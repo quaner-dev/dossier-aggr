@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: j-10000
+  namespace: ops-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: j-10000
+  template:
+    metadata:
+      labels:
+        app: j-10000
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: realai-15
+      containers:
+        - name: j-10000-runserver
+          image: sealos.hub:5000/infra-j10000:202505281312-8242379c
+          imagePullPolicy: Always
+          command:
+            - python3
+            - /root/ops_backend/manage.py
+            - runserver
+            - 0.0.0.0:8000
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: j-10000-common-env
+          volumeMounts:
+            - mountPath: /root/ops_backend/db
+              name: db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "10Gi"
+        - name: j-10000-qcluster
+          image: sealos.hub:5000/infra-j10000:202505281312-8242379c
+          imagePullPolicy: Always
+          command:
+            - python3
+            - /root/ops_backend/manage.py
+            - qcluster
+          envFrom:
+            - configMapRef:
+                name: j-10000-common-env
+          volumeMounts:
+            - mountPath: /root/ops_backend/db
+              name: db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "2500m"
+              memory: "10Gi"
+        - name: j-10000-long-qcluster
+          image: sealos.hub:5000/infra-j10000:202505281312-8242379c
+          imagePullPolicy: Always
+          command:
+            - python3
+            - /root/ops_backend/manage.py
+            - qcluster
+          env:
+            - name: Q_CLUSTER_NAME
+              value: "long"
+          envFrom:
+            - configMapRef:
+                name: j-10000-common-env
+          volumeMounts:
+            - mountPath: /root/ops_backend/db
+              name: db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "2500m"
+              memory: "10Gi"
+      volumes:
+        - name: db
+          persistentVolumeClaim:
+            claimName: j-10000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: j-10000-common-env
+  namespace: ops-backend
+data:
+  # ClickHouse Arachnid
+  clickhouse_arachnid_host: "160.72.22.1"
+  clickhouse_arachnid_port: "9000"
+  clickhouse_arachnid_username: "default"
+  clickhouse_arachnid_password: ""
+  # Clickhouse Business
+  clickhouse_business_host: "clickhouse-ck-clickhouse.click-test.svc.cluster.local"
+  clickhouse_business_port: "9000"
+  clickhouse_business_username: "default"
+  clickhouse_business_password: "password"
+  # Elasticsearch
+  elasticsearch_host: "elasticsearch.elasticsearch.svc.cluster.local"
+  elasticsearch_port: "9200"
+  # Kafka
+  kafka_bootstrap_servers: "kafka-kafka-plain-bootstrap.kafka-system.svc.cluster.local:9092"
+  # MySQL
+  mysql_host: "mysql-mysql.mysql.svc.cluster.local"
+  mysql_port: "3306"
+  mysql_username: "root"
+  mysql_password: "m2fxp9sb"
+  # Smart Dossier MySQL
+  smart_dossier_mysql_host: "160.72.22.16"
+  smart_dossier_mysql_port: "8003"
+  smart_dossier_mysql_username: "root"
+  smart_dossier_mysql_password: "LanmaAdmin.27"
+  # Redis
+  redis_host: "redis-redis.redis-biz.svc.cluster.local"
+  redis_port: "6379"
+  redis_password: "nk88nggg"
+  redis_db: "5"
+  # SeaWeed
+  seaweed_endpoint_url: "http://seaweedfs-filer-client-s3.kv-prod.svc.cluster.local:8333"
+  # DeepGlint
+  deepglint_host: "160.72.22.17"
+  deepglint_port: "3154"
+  # Face Service
+  face_service_host: "face-service.biz-system.svc.cluster.local"
+  face_service_port: "8080"
+  # VIID
+  viid_device_id: "65020000002005000215"
+  # HY Kafka
+  # hy_kafka_bootstrap_servers: "160.72.22.15:32000"
+  hy_kafka_bootstrap_servers: "160.72.16.201:9092,160.72.16.159:9092,160.72.16.212:9092"
+  hy_kafka_topic_name: "rl_hy_da_out"

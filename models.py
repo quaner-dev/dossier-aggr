@@ -1,5 +1,12 @@
-from sqlmodel import Field, SQLModel # type: ignore
+from sqlmodel import Field, SQLModel  # type: ignore
 from enum import IntEnum, StrEnum
+from pydantic import BeforeValidator
+from datetime import datetime
+from typing import Annotated
+
+CompactDateTime = Annotated[
+    datetime, BeforeValidator(lambda v: datetime.strptime(v, "%Y%m%d%H%M%S"))
+]
 
 
 class ResourceClassEnum(IntEnum):
@@ -36,24 +43,33 @@ class ResultFeatureDeclareEnum(IntEnum):
 
 
 class Subscribe(SQLModel, table=True):
-    SubscribeID: str = Field(primary_key=True)
-    Title: str
-    SubscribeDetail: str
+    SubscribeID: str = Field(primary_key=True, description="订阅标识符")
+    Title: str = Field(description="订阅标题")
+    SubscribeDetail: str = Field(description="订阅类别")
     ResourceClass: ResourceClassEnum
-    ResourceURI: str
-    ApplicantName: str
-    ApplicantOrg: str
-    BeginTime: str
-    EndTime: str
-    ReceiveAddr: str
-    ReportInterval: int | None = 30
-    Reason: str | None = None
-    OperateType: OperateTypeEnum
-    SubscribeStatus: SubscribeStatusEnum
-    SubscribeCancelOrg: str | None = None
-    SubscribeCancelPerson: str | None = None
-    CancelTime: str | None = None
-    CancelReason: str | None = None
-    ResultImageDeclare: ResultImageDeclareEnum
-    ResultFeatureDeclare: ResultFeatureDeclareEnum
-    TabID: str | None = None
+    ResourceURI: str = Field(description="订阅资源路径")
+    ApplicantName: str = Field(description="申请人")
+    ApplicantOrg: str = Field(description="申请单位")
+    BeginTime: CompactDateTime = Field(description="开始时间")
+    EndTime: CompactDateTime = Field(description="结束时间")
+    ReceiveAddr: str = Field(description="信息接收地址")
+    ReportInterval: int | None = Field(default=30, description="信息上报间隔时间")
+    Reason: str | None = Field(default=None, description="理由")
+    OperateType: OperateTypeEnum = Field(description="操作类型")
+    SubscribeStatus: SubscribeStatusEnum = Field(description="订阅执行状态")
+    SubscribeCancelOrg: str | None = Field(default=None, description="订阅取消单位")
+    SubscribeCancelPerson: str | None = Field(default=None, description="订阅取消人")
+    CancelTime: str | None = Field(default=None, description="取消时间")
+    CancelReason: str | None = Field(default=None, description="取消原因")
+    ResultImageDeclare: ResultImageDeclareEnum = Field(description="返回结果图片约定")
+    ResultFeatureDeclare: ResultFeatureDeclareEnum = Field(
+        description="返回结果特征值约定"
+    )
+    TabID: str | None = Field(default=None, description="订阅分类标签标识")
+
+    # @field_validator("BeginTime", "EndTime")
+    # @classmethod
+    # def parse_datetime(cls, v: Any) -> datetime:
+    #     if isinstance(v, str):
+    #         return datetime.strptime(v, "%Y%m%d%H%M%S")
+    #     return v

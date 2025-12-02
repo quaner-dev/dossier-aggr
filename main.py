@@ -1,20 +1,27 @@
 from typing import Any
 from datetime import datetime
 
+from fastapi import FastAPI, Depends
 
-from fastapi import FastAPI
 from sqlmodel import create_engine, select, Session
 
 from contants import *
 from schemas import *
+from auth import HTTPDigest1400
 import models
 
 app = FastAPI()
 engine = create_engine("sqlite:///db.sqlite3")
 session = Session(engine)
+security = HTTPDigest1400()
 
 
-@app.post(path=register_url, response_model=ResponseStatusObject)
+# TODO 这里的depends其实是Fastapi的设计模式，依赖注入，如果这样设定，Fastapi就可以正常运行这段代码，自动调用过__call__
+@app.post(
+    path=register_url,
+    response_model=ResponseStatusObject,
+    dependencies=[Depends(security)],
+)
 async def register() -> Any:
     return {
         "RequestURL": register_url,
@@ -47,6 +54,7 @@ async def keepalive():
 @app.post(path=subscribe_url)
 def subscrbe(subscribe_list: SubscribeListObject):
     for subscribe in subscribe_list.SubscribeListObject.SubscribeObject:
+        print(subscribe.BeginTime)
         session.add(
             models.Subscribe(
                 SubscribeID=subscribe.SubscribeID,

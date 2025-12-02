@@ -1,9 +1,8 @@
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from contants import *
 from typing import Dict, Any
+from main import app
 
-app = FastAPI()
 client = TestClient(app)
 
 
@@ -35,3 +34,23 @@ def test_subscribe():
     }
     response = client.post(url=subscribe_url, json=payload)
     assert response.status_code == 200
+
+
+def test_digest_auth_first_request_returns_401():
+    """测试第一次请求没有Authorization头返回401"""
+    response = client.get("/users/me")
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert "Digest" in response.headers["WWW-Authenticate"]
+
+
+def test_digest_auth_second_request_returns_200():
+    """测试第二次请求带Authorization头返回200"""
+    # 带任意Digest Authorization头即可通过
+    response = client.get(
+        "/users/me",
+        headers={"Authorization": "Digest username=\"test\", realm=\"VIID API\", nonce=\"abc123\""}
+    )
+    assert response.status_code == 200
+    assert "scheme" in response.json()
+    assert response.json()["scheme"] == "Digest"

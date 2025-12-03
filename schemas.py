@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List
-from models import Subscribe
+from models import Subscribe, APE
 
 
 class VIIDHeaders(BaseModel):
@@ -20,3 +20,11 @@ class SubscribeObject(BaseModel):
 
 class SubscribeListObject(BaseModel):
     SubscribeListObject: SubscribeObject
+
+
+class APEObject(BaseModel):
+    APEObject: List[APE]
+
+
+class APEListObject(BaseModel):
+    APEListObject: APEObject

@@ -18,41 +18,41 @@ security = HTTPDigest1400()
 
 # TODO 这里的depends其实是Fastapi的设计模式，依赖注入，如果这样设定，Fastapi就可以正常运行这段代码，自动调用过__call__
 @app.post(
-    path=register_url,
+    path=REGISTER_URL,
     response_model=ResponseStatusObject,
     dependencies=[Depends(security)],
 )
 async def register() -> Any:
     return {
-        "RequestURL": register_url,
+        "RequestURL": REGISTER_URL,
         "StatusCode": "0",
         "StatusString": "注册成功",
         "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
     }
 
 
-@app.post(path=unregister_url, response_model=ResponseStatusObject)
+@app.post(path=UNREGISTER_URL, response_model=ResponseStatusObject)
 async def unregister():
     return {
-        "RequestURL": unregister_url,
+        "RequestURL": UNREGISTER_URL,
         "StatusCode": "0",
         "StatusString": "注销成功",
         "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
     }
 
 
-@app.post(path=keepalive_url, response_model=ResponseStatusObject)
+@app.post(path=KEEPALIVE_URL, response_model=ResponseStatusObject)
 async def keepalive():
     return {
-        "RequestURL": keepalive_url,
+        "RequestURL": KEEPALIVE_URL,
         "StatusCode": "0",
         "StatusString": "保活成功",
         "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
     }
 
 
-@app.post(path=subscribe_url)
-def subscrbe(subscribe_list: SubscribeListObject):
+@app.post(path=SUBSCRIBES_URL)
+async def subscrbe(subscribe_list: SubscribeListObject):
     for subscribe in subscribe_list.SubscribeListObject.SubscribeObject:
         print(subscribe.BeginTime)
         session.add(
@@ -88,3 +88,9 @@ def subscrbe(subscribe_list: SubscribeListObject):
 
         if result is None:
             raise Exception("aaa")
+
+
+@app.get(path=APES_URL, response_model=ResponseStatusObject)
+async def apes():
+    results = session.exec(select(models.APE)).all()
+    return {"APEListObject": {"APEObject": results}}

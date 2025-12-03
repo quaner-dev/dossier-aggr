@@ -2,7 +2,7 @@ from sqlmodel import Field, SQLModel  # type: ignore
 from enum import IntEnum, StrEnum
 from pydantic import BeforeValidator
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Optional
 
 CompactDateTime = Annotated[
     datetime, BeforeValidator(lambda v: datetime.strptime(v, "%Y%m%d%H%M%S"))
@@ -73,3 +73,43 @@ class Subscribe(SQLModel, table=True):
     #     if isinstance(v, str):
     #         return datetime.strptime(v, "%Y%m%d%H%M%S")
     #     return v
+
+
+class CapDirectionEnum(IntEnum):
+    Front = 0  # 拍车头
+    Rear = 1  # 拍车尾
+
+
+class MonitorDirectionEnum(IntEnum):
+    WestToEast = 1  # 西向东（东）
+    EastToWest = 2  # 东向西（西）
+    NorthToSouth = 3  # 北向南（南）
+    SouthToNorth = 4  # 南向北（北）
+    SouthwestToNortheast = 5  # 西南到东北（东北）
+    NortheastToSouthwest = 6  # 东北到西南（西南）
+    NorthwestToSoutheast = 7  # 西北到东南（东南）
+    SoutheastToNorthwest = 8  # 东南到西北（西北）
+    Other = 9  # 其他
+
+
+class APE(SQLModel, table=True):
+    ApeID: str = Field(primary_key=True, description="设备ID")
+    Name: str = Field(description="名称")
+    Model: str = Field(description="型号")
+    IPAddr: str = Field(description="IP地址")
+    IPV6Addr: Optional[str] = Field(description="IPv6地址")
+    Port: int = Field(description="端口号")
+    Longitude: float = Field(description="经度")
+    Latitude: float = Field(description="纬度")
+    PlaceCode: str = Field(description="安装地点行政区划代码")
+    Place: Optional[str] = Field(description="位置名")
+    OrgCode: Optional[str] = Field(description="管辖单位代码")
+    CapDirection: Optional[CapDirectionEnum] = Field(description="车辆抓拍方向")
+    MonitorDirection: Optional[MonitorDirectionEnum] = Field(description="监测方向")
+    MonitorAreaDesc: Optional[str] = Field(description="监视区域说明")
+    IsOnline: str = Field(description="是否在线")
+    OwnerApsID: Optional[str] = Field(description="所属采集系统")
+    UserId: Optional[str] = Field(description="用户帐号")
+    Password: Optional[str] = Field(description="口令")
+    FunctionType: str = Field(description="功能类型")
+    PositionType: Optional[str] = Field(description="位置类型")

@@ -90,7 +90,12 @@ async def subscrbe(subscribe_list: SubscribeListObject):
             raise Exception("aaa")
 
 
-@app.get(path=APES_URL, response_model=ResponseStatusObject)
+@app.get(path=APES_URL, response_model=APEListObject)
 async def apes():
     results = session.exec(select(models.APE)).all()
     return {"APEListObject": {"APEObject": results}}
+
+
+@app.post(path=SUBSCRIBE_NOTIFICATIONS_URL, response_model=ResponseStatusObject)
+async def subscribe_notifications():
+    pass

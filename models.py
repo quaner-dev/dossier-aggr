@@ -1,22 +1,22 @@
 from sqlmodel import Field, SQLModel  # type: ignore
-import schemas
+from enums import *
 
 
 class Subscribe(SQLModel, table=True):
     SubscribeID: str = Field(description="订阅标识符", max_length=33, primary_key=True)
     Title: str = Field(description="订阅标题", max_length=256)
     SubscribeDetail: str = Field(description="订阅类别")
-    ResourceClass: schemas.ResourceClassEnum = Field(description="订阅资源类别")
+    ResourceClass: ResourceClassEnum = Field(description="订阅资源类别")
     ResourceURI: str = Field(description="订阅资源路径", max_length=256)
     ApplicantName: str = Field(description="申请人", max_length=50)
     ApplicantOrg: str = Field(description="申请单位", max_length=100)
-    BeginTime: schemas.CompactDateTime = Field(description="开始时间")
-    EndTime: schemas.CompactDateTime = Field(description="结束时间")
+    BeginTime: CompactDateTime = Field(description="开始时间")
+    EndTime: CompactDateTime = Field(description="结束时间")
     ReceiveAddr: str = Field(description="信息接收地址", max_length=256)
     ReportInterval: int | None = Field(default=30, description="信息上报间隔时间")
     Reason: str | None = Field(default=None, description="理由", max_length=256)
-    OperateType: schemas.OperateTypeEnum = Field(description="操作类型")
-    SubscribeStatus: schemas.SubscribeStatusEnum = Field(description="订阅执行状态")
+    OperateType: OperateTypeEnum = Field(description="操作类型")
+    SubscribeStatus: SubscribeStatusEnum = Field(description="订阅执行状态")
     SubscribeCancelOrg: str | None = Field(
         default=None, description="订阅取消单位", max_length=32
     )
@@ -27,38 +27,15 @@ class Subscribe(SQLModel, table=True):
     CancelReason: str | None = Field(
         default=None, description="取消原因", max_length=64
     )
-    ResultImageDeclare: schemas.ResultImageDeclareEnum = Field(
+    ResultImageDeclare: ResultImageDeclareEnum = Field(
         description="返回结果图片约定", max_length=5
     )
-    ResultFeatureDeclare: schemas.ResultFeatureDeclareEnum = Field(
+    ResultFeatureDeclare: ResultFeatureDeclareEnum = Field(
         description="返回结果特征值约定"
     )
     TabID: str | None = Field(
         default=None, description="订阅分类标签标识", max_length=41
     )
-
-
-class CapDirectionEnum(IntEnum):
-    Front = 0  # 拍车头
-    Rear = 1  # 拍车尾
-
-
-class MonitorDirectionEnum(IntEnum):
-    WestToEast = 1  # 西向东（东）
-    EastToWest = 2  # 东向西（西）
-    NorthToSouth = 3  # 北向南（南）
-    SouthToNorth = 4  # 南向北（北）
-    SouthwestToNortheast = 5  # 西南到东北（东北）
-    NortheastToSouthwest = 6  # 东北到西南（西南）
-    NorthwestToSoutheast = 7  # 西北到东南（东南）
-    SoutheastToNorthwest = 8  # 东南到西北（西北）
-    Other = 9  # 其他
-
-
-class StatusTypeEnum(IntEnum):
-    Online = 1  # 在线
-    Offline = 2  # 离线
-    Other = 9  # 其他
 
 
 class APE(SQLModel, table=True):

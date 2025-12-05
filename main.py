@@ -10,6 +10,7 @@ from schemas import *
 from auth import HTTPDigest1400
 import models
 
+
 app = FastAPI()
 engine = create_engine("sqlite:///db.sqlite3")
 session = Session(engine)
@@ -54,40 +55,8 @@ async def keepalive():
 @app.post(path=SUBSCRIBES_URL)
 async def subscrbe(subscribe_list: SubscribeListObject):
     for subscribe in subscribe_list.SubscribeListObject.SubscribeObject:
-        print(subscribe.BeginTime)
-        session.add(
-            models.Subscribe(
-                SubscribeID=subscribe.SubscribeID,
-                Title=subscribe.Title,
-                SubscribeDetail=subscribe.SubscribeDetail,
-                ResourceClass=subscribe.ResourceClass,
-                ResourceURI=subscribe.ResourceURI,
-                ApplicantName=subscribe.ApplicantName,
-                ApplicantOrg=subscribe.ApplicantOrg,
-                BeginTime=subscribe.BeginTime,
-                EndTime=subscribe.EndTime,
-                ReceiveAddr=subscribe.ReceiveAddr,
-                ReportInterval=subscribe.ReportInterval,
-                Reason=subscribe.Reason,
-                OperateType=subscribe.OperateType,
-                SubscribeStatus=subscribe.SubscribeStatus,
-                SubscribeCancelOrg=subscribe.SubscribeCancelOrg,
-                SubscribeCancelPerson=subscribe.SubscribeCancelPerson,
-                CancelTime=subscribe.CancelTime,
-                CancelReason=subscribe.CancelReason,
-                ResultImageDeclare=subscribe.ResultImageDeclare,
-                ResultFeatureDeclare=subscribe.ResultFeatureDeclare,
-                TabID=subscribe.TabID,
-            )
-        )
-        result = session.exec(
-            select(models.Subscribe).where(
-                models.Subscribe.SubscribeID == subscribe.SubscribeID
-            )
-        ).first()
-
-        if result is None:
-            raise Exception("aaa")
+        session.add(models.Subscribe.model_validate(subscribe))
+        session.commit()
 
 
 @app.get(path=APES_URL, response_model=APEListObject)
@@ -98,4 +67,9 @@ async def apes():
 
 @app.post(path=SUBSCRIBE_NOTIFICATIONS_URL, response_model=ResponseStatusObject)
 async def subscribe_notifications():
-    pass
+    return {
+        "RequestURL": SUBSCRIBE_NOTIFICATIONS_URL,
+        "StatusCode": "0",
+        "StatusString": "OK",
+        "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
+    }

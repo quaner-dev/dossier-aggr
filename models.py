@@ -1,8 +1,17 @@
 from sqlmodel import Field, SQLModel  # type: ignore
+from pydantic import BeforeValidator
+from datetime import datetime
 from enums import *
+from typing import Annotated
 
 
-class Subscribe(SQLModel, table=True):
+def parse_datetime(v: str | datetime) -> datetime:
+    if isinstance(v, str):
+        return datetime.strptime(v, "%Y%m%d%H%M%S")
+    return v
+
+
+class SubscribeBase(SQLModel):
     SubscribeID: str = Field(description="订阅标识符", max_length=33, primary_key=True)
     Title: str = Field(description="订阅标题", max_length=256)
     SubscribeDetail: str = Field(description="订阅类别")
@@ -10,8 +19,10 @@ class Subscribe(SQLModel, table=True):
     ResourceURI: str = Field(description="订阅资源路径", max_length=256)
     ApplicantName: str = Field(description="申请人", max_length=50)
     ApplicantOrg: str = Field(description="申请单位", max_length=100)
-    BeginTime: CompactDateTime = Field(description="开始时间")
-    EndTime: CompactDateTime = Field(description="结束时间")
+    BeginTime: Annotated[datetime, BeforeValidator(parse_datetime)] = Field(
+        description="开始时间"
+    )
+    EndTime: datetime = Field(description="结束时间")
     ReceiveAddr: str = Field(description="信息接收地址", max_length=256)
     ReportInterval: int | None = Field(default=30, description="信息上报间隔时间")
     Reason: str | None = Field(default=None, description="理由", max_length=256)
@@ -36,6 +47,10 @@ class Subscribe(SQLModel, table=True):
     TabID: str | None = Field(
         default=None, description="订阅分类标签标识", max_length=41
     )
+
+
+class Subscribe(SubscribeBase, table=True):
+    pass
 
 
 class APE(SQLModel, table=True):

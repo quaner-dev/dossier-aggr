@@ -1,33 +1,34 @@
 from sqlmodel import Field, SQLModel  # type: ignore
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, PlainSerializer
 from datetime import datetime
-from enums import *
 from typing import Annotated
-
-
-def parse_datetime(v: str | datetime) -> datetime:
-    if isinstance(v, str):
-        return datetime.strptime(v, "%Y%m%d%H%M%S")
-    return v
+import utils
+import enums
 
 
 class SubscribeBase(SQLModel):
     SubscribeID: str = Field(description="订阅标识符", max_length=33, primary_key=True)
     Title: str = Field(description="订阅标题", max_length=256)
     SubscribeDetail: str = Field(description="订阅类别")
-    ResourceClass: ResourceClassEnum = Field(description="订阅资源类别")
+    ResourceClass: enums.ResourceClassEnum = Field(description="订阅资源类别")
     ResourceURI: str = Field(description="订阅资源路径", max_length=256)
     ApplicantName: str = Field(description="申请人", max_length=50)
     ApplicantOrg: str = Field(description="申请单位", max_length=100)
-    BeginTime: Annotated[datetime, BeforeValidator(parse_datetime)] = Field(
-        description="开始时间"
-    )
-    EndTime: datetime = Field(description="结束时间")
+    BeginTime: Annotated[
+        datetime,
+        BeforeValidator(utils.parse_datetime),
+        PlainSerializer(utils.serialize_datetime),
+    ] = Field(description="开始时间")
+    EndTime: Annotated[
+        datetime,
+        BeforeValidator(utils.parse_datetime),
+        PlainSerializer(utils.serialize_datetime),
+    ] = Field(description="结束时间")
     ReceiveAddr: str = Field(description="信息接收地址", max_length=256)
     ReportInterval: int | None = Field(default=30, description="信息上报间隔时间")
     Reason: str | None = Field(default=None, description="理由", max_length=256)
-    OperateType: OperateTypeEnum = Field(description="操作类型")
-    SubscribeStatus: SubscribeStatusEnum = Field(description="订阅执行状态")
+    OperateType: enums.OperateTypeEnum = Field(description="操作类型")
+    SubscribeStatus: enums.SubscribeStatusEnum = Field(description="订阅执行状态")
     SubscribeCancelOrg: str | None = Field(
         default=None, description="订阅取消单位", max_length=32
     )
@@ -38,10 +39,10 @@ class SubscribeBase(SQLModel):
     CancelReason: str | None = Field(
         default=None, description="取消原因", max_length=64
     )
-    ResultImageDeclare: ResultImageDeclareEnum = Field(
+    ResultImageDeclare: enums.ResultImageDeclareEnum = Field(
         description="返回结果图片约定", max_length=5
     )
-    ResultFeatureDeclare: ResultFeatureDeclareEnum = Field(
+    ResultFeatureDeclare: enums.ResultFeatureDeclareEnum = Field(
         description="返回结果特征值约定"
     )
     TabID: str | None = Field(
@@ -65,16 +66,16 @@ class APE(SQLModel, table=True):
     PlaceCode: str = Field(description="安装地点行政区划代码", max_length=6)
     Place: str | None = Field(default=None, description="位置名", max_length=256)
     OrgCode: str | None = Field(default=None, description="管辖单位代码", max_length=12)
-    CapDirection: CapDirectionEnum | None = Field(
+    CapDirection: enums.CapDirectionEnum | None = Field(
         default=None, description="车辆抓拍方向"
     )
-    MonitorDirection: MonitorDirectionEnum | None = Field(
+    MonitorDirection: enums.MonitorDirectionEnum | None = Field(
         default=None, description="监测方向"
     )
     MonitorAreaDesc: str | None = Field(
         default=None, description="监视区域说明", max_length=256
     )
-    IsOnline: StatusTypeEnum = Field(description="是否在线")
+    IsOnline: enums.StatusTypeEnum = Field(description="是否在线")
     OwnerApsID: str | None = Field(
         default=None, description="所属采集系统", max_length=20
     )

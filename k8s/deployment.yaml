@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: j-10000
+  namespace: ops-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: j-10000
+  template:
+    metadata:
+      labels:
+        app: j-10000
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: realai-15
+      containers:
+        - name: j-10000-runserver
+          image: sealos.hub:5000/infra-j10000:202505281312-8242379c
+          imagePullPolicy: Always
+          command:
+            - python3
+            - /root/ops_backend/manage.py
+            - runserver
+            - 0.0.0.0:8000
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: j-10000-common-env
+          volumeMounts:
+            - mountPath: /root/ops_backend/db
+              name: db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "10Gi"
+        - name: j-10000-qcluster
+          image: sealos.hub:5000/infra-j10000:202505281312-8242379c
+          imagePullPolicy: Always
+          command:
+            - python3
+            - /root/ops_backend/manage.py
+            - qcluster
+          envFrom:
+            - configMapRef:
+                name: j-10000-common-env
+          volumeMounts:
+            - mountPath: /root/ops_backend/db
+              name: db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "2500m"
+              memory: "10Gi"
+        - name: j-10000-long-qcluster
+          image: sealos.hub:5000/infra-j10000:202505281312-8242379c
+          imagePullPolicy: Always
+          command:
+            - python3
+            - /root/ops_backend/manage.py
+            - qcluster
+          env:
+            - name: Q_CLUSTER_NAME
+              value: "long"
+          envFrom:
+            - configMapRef:
+                name: j-10000-common-env
+          volumeMounts:
+            - mountPath: /root/ops_backend/db
+              name: db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "2500m"
+              memory: "10Gi"
+      volumes:
+        - name: db
+          persistentVolumeClaim:
+            claimName: j-10000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: j-10000-common-env
+  namespace: ops-backend
+data:
+  # ClickHouse Arachnid
+  clickhouse_arachnid_host: "xx.xx.xx"

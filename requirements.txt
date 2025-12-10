@@ -1,0 +1,11 @@
+fastapi[standard]
+sqlmodel
+uvicorn
+pytest
+
+# Taskiq
+taskiq
+taskiq[reload]
+taskiq-redis
+taskiq-fastapi
+taskiq-aio-pika

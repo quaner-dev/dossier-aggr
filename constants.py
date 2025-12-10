@@ -1,0 +1,7 @@
+REGISTER_URL = "/VIID/System/Register"
+UNREGISTER_URL = "/VIID/System/UnRegister"
+KEEPALIVE_URL = "/VIID/System/Keepalive"
+SUBSCRIBES_URL = "/VIID/Subscribes"
+APES_URL = "/VIID/APEs"
+SUBSCRIBE_NOTIFICATIONS_URL = "/VIID/SubscribeNotifications"
+FACES_URL = "/VIID/Faces"

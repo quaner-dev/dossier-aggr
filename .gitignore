@@ -1,0 +1,14 @@
+.vscode
+.github
+.continue
+
+__pycache__
+.pytest_cache
+.mypy_cache
+
+build_dockerimage.sh
+
+*.tar.gz
+*.tar
+
+db.sqlite3

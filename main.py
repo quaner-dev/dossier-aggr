@@ -60,8 +60,8 @@ async def keepalive():
 @app.post(
     path=constants.SUBSCRIBES_URL, response_model=schemas.ResponseStatusListObject
 )
-async def subscrbe(subscribe_list: schemas.SubscribeListObject):
-    subscribes = subscribe_list.SubscribeListObject.SubscribeObject
+async def subscrbe(data: schemas.SubscribeListSchema):
+    subscribes = data.SubscribeListObject.SubscribeObject
     for subscribe in subscribes:
         session.add(models.Subscribe.model_validate(subscribe))
 
@@ -80,7 +80,7 @@ async def subscrbe(subscribe_list: schemas.SubscribeListObject):
     }
 
 
-@app.get(path=constants.APES_URL, response_model=schemas.APEListObject)
+@app.get(path=constants.APES_URL, response_model=schemas.APEListSchema)
 async def apes():
     apes = session.exec(select(models.APE)).all()
     return {"APEListObject": {"APEObject": apes}}
@@ -100,6 +100,49 @@ async def subscribe_notifications():
 
 
 @app.post(path=constants.FACES_URL, response_model=schemas.ResponseStatusListObject)
-async def face(face_list: schemas.FaceListObject):
-    for face in face_list.FaceList:
-        await tasks.my_redis_task.kiq(face)
+async def faces_create(data: schemas.FaceObjectListSchema):
+    faces = data.FaceObjectList.FaceObject
+    for face in faces:
+        await tasks.create_face.kiq(face)
+
+    return {
+        "ResponseStatusList": [
+            {
+                "RequestURL": constants.FACES_URL,
+                "StatusCode": "0",
+                "StatusString": "注册成功",
+                "Id": face.FaceID,
+                "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
+            }
+            for face in faces
+        ]
+    }
+
+
+@app.post(path=constants.PERSONS_URL, response_model=schemas.ResponseStatusListObject)
+async def persons_create(data: schemas.PersonObjectListSchema):
+    persons = data.PersonObjectList.PersonObject
+    for person in persons:
+        await tasks.create_person.kiq(person)
+
+    return {
+        "ResponseStatusList": [
+            {
+                "RequestURL": constants.PERSONS_URL,
+                "StatusCode": "0",
+                "StatusString": "注册成功",
+                "Id": person.PersonID,
+                "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
+            }
+            for person in persons
+        ]
+    }
+
+
+@app.get(
+    path=constants.PROFILES_QUERY_SYNC_URL,
+    response_model=schemas.ProfilesQueryResultSchema,
+)
+async def profile_read(data: schemas.ProfileQuerySchema):
+    profiles_query = data.ProfileQueryObject
+    return profiles_query

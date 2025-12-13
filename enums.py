@@ -99,3 +99,8 @@ class ResultImageDeclareEnum(StrEnum):
 class ResultFeatureDeclareEnum(IntEnum):
     WithoutFeatures = -1  # 不要特征值
     WithFeatures = 1  # 需要返回特征值
+
+
+class SortTypeEnum(StrEnum):
+    Desc = "desc"  # 降序
+    Asc = "Asc"  # 升序

@@ -101,6 +101,6 @@ class ResultFeatureDeclareEnum(IntEnum):
     WithFeatures = 1  # 需要返回特征值
 
 
-class SortTypeEnum(StrEnum):
-    Desc = "desc"  # 降序
-    Asc = "Asc"  # 升序
+class ResultSubjectDetailDeclareEnum(IntEnum):
+    EXCLUDE_DETAIL = -1  # 不需要轨迹详细信息
+    INCLUDE_DETAIL = 1  # 需要返回轨迹详细信息

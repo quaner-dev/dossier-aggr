@@ -51,10 +51,14 @@ class SubscribeBase(SQLModel):
 
 
 class Subscribe(SubscribeBase, table=True):
+    """GA/T 1400.3-2017 A.19 订阅对象"""
+
     pass
 
 
 class APE(SQLModel, table=True):
+    """GA/T 1400.3-2017 A.1 采集设备对象"""
+
     ApeID: str = Field(description="设备ID", max_length=20, primary_key=True)
     Name: str = Field(description="名称", max_length=100)
     Model: str = Field(description="型号", max_length=100)

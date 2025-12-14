@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Annotated, Literal
+from typing import List, Optional, Annotated
 from pydantic import BeforeValidator, PlainSerializer
 from datetime import datetime
 import enums
@@ -7,91 +7,72 @@ import models
 import utils
 
 
+VIIDDateTime = Annotated[
+    datetime,
+    BeforeValidator(utils.parse_datetime),
+    PlainSerializer(utils.serialize_datetime),
+]
+
+
 class VIIDHeaders(BaseModel):
     content_type: str = "application/VIID+JSON"
 
 
-# 应答状态对象
-class ResponseStatusObject(BaseModel):
+class ResponseStatus(BaseModel):
+    """GA/T 1400.3-2017 A.26 应答状态对象"""
+
     RequestURL: str = Field(description="资源定位符")
     StatusCode: str = Field(description="状态码")
     StatusString: str = Field(description="状态描述")
     Id: str = Field(description="资源ID")
-    LocalTime: Annotated[
-        datetime,
-        BeforeValidator(utils.parse_datetime),
-        PlainSerializer(utils.serialize_datetime),
-    ] = Field(description="日期时间")
+    LocalTime: VIIDDateTime = Field(description="日期时间")
 
 
-# 应答状态对象列表
-class ResponseStatusListObject(BaseModel):
-    ResponseStatusList: List[ResponseStatusObject]
+class ResponseStatusList(BaseModel):
+    """GA/T 1400.3-2017 C.25 应答状态对象列表"""
+
+    ResponseStatusObject: List[ResponseStatus]
 
 
-# 采集设备列表
+# 应答状态对象列表结构
+class ResponseStatusListSchema(BaseModel):
+    ResponseStatusListObject: ResponseStatusList
+
+
 class APEList(BaseModel):
+    """GA/T 1400.3-2017 C.1 采集设备对象列表"""
+
     APEObject: List[models.APE]
 
 
-# 采集设备列表结构
+# 采集设备对象列表结构
 class APEListSchema(BaseModel):
     APEListObject: APEList
 
 
-# 订阅列表
+# 订阅对象列表
 class SubscribeList(BaseModel):
+    """GA/T 1400.3-2017 C.19 订阅对象列表"""
+
     SubscribeObject: List[models.SubscribeBase]
 
 
-# 订阅列表结构
+# 订阅对象列表结构
 class SubscribeListSchema(BaseModel):
     SubscribeListObject: SubscribeList
 
 
-# 通知
-class SubscribeNotification(BaseModel):
-    NotificationID: str = Field(description="通知标识", max_length=33)
-    SubscribeID: str = Field(description="订阅标识", max_length=33)
-    Title: str = Field(description="订阅标题", max_length=256)
-    TriggerTime: str = Field(description="触发时间")
-    InfoIDs: str = Field(description="信息标识", max_length=1024)
-    DeviceList: Optional[str] = Field(default=None, description="设备")
-    PersonObjectList: Optional[str] = Field(default=None, description="人员信息")
-    FaceObjectList: Optional[str] = Field(default=None, description="人脸信息")
-    MotorVehicleObjectList: Optional[str] = Field(
-        default=None, description="机动车信息"
-    )
-    NonMotorVehicleObjectList: Optional[str] = Field(
-        default=None, description="非机动车信息"
-    )
-    DataClassTabObjectList: Optional[str] = Field(
-        default=None, description="数据分类标签"
-    )
-    ExecuteOperation: Optional[enums.ExecuteOperationEnum] = Field(
-        default=None, description="更新项目"
-    )
-
-
-# 通知列表
-class SubscribeNotificationList(BaseModel):
-    SubscribeNotificationObject: List[SubscribeNotification]
-
-
-# 通知列表结构
-class SubscribeNotificationListSchema(BaseModel):
-    SubscribeNotificationListObject: SubscribeNotificationList
-
-
-# 特征值
 class FeatureInfo(BaseModel):
+    """视图库对接技术要求 A.7 特征值对象"""
+
     Vendor: str = Field(description="厂商", max_length=100)
     AlgorithmVersion: str = Field(description="算法版本", max_length=100)
     FeatureData: str = Field(description="特征值数据")
 
 
-# 子图像
 class SubImageInfo(BaseModel):
+    """GA/T 1400.3-2017 C.6 图像子对象"""
+
     ImageID: Optional[str] = Field(default=None, description="图像标识", max_length=41)
     EventSort: Optional[int] = Field(default=None, description="事件分类")
     DeviceID: Optional[str] = Field(default=None, description="设备编码", max_length=20)
@@ -107,8 +88,15 @@ class SubImageInfo(BaseModel):
     FeatureInfoObject: FeatureInfo = Field(description="特征值属性")
 
 
-# 人脸
+class SubImageInfoList(BaseModel):
+    """GA/T 1400.3-2017 C.6 子图像对象列表"""
+
+    SubImageInfoObject: List[SubImageInfo]
+
+
 class Face(BaseModel):
+    """GA/T 1400.3-2017 A.9 人脸对象"""
+
     FaceID: str = Field(description="人脸标识", max_length=33)
     InfoKind: enums.InfoKindEnum = Field(
         default=enums.InfoKindEnum.Other, description="信息分类"
@@ -122,18 +110,20 @@ class Face(BaseModel):
     SubImageList: List[SubImageInfo] = Field(description="图像列表")
 
 
-# 人脸列表
 class FaceList(BaseModel):
+    """GA/T 1400.3-2017 C.9 人脸对象列表"""
+
     FaceObject: List[Face]
 
 
-# 人脸列表结构
-class FaceObjectListSchema(BaseModel):
-    FaceObjectList: FaceList
+# 人脸对象列表结构
+class FaceListObjectSchema(BaseModel):
+    FaceListObject: FaceList
 
 
-# 人员
 class Person(BaseModel):
+    """GA/T 1400.3-2017 A.8 人员对象"""
+
     PersonID: str = Field(description="人员标识", max_length=33)
     InfoKind: enums.InfoKindEnum = Field(
         default=enums.InfoKindEnum.Other, description="信息分类"
@@ -147,57 +137,176 @@ class Person(BaseModel):
     SubImageList: List[SubImageInfo] = Field(description="图像列表")
 
 
-# 人员列表
 class PersonList(BaseModel):
+    """GA/T 1400.3-2017 C.8 人员对象列表"""
+
     PersonObject: List[Person]
 
 
-# 人员列表结构
-class PersonObjectListSchema(BaseModel):
-    PersonObjectList: PersonList
+# 人员对象列表结构
+class PersonListObjectSchema(BaseModel):
+    PersonListObject: PersonList
 
 
-# 档案查询请求
-class ProfileQuery(BaseModel):
-    QueryID: str = Field(description="查询标识")
-    PageNum: int = Field(description="起始页码")
-    PageRecordNum: int = Field(description="每页记录数")
-    BeginTime: Annotated[
-        datetime,
-        BeforeValidator(utils.parse_datetime),
-        PlainSerializer(utils.serialize_datetime),
-    ] = Field(description="开始时间")
-    EndTime: Annotated[
-        datetime,
-        BeforeValidator(utils.parse_datetime),
-        PlainSerializer(utils.serialize_datetime),
-    ] = Field(description="结束时间")
-    Sort: Literal["ProfileID", "IDNumber", "CreateTime"] = Field(
-        default="CreateTime", description="图片类型"
+class SubscribeNotification(BaseModel):
+    """GA/T 1400.3-2017 A.20 通知对象"""
+
+    NotificationID: str = Field(description="通知标识", max_length=33)
+    SubscribeID: str = Field(description="订阅标识", max_length=33)
+    Title: str = Field(description="订阅标题", max_length=256)
+    TriggerTime: str = Field(description="触发时间")
+    InfoIDs: str = Field(description="信息标识", max_length=1024)
+    DeviceList: Optional[str] = Field(default=None, description="设备")
+    PersonObjectList: Optional[PersonList] = Field(default=None, description="人员信息")
+    FaceObjectList: Optional[FaceList] = Field(default=None, description="人脸信息")
+    DataClassTabObjectList: Optional[str] = Field(
+        default=None, description="数据分类标签"
     )
-    SortType: enums.SortTypeEnum = Field(description="排序类型")
-    IDNumber: Optional[str] = Field(description="档案人员身份证号")
-    Name: Optional[str] = Field(description="档案人员姓名")
+    ExecuteOperation: Optional[enums.ExecuteOperationEnum] = Field(
+        default=None, description="更新项目"
+    )
+
+
+class SubscribeNotificationList(BaseModel):
+    """GA/T 1400.3-2017 C.20 通知对象列表"""
+
+    SubscribeNotificationObject: List[SubscribeNotification]
+
+
+# 通知对象列表结构
+class SubscribeNotificationListSchema(BaseModel):
+    SubscribeNotificationListObject: SubscribeNotificationList
+
+
+class PictureQueryCondition(BaseModel):
+    """GA/T 2350.5-2025 B.7 以图像搜图查询条件对象"""
+
+    SubImage: SubImageInfo = Field(description="对象小图")
+    Threshold: float = Field(description="相似度分数线")
+    SubjectID: str = Field(description="数据标识", max_length=48)
+
+
+# 以图像搜图查询条件对象列表
+class PictureQueryConditionList(BaseModel):
+    PictureQueryConditionObject: List[PictureQueryCondition]
+
+
+class GeoRectangleType(BaseModel):
+    """GA/T 2350.5-2025 B.12 检索区域对象"""
+
+    LeftTopLongitude: float = Field(description="西北经度", decimal_places=6)
+    LeftTopLatitude: float = Field(description="西北纬度", decimal_places=6)
+    RightBtmLongitude: float = Field(description="东南经度", decimal_places=6)
+    RightBtmLatitude: float = Field(description="东南纬度", decimal_places=6)
+
+
+class DeviceSelector(BaseModel):
+    """GA/T 2350.5-2025 B.13 检索设备范围对象"""
+
+    # TODO 这里是个List，但是里面的device其实是个str，不是具有字段类型的model，所以这里直接使用List str来处理
+    DeviceIDs: List[str] = Field(description="设备ID列表")
+    DevicePlaceCode: str = Field(max_length=6, description="设备行政区划")
+
+
+# TODO
+class ArchiveQueryBase(BaseModel):
+    QueryID: str = Field(max_length=48, description="查询标识")
+    MaxNumRecordReturn: Optional[int] = Field(description="最多返回记录数")
+    PageRecordNum: Optional[int] = Field(description="每页记录数")
+    RecordStartNo: Optional[int] = Field(description="起始记录号")
+    BeginTime: Optional[VIIDDateTime] = Field(description="开始时间")
+    EndTime: Optional[VIIDDateTime] = Field(description="结束时间")
+    GeoRectangle: Optional[GeoRectangleType] = Field(description="检索的区域范围")
+    DeviceSelected: DeviceSelector = Field(description="检索的设备范围")
+    Sort: Optional[str] = Field(description="排序依据")
+    # TODO 这里的字段需要的内容很多，有需要的话再实现
+    Field: str = Field(description="其他结构化筛查条件")
+
+
+class ArchiveQuery(ArchiveQueryBase):
+    """GA/T 2350.5-2025 B.6 档案查询对象"""
+
+    PictureQueryCondition: Optional[PictureQueryConditionList] = Field(
+        description="以图像搜图查询"
+    )
 
 
 # 档案查询请求结构
-class ProfileQuerySchema(BaseModel):
-    ProfileQueryObject: ProfileQuery
+class ArchiveQuerySchema(BaseModel):
+    ArchiveQueryObject: ArchiveQuery
 
 
-# 档案查询结果
-class ProfilesQueryResult(BaseModel):
-    QueryID: str = Field(description="查询标识")
+class Archive(BaseModel):
+    """GA/T 2350.5-2025 B.3 人员档案基础信息对象"""
+
+    ArchiveID: str = Field(max_length=48, description="档案标识")
+    ArchiveLibraryID: Optional[str] = Field(max_length=48, description="所属目标档案库")
+    IDType: Optional[str] = Field(max_length=3, description="证件类型")
+    IDNumber: Optional[str] = Field(max_length=30, description="证件编号")
+    Name: Optional[str] = Field(max_length=50, description="姓名")
+    BirthTime: Optional[VIIDDateTime] = Field(description="出生日期")
+    CreateTime: VIIDDateTime = Field(description="档案创建时间")
+    UpdateTime: VIIDDateTime = Field(description="档案更新时间")
+    SubImageList: SubImageInfoList = Field(description="图片信息列表")
+
+
+# 人员档案基础信息对象列表
+class ArchiveList(BaseModel):
+    ArchiveObject: List[Archive]
+
+
+# 人员档案基础信息对象列表结构
+class ArchiveListSchema(BaseModel):
+    ArchiveListObject: ArchiveList
+
+
+# TODO
+class ArchiveQueryResultBase(BaseModel):
+    QueryID: str = Field(max_length=48, description="查询标识")
+    RecordStartNo: Optional[int] = Field(description="起始记录号")
+    PageRecordNum: int = Field(description="本页返回记录数")
     TotalNum: int = Field(description="符合条件记录总数")
-    # ProfileID
-    # IDNumber
-    # Name
-    # CreateTime
-    # SubImageList
-    # Type
-    # Data
-    # StoragePath
 
 
-class ProfilesQueryResultSchema(BaseModel):
-    ProfilesQueryResultObject: ProfilesQueryResult
+class ArchiveQueryResult(ArchiveQueryResultBase):
+    """GA/T 2350.5-2025 B.8 档案查询结果对象"""
+
+    ArchiveListObject: ArchiveList = Field(description="人员结果档案对象列表")
+
+
+# 档案查询结果对象结构
+class ArchiveQueryResultSchema(BaseModel):
+    ArchiveQueryResultObject: ArchiveQueryResult
+
+
+class ArchiveSubject(BaseModel):
+    """GA/T 2350.5-2025 B.5 档案明细信息对象"""
+
+    ArchiveID: str = Field(max_length=48, description="档案标识")
+    PersonIDList: Optional[List[str]] = Field(description="人员信息标识列表")
+    FaceIDList: Optional[List[str]] = Field(description="人脸信息标识列表")
+    PersonObjectList: Optional[PersonList] = Field(description="人员完整信息列表")
+    FaceObjectList: Optional[FaceList] = Field(description="人脸完整信息列表")
+
+
+class ArchiveSubjectQuery(ArchiveQueryBase):
+    """GA/T 2350.5-2025 B.9 档案明细查询对象"""
+
+    # TODO 这里需要限制profileid的长度
+    ArchiveIDList: List[str] = Field(description="档案标识列表")
+    ResultSubjectDetailDeclare: enums.ResultSubjectDetailDeclareEnum = Field(
+        default=enums.ResultSubjectDetailDeclareEnum.EXCLUDE_DETAIL,
+        description="返回结果轨迹详细信息约定",
+    )
+
+
+# 档案明细查询对象结构
+class ArchiveSubjectQuerySchema(BaseModel):
+    ArchiveSubjectQueryObject: ArchiveSubjectQuery
+
+
+class ArchiveSubjectQueryResult(ArchiveQueryResultBase):
+    """GA/T 2350.5-2025 B.10 档案明细查询结果对象"""
+
+    # TODO 需要等待profilesubject的对象构建完毕处理完
+    ArchiveSubjectInfoList: int = Field(description="结果档案明细对象列表")

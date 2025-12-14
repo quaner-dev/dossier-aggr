@@ -1,6 +1,7 @@
 # VIID 服务系统
 
-基于 FastAPI 的 VIID (Video Image Information Database) 协议实现，提供视频图像信息数据库的标准接口服务。
+基于 FastAPI 的 VIID (Video And Image Information Database) 协议实现，提供视频图像信息数据库的标准接口服务。
+VIAS（Video And Image Analysis For Public Security）
 
 ## 项目简介
 

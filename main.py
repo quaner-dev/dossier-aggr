@@ -27,6 +27,7 @@ security = HTTPDigest1400()
     path=constants.REGISTER_URL,
     response_model=schemas.ResponseStatus,
     dependencies=[Depends(security)],
+    description="GA/T 1400.4-2017 7.2.1 注册消息",
 )
 async def register() -> Any:
     return {
@@ -37,7 +38,11 @@ async def register() -> Any:
     }
 
 
-@app.post(path=constants.UNREGISTER_URL, response_model=schemas.ResponseStatus)
+@app.post(
+    path=constants.UNREGISTER_URL,
+    response_model=schemas.ResponseStatus,
+    description="GA/T 1400.4-2017 7.2.2 注册消息",
+)
 async def unregister():
     return {
         "RequestURL": constants.UNREGISTER_URL,
@@ -47,7 +52,11 @@ async def unregister():
     }
 
 
-@app.post(path=constants.KEEPALIVE_URL, response_model=schemas.ResponseStatus)
+@app.post(
+    path=constants.KEEPALIVE_URL,
+    response_model=schemas.ResponseStatus,
+    description="GA/T 1400.4-2017 7.2.3 保活消息",
+)
 async def keepalive():
     return {
         "RequestURL": constants.KEEPALIVE_URL,
@@ -58,7 +67,9 @@ async def keepalive():
 
 
 @app.post(
-    path=constants.SUBSCRIBES_URL, response_model=schemas.ResponseStatusListSchema
+    path=constants.SUBSCRIBES_URL,
+    response_model=schemas.ResponseStatusListSchema,
+    description="GA/T 1400.4-2017 7.2.20.1 批量订阅消息",
 )
 async def subscrbe(data: schemas.SubscribeListSchema):
     subscribes = data.SubscribeListObject.SubscribeObject
@@ -80,7 +91,11 @@ async def subscrbe(data: schemas.SubscribeListSchema):
     }
 
 
-@app.get(path=constants.APES_URL, response_model=schemas.APEListSchema)
+@app.get(
+    path=constants.APES_URL,
+    response_model=schemas.APEListSchema,
+    description="GA/T 1400.4-2017 7.2.5 采集设备的查询",
+)
 async def apes():
     apes = session.exec(select(models.APE)).all()
     return {"APEListObject": {"APEObject": apes}}
@@ -89,8 +104,9 @@ async def apes():
 @app.post(
     path=constants.SUBSCRIBE_NOTIFICATIONS_URL,
     response_model=schemas.ResponseStatus,
+    description="GA/T 1400.4-2017 7.2.21.1 通知消息",
 )
-async def subscribe_notifications():
+async def subscribe_notifications():  # TODO 这里的请求体需要处理好
     return {
         "RequestURL": constants.SUBSCRIBE_NOTIFICATIONS_URL,
         "StatusCode": "0",
@@ -99,7 +115,11 @@ async def subscribe_notifications():
     }
 
 
-@app.post(path=constants.FACES_URL, response_model=schemas.ResponseStatusListSchema)
+@app.post(
+    path=constants.FACES_URL,
+    response_model=schemas.ResponseStatusListSchema,
+    description="GA/T 1400.4-2017 7.2.12.1 人脸批量增加",
+)
 async def faces_create(data: schemas.FaceListObjectSchema):
     faces = data.FaceListObject.FaceObject
     for face in faces:
@@ -119,7 +139,11 @@ async def faces_create(data: schemas.FaceListObjectSchema):
     }
 
 
-@app.post(path=constants.PERSONS_URL, response_model=schemas.ResponseStatusListSchema)
+@app.post(
+    path=constants.PERSONS_URL,
+    response_model=schemas.ResponseStatusListSchema,
+    description="GA/T 1400.4-2017 7.2.11.1 人脸人员增加",
+)
 async def persons_create(data: schemas.PersonListObjectSchema):
     persons = data.PersonListObject.PersonObject
     for person in persons:
@@ -140,37 +164,41 @@ async def persons_create(data: schemas.PersonListObjectSchema):
 
 
 @app.get(
-    path=constants.PROFILES_QUERY_SYNC_URL,
-    response_model=schemas.ProfilesQueryResultSchema,
-    description="查询档案对象信息",
+    path=constants.ARCHIVES_QUERY_SYNC_URL,
+    response_model=schemas.ArchiveQueryResultSchema,
+    description="GA/T 2350.5-2025 A.9 人员档案查询接口",
 )
-async def profiles_query_sync_read(data: schemas.ProfileQuerySchema): ...
+async def archives_query_sync_read(data: schemas.ArchiveQuerySchema): ...
 
 
 @app.post(
-    path=constants.PROFILES_URL,
+    path=constants.ARCHIVES_URL,
     response_model=schemas.ResponseStatusListSchema,
-    description="增加档案对象",
+    description="GA/T 2350.5-2025 A.10 人员档案增加接口",
 )
-async def profile_create(data: schemas.ProfileListSchema): ...
+async def archives_create(data: schemas.ArchiveListSchema): ...
 
 
 @app.put(
-    path=constants.PROFILES_URL,
+    path=constants.ARCHIVES_URL,
     response_model=schemas.ResponseStatusListSchema,
-    description="更新档案对象",
+    description="GA/T 2350.5-2025 A.10 人员档案更新接口",
 )
-async def profile_update(data: schemas.ProfileListSchema): ...
+async def archives_update(data: schemas.ArchiveListSchema): ...
 
 
 # TODO 删除的入参是ProfileID，需要在入参中设定
 @app.delete(
-    path=constants.PROFILES_URL,
+    path=constants.ARCHIVES_URL,
     response_model=schemas.ResponseStatusListSchema,
-    description="删除档案对象",
+    description="GA/T 2350.5-2025 A.10 人员档案删除接口",
 )
-async def profile_delete(): ...
+async def archives_delete(): ...
 
 
-@app.post(path=constants.PROFILE_SUBJECT_QUERY_SYNC_URL, response_model="")
-async def profile_subject_query_sync_read(data: schemas.ProfileSubjectQuerySchema): ...
+@app.post(
+    path=constants.ARCHIVE_SUBJECT_QUERY_SYNC_URL,
+    response_model="",
+    description="GA/T 2350.5-2025 A.13 人员档案明细查询接口",
+)
+async def archive_subject_query_sync_read(data: schemas.ArchiveSubjectQuerySchema): ...

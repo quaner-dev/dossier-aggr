@@ -11,6 +11,7 @@ import tasks
 import models
 import brokers
 import schemas
+import settings
 import constants
 
 
@@ -18,7 +19,7 @@ taskiq_fastapi.init(brokers.broker, "main:app")
 
 
 app = FastAPI(lifespan=brokers.lifespan)
-engine = create_engine("sqlite:///db.sqlite3")
+engine = create_engine(settings.DATABASE_URL)
 session = Session(engine)
 security = auth.HTTPDigest1400()
 

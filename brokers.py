@@ -2,14 +2,20 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from taskiq import AsyncBroker, InMemoryBroker
 from taskiq_aio_pika import AioPikaBroker
 
 import settings
 
 
-broker = AioPikaBroker(
-    f"amqp://{settings.RABBITMQ_USERNAME}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_IP}:{settings.RABBITMQ_PORT}"
-)
+broker: AsyncBroker
+
+if settings.ENV == "dev":
+    broker = InMemoryBroker()
+else:
+    broker = AioPikaBroker(
+        f"amqp://{settings.RABBITMQ_USERNAME}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_IP}:{settings.RABBITMQ_PORT}"
+    )
 
 
 @asynccontextmanager

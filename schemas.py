@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Annotated
-from pydantic import BeforeValidator, PlainSerializer
+from typing import List, Annotated
 from datetime import datetime
+
+from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
+
 import enums
 import models
 import utils
@@ -40,15 +41,15 @@ class FeatureInfo(BaseModel):
 class SubImageInfo(BaseModel):
     """GA/T 1400.3-2017 C.6 图像子对象"""
 
-    ImageID: Optional[str] = Field(default=None, description="图像标识", max_length=41)
-    EventSort: Optional[int] = Field(default=None, description="事件分类")
-    DeviceID: Optional[str] = Field(default=None, description="设备编码", max_length=20)
-    StoragePath: Optional[str] = Field(
+    ImageID: str | None = Field(default=None, description="图像标识", max_length=41)
+    EventSort: int | None = Field(default=None, description="事件分类")
+    DeviceID: str | None = Field(default=None, description="设备编码", max_length=20)
+    StoragePath: str | None = Field(
         default=None, description="存储路径", max_length=256
     )
     Type: enums.ImageTypeEnum = Field(description="图片类型")
     FileFormat: enums.ImageFormatEnum = Field(description="图像文件格式")
-    ShotTime: Optional[str] = Field(default=None, description="拍摄时间")
+    ShotTime: str | None = Field(default=None, description="拍摄时间")
     Width: int = Field(description="水平像素值")
     Height: int = Field(description="垂直像素值")
     Data: str = Field(description="图像数据")
@@ -135,13 +136,11 @@ class SubscribeNotification(BaseModel):
     Title: str = Field(description="订阅标题", max_length=256)
     TriggerTime: str = Field(description="触发时间")
     InfoIDs: str = Field(description="信息标识", max_length=1024)
-    DeviceList: Optional[str] = Field(default=None, description="设备")
-    PersonObjectList: Optional[PersonList] = Field(default=None, description="人员信息")
-    FaceObjectList: Optional[FaceList] = Field(default=None, description="人脸信息")
-    DataClassTabObjectList: Optional[str] = Field(
-        default=None, description="数据分类标签"
-    )
-    ExecuteOperation: Optional[enums.ExecuteOperationEnum] = Field(
+    DeviceList: str | None = Field(default=None, description="设备")
+    PersonObjectList: PersonList | None = Field(default=None, description="人员信息")
+    FaceObjectList: FaceList | None = Field(default=None, description="人脸信息")
+    DataClassTabObjectList: str | None = Field(default=None, description="数据分类标签")
+    ExecuteOperation: enums.ExecuteOperationEnum | None = Field(
         default=None, description="更新项目"
     )
 
@@ -212,11 +211,11 @@ class Archive(BaseModel):
     """GA/T 2350.5-2025 B.3 人员档案基础信息对象"""
 
     ArchiveID: str = Field(max_length=48, description="档案标识")
-    ArchiveLibraryID: Optional[str] = Field(max_length=48, description="所属目标档案库")
-    IDType: Optional[str] = Field(max_length=3, description="证件类型")
-    IDNumber: Optional[str] = Field(max_length=30, description="证件编号")
-    Name: Optional[str] = Field(max_length=50, description="姓名")
-    BirthTime: Optional[VIIDDateTime] = Field(description="出生日期")
+    ArchiveLibraryID: str | None = Field(max_length=48, description="所属目标档案库")
+    IDType: str | None = Field(max_length=3, description="证件类型")
+    IDNumber: str | None = Field(max_length=30, description="证件编号")
+    Name: str | None = Field(max_length=50, description="姓名")
+    BirthTime: VIIDDateTime | None = Field(description="出生日期")
     CreateTime: VIIDDateTime = Field(description="档案创建时间")
     UpdateTime: VIIDDateTime = Field(description="档案更新时间")
     SubImageList: SubImageInfoList = Field(description="图片信息列表")
@@ -236,23 +235,23 @@ class ArchiveSubject(BaseModel):
     """GA/T 2350.5-2025 B.5 档案明细信息对象"""
 
     ArchiveID: str = Field(max_length=48, description="档案标识")
-    PersonIDList: Optional[List[str]] = Field(description="人员信息标识列表")
-    FaceIDList: Optional[List[str]] = Field(description="人脸信息标识列表")
-    PersonObjectList: Optional[PersonList] = Field(description="人员完整信息列表")
-    FaceObjectList: Optional[FaceList] = Field(description="人脸完整信息列表")
+    PersonIDList: List[str] | None = Field(description="人员信息标识列表")
+    FaceIDList: List[str] | None = Field(description="人脸信息标识列表")
+    PersonObjectList: PersonList | None = Field(description="人员完整信息列表")
+    FaceObjectList: FaceList | None = Field(description="人脸完整信息列表")
 
 
 # TODO
 class ArchiveQueryBase(BaseModel):
     QueryID: str = Field(max_length=48, description="查询标识")
-    MaxNumRecordReturn: Optional[int] = Field(description="最多返回记录数")
-    PageRecordNum: Optional[int] = Field(description="每页记录数")
-    RecordStartNo: Optional[int] = Field(description="起始记录号")
-    BeginTime: Optional[VIIDDateTime] = Field(description="开始时间")
-    EndTime: Optional[VIIDDateTime] = Field(description="结束时间")
-    GeoRectangle: Optional[GeoRectangleType] = Field(description="检索的区域范围")
+    MaxNumRecordReturn: int | None = Field(description="最多返回记录数")
+    PageRecordNum: int | None = Field(description="每页记录数")
+    RecordStartNo: int | None = Field(description="起始记录号")
+    BeginTime: VIIDDateTime | None = Field(description="开始时间")
+    EndTime: VIIDDateTime | None = Field(description="结束时间")
+    GeoRectangle: GeoRectangleType | None = Field(description="检索的区域范围")
     DeviceSelected: DeviceSelector = Field(description="检索的设备范围")
-    Sort: Optional[str] = Field(description="排序依据")
+    Sort: str | None = Field(description="排序依据")
     # TODO 这里的字段需要的内容很多，有需要的话再实现
     Field: str = Field(description="其他结构化筛查条件")
 
@@ -260,7 +259,7 @@ class ArchiveQueryBase(BaseModel):
 class ArchiveQuery(ArchiveQueryBase):
     """GA/T 2350.5-2025 B.6 档案查询对象"""
 
-    PictureQueryCondition: Optional[PictureQueryConditionList] = Field(
+    PictureQueryCondition: PictureQueryConditionList | None = Field(
         description="以图像搜图查询"
     )
 
@@ -273,7 +272,7 @@ class ArchiveQuerySchema(BaseModel):
 # TODO
 class ArchiveQueryResultBase(BaseModel):
     QueryID: str = Field(max_length=48, description="查询标识")
-    RecordStartNo: Optional[int] = Field(description="起始记录号")
+    RecordStartNo: int | None = Field(description="起始记录号")
     PageRecordNum: int = Field(description="本页返回记录数")
     TotalNum: int = Field(description="符合条件记录总数")
 

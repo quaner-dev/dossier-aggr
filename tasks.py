@@ -1,10 +1,10 @@
 import schemas
-from brokers import broker
+import brokers
 
 
-@broker.task
+@brokers.broker.task
 async def create_face(face: schemas.Face): ...
 
 
-@broker.task
+@brokers.broker.task
 async def create_person(person: schemas.Person): ...

@@ -1,10 +1,11 @@
 import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from taskiq_aio_pika import AioPikaBroker
 
 import settings
-from contextlib import asynccontextmanager
-from taskiq_aio_pika import AioPikaBroker
+
 
 broker = AioPikaBroker(
     f"amqp://{settings.RABBITMQ_USERNAME}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_IP}:{settings.RABBITMQ_PORT}"

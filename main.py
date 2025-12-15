@@ -6,12 +6,12 @@ from sqlmodel import Session, create_engine, select
 
 import taskiq_fastapi
 
+import auth
 import tasks
 import models
 import brokers
 import schemas
 import constants
-from auth import HTTPDigest1400
 
 
 taskiq_fastapi.init(brokers.broker, "main:app")
@@ -20,7 +20,7 @@ taskiq_fastapi.init(brokers.broker, "main:app")
 app = FastAPI(lifespan=brokers.lifespan)
 engine = create_engine("sqlite:///db.sqlite3")
 session = Session(engine)
-security = HTTPDigest1400()
+security = auth.HTTPDigest1400()
 
 
 @app.post(

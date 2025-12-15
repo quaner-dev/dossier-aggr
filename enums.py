@@ -1,7 +1,9 @@
-from enum import IntEnum, StrEnum
-from pydantic import BeforeValidator
 from typing import Annotated
 from datetime import datetime
+from enum import IntEnum, StrEnum
+
+from pydantic import BeforeValidator
+
 
 CompactDateTime = Annotated[
     datetime, BeforeValidator(lambda v: datetime.strptime(v, "%Y%m%d%H%M%S"))

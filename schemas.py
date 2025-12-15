@@ -18,27 +18,6 @@ class VIIDHeaders(BaseModel):
     content_type: str = "application/VIID+JSON"
 
 
-class ResponseStatus(BaseModel):
-    """GA/T 1400.3-2017 A.26 应答状态对象"""
-
-    RequestURL: str = Field(description="资源定位符")
-    StatusCode: str = Field(description="状态码")
-    StatusString: str = Field(description="状态描述")
-    Id: str = Field(description="资源ID")
-    LocalTime: VIIDDateTime = Field(description="日期时间")
-
-
-class ResponseStatusList(BaseModel):
-    """GA/T 1400.3-2017 C.25 应答状态对象列表"""
-
-    ResponseStatusObject: List[ResponseStatus]
-
-
-# 应答状态对象列表结构
-class ResponseStatusListSchema(BaseModel):
-    ResponseStatusListObject: ResponseStatusList
-
-
 class APEList(BaseModel):
     """GA/T 1400.3-2017 C.1 采集设备对象列表"""
 
@@ -48,18 +27,6 @@ class APEList(BaseModel):
 # 采集设备对象列表结构
 class APEListSchema(BaseModel):
     APEListObject: APEList
-
-
-# 订阅对象列表
-class SubscribeList(BaseModel):
-    """GA/T 1400.3-2017 C.19 订阅对象列表"""
-
-    SubscribeObject: List[models.SubscribeBase]
-
-
-# 订阅对象列表结构
-class SubscribeListSchema(BaseModel):
-    SubscribeListObject: SubscribeList
 
 
 class FeatureInfo(BaseModel):
@@ -94,6 +61,33 @@ class SubImageInfoList(BaseModel):
     SubImageInfoObject: List[SubImageInfo]
 
 
+class Person(BaseModel):
+    """GA/T 1400.3-2017 A.8 人员对象"""
+
+    PersonID: str = Field(description="人员标识", max_length=33)
+    InfoKind: enums.InfoKindEnum = Field(
+        default=enums.InfoKindEnum.Other, description="信息分类"
+    )
+    SourceID: str = Field(description="来源标识", max_length=41)
+    DeviceID: str = Field(description="设备编码", max_length=20)
+    LeftTopX: int = Field(description="左上角X坐标")
+    LeftTopY: int = Field(description="左上角Y坐标")
+    RightBtmX: int = Field(description="右下角X坐标")
+    RightBtmY: int = Field(description="右下角Y坐标")
+    SubImageList: List[SubImageInfo] = Field(description="图像列表")
+
+
+class PersonList(BaseModel):
+    """GA/T 1400.3-2017 C.8 人员对象列表"""
+
+    PersonObject: List[Person]
+
+
+# 人员对象列表结构
+class PersonListObjectSchema(BaseModel):
+    PersonListObject: PersonList
+
+
 class Face(BaseModel):
     """GA/T 1400.3-2017 A.9 人脸对象"""
 
@@ -121,31 +115,16 @@ class FaceListObjectSchema(BaseModel):
     FaceListObject: FaceList
 
 
-class Person(BaseModel):
-    """GA/T 1400.3-2017 A.8 人员对象"""
+# 订阅对象列表
+class SubscribeList(BaseModel):
+    """GA/T 1400.3-2017 C.19 订阅对象列表"""
 
-    PersonID: str = Field(description="人员标识", max_length=33)
-    InfoKind: enums.InfoKindEnum = Field(
-        default=enums.InfoKindEnum.Other, description="信息分类"
-    )
-    SourceID: str = Field(description="来源标识", max_length=41)
-    DeviceID: str = Field(description="设备编码", max_length=20)
-    LeftTopX: int = Field(description="左上角X坐标")
-    LeftTopY: int = Field(description="左上角Y坐标")
-    RightBtmX: int = Field(description="右下角X坐标")
-    RightBtmY: int = Field(description="右下角Y坐标")
-    SubImageList: List[SubImageInfo] = Field(description="图像列表")
+    SubscribeObject: List[models.SubscribeBase]
 
 
-class PersonList(BaseModel):
-    """GA/T 1400.3-2017 C.8 人员对象列表"""
-
-    PersonObject: List[Person]
-
-
-# 人员对象列表结构
-class PersonListObjectSchema(BaseModel):
-    PersonListObject: PersonList
+# 订阅对象列表结构
+class SubscribeListSchema(BaseModel):
+    SubscribeListObject: SubscribeList
 
 
 class SubscribeNotification(BaseModel):
@@ -178,17 +157,25 @@ class SubscribeNotificationListSchema(BaseModel):
     SubscribeNotificationListObject: SubscribeNotificationList
 
 
-class PictureQueryCondition(BaseModel):
-    """GA/T 2350.5-2025 B.7 以图像搜图查询条件对象"""
+class ResponseStatus(BaseModel):
+    """GA/T 1400.3-2017 A.26 应答状态对象"""
 
-    SubImage: SubImageInfo = Field(description="对象小图")
-    Threshold: float = Field(description="相似度分数线")
-    SubjectID: str = Field(description="数据标识", max_length=48)
+    RequestURL: str = Field(description="资源定位符")
+    StatusCode: str = Field(description="状态码")
+    StatusString: str = Field(description="状态描述")
+    Id: str = Field(description="资源ID")
+    LocalTime: VIIDDateTime = Field(description="日期时间")
 
 
-# 以图像搜图查询条件对象列表
-class PictureQueryConditionList(BaseModel):
-    PictureQueryConditionObject: List[PictureQueryCondition]
+class ResponseStatusList(BaseModel):
+    """GA/T 1400.3-2017 C.25 应答状态对象列表"""
+
+    ResponseStatusObject: List[ResponseStatus]
+
+
+# 应答状态对象列表结构
+class ResponseStatusListSchema(BaseModel):
+    ResponseStatusListObject: ResponseStatusList
 
 
 class GeoRectangleType(BaseModel):
@@ -206,6 +193,53 @@ class DeviceSelector(BaseModel):
     # TODO 这里是个List，但是里面的device其实是个str，不是具有字段类型的model，所以这里直接使用List str来处理
     DeviceIDs: List[str] = Field(description="设备ID列表")
     DevicePlaceCode: str = Field(max_length=6, description="设备行政区划")
+
+
+class PictureQueryCondition(BaseModel):
+    """GA/T 2350.5-2025 B.7 以图像搜图查询条件对象"""
+
+    SubImage: SubImageInfo = Field(description="对象小图")
+    Threshold: float = Field(description="相似度分数线")
+    SubjectID: str = Field(description="数据标识", max_length=48)
+
+
+# 以图像搜图查询条件对象列表
+class PictureQueryConditionList(BaseModel):
+    PictureQueryConditionObject: List[PictureQueryCondition]
+
+
+class Archive(BaseModel):
+    """GA/T 2350.5-2025 B.3 人员档案基础信息对象"""
+
+    ArchiveID: str = Field(max_length=48, description="档案标识")
+    ArchiveLibraryID: Optional[str] = Field(max_length=48, description="所属目标档案库")
+    IDType: Optional[str] = Field(max_length=3, description="证件类型")
+    IDNumber: Optional[str] = Field(max_length=30, description="证件编号")
+    Name: Optional[str] = Field(max_length=50, description="姓名")
+    BirthTime: Optional[VIIDDateTime] = Field(description="出生日期")
+    CreateTime: VIIDDateTime = Field(description="档案创建时间")
+    UpdateTime: VIIDDateTime = Field(description="档案更新时间")
+    SubImageList: SubImageInfoList = Field(description="图片信息列表")
+
+
+# 人员档案基础信息对象列表
+class ArchiveList(BaseModel):
+    ArchiveObject: List[Archive]
+
+
+# 人员档案基础信息对象列表结构
+class ArchiveListSchema(BaseModel):
+    ArchiveListObject: ArchiveList
+
+
+class ArchiveSubject(BaseModel):
+    """GA/T 2350.5-2025 B.5 档案明细信息对象"""
+
+    ArchiveID: str = Field(max_length=48, description="档案标识")
+    PersonIDList: Optional[List[str]] = Field(description="人员信息标识列表")
+    FaceIDList: Optional[List[str]] = Field(description="人脸信息标识列表")
+    PersonObjectList: Optional[PersonList] = Field(description="人员完整信息列表")
+    FaceObjectList: Optional[FaceList] = Field(description="人脸完整信息列表")
 
 
 # TODO
@@ -236,30 +270,6 @@ class ArchiveQuerySchema(BaseModel):
     ArchiveQueryObject: ArchiveQuery
 
 
-class Archive(BaseModel):
-    """GA/T 2350.5-2025 B.3 人员档案基础信息对象"""
-
-    ArchiveID: str = Field(max_length=48, description="档案标识")
-    ArchiveLibraryID: Optional[str] = Field(max_length=48, description="所属目标档案库")
-    IDType: Optional[str] = Field(max_length=3, description="证件类型")
-    IDNumber: Optional[str] = Field(max_length=30, description="证件编号")
-    Name: Optional[str] = Field(max_length=50, description="姓名")
-    BirthTime: Optional[VIIDDateTime] = Field(description="出生日期")
-    CreateTime: VIIDDateTime = Field(description="档案创建时间")
-    UpdateTime: VIIDDateTime = Field(description="档案更新时间")
-    SubImageList: SubImageInfoList = Field(description="图片信息列表")
-
-
-# 人员档案基础信息对象列表
-class ArchiveList(BaseModel):
-    ArchiveObject: List[Archive]
-
-
-# 人员档案基础信息对象列表结构
-class ArchiveListSchema(BaseModel):
-    ArchiveListObject: ArchiveList
-
-
 # TODO
 class ArchiveQueryResultBase(BaseModel):
     QueryID: str = Field(max_length=48, description="查询标识")
@@ -277,16 +287,6 @@ class ArchiveQueryResult(ArchiveQueryResultBase):
 # 档案查询结果对象结构
 class ArchiveQueryResultSchema(BaseModel):
     ArchiveQueryResultObject: ArchiveQueryResult
-
-
-class ArchiveSubject(BaseModel):
-    """GA/T 2350.5-2025 B.5 档案明细信息对象"""
-
-    ArchiveID: str = Field(max_length=48, description="档案标识")
-    PersonIDList: Optional[List[str]] = Field(description="人员信息标识列表")
-    FaceIDList: Optional[List[str]] = Field(description="人脸信息标识列表")
-    PersonObjectList: Optional[PersonList] = Field(description="人员完整信息列表")
-    FaceObjectList: Optional[FaceList] = Field(description="人脸完整信息列表")
 
 
 class ArchiveSubjectQuery(ArchiveQueryBase):

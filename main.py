@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 from datetime import datetime
 
@@ -31,12 +32,13 @@ security = auth.HTTPDigest1400()
     description="GA/T 1400.4-2017 7.2.1 注册消息",
 )
 async def register() -> Any:
-    return {
-        "RequestURL": constants.REGISTER_URL,
-        "StatusCode": "0",
-        "StatusString": "注册成功",
-        "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
-    }
+    response_status_object = schemas.ResponseStatus(
+        RequestURL=constants.REGISTER_URL,
+        StatusCode="0",
+        StatusString="注册成功",
+        LocalTime=datetime.now(),
+    )
+    return schemas.ResponseStatusList(ResponseStatusObject=response_status_object)
 
 
 @app.post(
@@ -45,12 +47,13 @@ async def register() -> Any:
     description="GA/T 1400.4-2017 7.2.2 注册消息",
 )
 async def unregister():
-    return {
-        "RequestURL": constants.UNREGISTER_URL,
-        "StatusCode": "0",
-        "StatusString": "注销成功",
-        "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
-    }
+    response_status_object = schemas.ResponseStatus(
+        RequestURL=constants.UNREGISTER_URL,
+        StatusCode="0",
+        StatusString="注销成功",
+        LocalTime=datetime.now(),
+    )
+    return schemas.ResponseStatusList(ResponseStatusObject=response_status_object)
 
 
 @app.post(
@@ -59,12 +62,79 @@ async def unregister():
     description="GA/T 1400.4-2017 7.2.3 保活消息",
 )
 async def keepalive():
-    return {
-        "RequestURL": constants.KEEPALIVE_URL,
-        "StatusCode": "0",
-        "StatusString": "保活成功",
-        "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
-    }
+    response_status_object = schemas.ResponseStatus(
+        RequestURL=constants.KEEPALIVE_URL,
+        StatusCode="0",
+        StatusString="保活成功",
+        LocalTime=datetime.now(),
+    )
+    return schemas.ResponseStatusList(ResponseStatusObject=response_status_object)
+
+
+@app.get(
+    path=constants.APES_URL,
+    response_model=schemas.APEListSchema,
+    description="GA/T 1400.4-2017 7.2.5 采集设备的查询",
+)
+async def apes():
+    apes = session.exec(select(models.APE)).all()
+    return schemas.APEListSchema(APEListObject=schemas.APEList(APEObject=list(apes)))
+
+
+@app.post(
+    path=constants.PERSONS_URL,
+    response_model=schemas.ResponseStatusListSchema,
+    description="GA/T 1400.4-2017 7.2.11.1 人脸人员增加",
+)
+async def persons_create(data: schemas.PersonListObjectSchema):
+    persons = data.PersonListObject.PersonObject
+    for person in persons:
+        await tasks.create_person.kiq(person)
+
+    response_status_objects = [
+        schemas.ResponseStatus(
+            RequestURL=constants.PERSONS_URL,
+            StatusCode="0",
+            StatusString="上传成功",
+            Id=person.PersonID,
+            LocalTime=datetime.now(),
+        )
+        for person in persons
+    ]
+
+    return schemas.ResponseStatusListSchema(
+        ResponseStatusListObject=schemas.ResponseStatusList(
+            ResponseStatusObject=response_status_objects
+        )
+    )
+
+
+@app.post(
+    path=constants.FACES_URL,
+    response_model=schemas.ResponseStatusListSchema,
+    description="GA/T 1400.4-2017 7.2.12.1 人脸批量增加",
+)
+async def faces_create(data: schemas.FaceListObjectSchema):
+    faces = data.FaceListObject.FaceObject
+    for face in faces:
+        await tasks.create_face.kiq(face)
+
+    response_status_objects = [
+        schemas.ResponseStatus(
+            RequestURL=constants.FACES_URL,
+            StatusCode="0",
+            StatusString="上传成功",
+            Id=face.FaceID,
+            LocalTime=datetime.now(),
+        )
+        for face in faces
+    ]
+
+    return schemas.ResponseStatusListSchema(
+        ResponseStatusListObject=schemas.ResponseStatusList(
+            ResponseStatusObject=response_status_objects
+        )
+    )
 
 
 @app.post(
@@ -78,90 +148,54 @@ async def subscrbe(data: schemas.SubscribeListSchema):
         session.add(models.Subscribe.model_validate(subscribe))
 
     session.commit()
-    return {
-        "ResponseStatusList": [
-            {
-                "RequestURL": constants.SUBSCRIBES_URL,
-                "StatusCode": "0",
-                "StatusString": "注册成功",
-                "Id": subscribe.SubscribeID,
-                "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
-            }
-            for subscribe in subscribes
-        ]
-    }
 
+    response_status_objects = [
+        schemas.ResponseStatus(
+            RequestURL=constants.SUBSCRIBES_URL,
+            StatusCode="0",
+            StatusString="订阅成功",
+            Id=subscribe.SubscribeID,
+            LocalTime=datetime.now(),
+        )
+        for subscribe in subscribes
+    ]
 
-@app.get(
-    path=constants.APES_URL,
-    response_model=schemas.APEListSchema,
-    description="GA/T 1400.4-2017 7.2.5 采集设备的查询",
-)
-async def apes():
-    apes = session.exec(select(models.APE)).all()
-    return {"APEListObject": {"APEObject": apes}}
+    return schemas.ResponseStatusListSchema(
+        ResponseStatusListObject=schemas.ResponseStatusList(
+            ResponseStatusObject=response_status_objects
+        )
+    )
 
 
 @app.post(
     path=constants.SUBSCRIBE_NOTIFICATIONS_URL,
-    response_model=schemas.ResponseStatus,
+    response_model=schemas.ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.21.1 通知消息",
 )
-async def subscribe_notifications():  # TODO 这里的请求体需要处理好
-    return {
-        "RequestURL": constants.SUBSCRIBE_NOTIFICATIONS_URL,
-        "StatusCode": "0",
-        "StatusString": "OK",
-        "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
-    }
+async def subscribe_notifications_create(
+    data: schemas.SubscribeNotificationListSchema,
+):
+    subscribe_notifications = (
+        data.SubscribeNotificationListObject.SubscribeNotificationObject
+    )
+    for subscribe_notification in subscribe_notifications:
+        logging.info("Subscribe Notification: %s", subscribe_notification)
 
-
-@app.post(
-    path=constants.FACES_URL,
-    response_model=schemas.ResponseStatusListSchema,
-    description="GA/T 1400.4-2017 7.2.12.1 人脸批量增加",
-)
-async def faces_create(data: schemas.FaceListObjectSchema):
-    faces = data.FaceListObject.FaceObject
-    for face in faces:
-        await tasks.create_face.kiq(face)
-
-    return {
-        "ResponseStatusList": [
-            {
-                "RequestURL": constants.FACES_URL,
-                "StatusCode": "0",
-                "StatusString": "注册成功",
-                "Id": face.FaceID,
-                "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
-            }
-            for face in faces
-        ]
-    }
-
-
-@app.post(
-    path=constants.PERSONS_URL,
-    response_model=schemas.ResponseStatusListSchema,
-    description="GA/T 1400.4-2017 7.2.11.1 人脸人员增加",
-)
-async def persons_create(data: schemas.PersonListObjectSchema):
-    persons = data.PersonListObject.PersonObject
-    for person in persons:
-        await tasks.create_person.kiq(person)
-
-    return {
-        "ResponseStatusList": [
-            {
-                "RequestURL": constants.PERSONS_URL,
-                "StatusCode": "0",
-                "StatusString": "注册成功",
-                "Id": person.PersonID,
-                "LocalTime": datetime.now().strftime("%Y%m%d%H%M%S"),
-            }
-            for person in persons
-        ]
-    }
+    response_status_objects = [
+        schemas.ResponseStatus(
+            RequestURL=constants.SUBSCRIBE_NOTIFICATIONS_URL,
+            StatusCode="0",
+            StatusString="通知成功",
+            Id=subscribe_notification.NotificationID,
+            LocalTime=datetime.now(),
+        )
+        for subscribe_notification in subscribe_notifications
+    ]
+    return schemas.ResponseStatusListSchema(
+        ResponseStatusListObject=schemas.ResponseStatusList(
+            ResponseStatusObject=response_status_objects
+        )
+    )
 
 
 @app.get(
@@ -177,7 +211,24 @@ async def archives_query_sync_read(data: schemas.ArchiveQuerySchema): ...
     response_model=schemas.ResponseStatusListSchema,
     description="GA/T 2350.5-2025 A.10 人员档案增加接口",
 )
-async def archives_create(data: schemas.ArchiveListSchema): ...
+async def archives_create(data: schemas.ArchiveListSchema):
+    archives = data.ArchiveListObject.ArchiveObject
+
+    response_status_objects = [
+        schemas.ResponseStatus(
+            RequestURL=constants.SUBSCRIBE_NOTIFICATIONS_URL,
+            StatusCode="0",
+            StatusString="档案创建成功",
+            Id=archive.ArchiveID,
+            LocalTime=datetime.now(),
+        )
+        for archive in archives
+    ]
+    return schemas.ResponseStatusListSchema(
+        ResponseStatusListObject=schemas.ResponseStatusList(
+            ResponseStatusObject=response_status_objects
+        )
+    )
 
 
 @app.put(
@@ -185,7 +236,24 @@ async def archives_create(data: schemas.ArchiveListSchema): ...
     response_model=schemas.ResponseStatusListSchema,
     description="GA/T 2350.5-2025 A.10 人员档案更新接口",
 )
-async def archives_update(data: schemas.ArchiveListSchema): ...
+async def archives_update(data: schemas.ArchiveListSchema):
+    archives = data.ArchiveListObject.ArchiveObject
+
+    response_status_objects = [
+        schemas.ResponseStatus(
+            RequestURL=constants.SUBSCRIBE_NOTIFICATIONS_URL,
+            StatusCode="0",
+            StatusString="档案更新成功",
+            Id=archive.ArchiveID,
+            LocalTime=datetime.now(),
+        )
+        for archive in archives
+    ]
+    return schemas.ResponseStatusListSchema(
+        ResponseStatusListObject=schemas.ResponseStatusList(
+            ResponseStatusObject=response_status_objects
+        )
+    )
 
 
 # TODO 删除的入参是ProfileID，需要在入参中设定

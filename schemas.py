@@ -1,4 +1,4 @@
-from typing import List, Annotated
+from typing import Union, List, Annotated
 from datetime import datetime
 
 from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
@@ -50,9 +50,9 @@ class SubImageInfo(BaseModel):
     Type: enums.ImageTypeEnum = Field(description="图片类型")
     FileFormat: enums.ImageFormatEnum = Field(description="图像文件格式")
     ShotTime: str | None = Field(default=None, description="拍摄时间")
-    Width: int = Field(description="水平像素值")
-    Height: int = Field(description="垂直像素值")
-    Data: str = Field(description="图像数据")
+    Width: int | None = Field(description="水平像素值")
+    Height: int | None = Field(description="垂直像素值")
+    Data: str | None = Field(description="图像数据")
     FeatureInfoObject: FeatureInfo = Field(description="特征值属性")
 
 
@@ -71,11 +71,11 @@ class Person(BaseModel):
     )
     SourceID: str = Field(description="来源标识", max_length=41)
     DeviceID: str = Field(description="设备编码", max_length=20)
-    LeftTopX: int = Field(description="左上角X坐标")
-    LeftTopY: int = Field(description="左上角Y坐标")
-    RightBtmX: int = Field(description="右下角X坐标")
-    RightBtmY: int = Field(description="右下角Y坐标")
-    SubImageList: List[SubImageInfo] = Field(description="图像列表")
+    LeftTopX: int | None = Field(description="左上角X坐标")
+    LeftTopY: int | None = Field(description="左上角Y坐标")
+    RightBtmX: int | None = Field(description="右下角X坐标")
+    RightBtmY: int | None = Field(description="右下角Y坐标")
+    SubImageList: List[SubImageInfo] | None = Field(description="图像列表")
 
 
 class PersonList(BaseModel):
@@ -98,11 +98,11 @@ class Face(BaseModel):
     )
     SourceID: str = Field(description="来源标识", max_length=41)
     DeviceID: str = Field(description="设备编码", max_length=20)
-    LeftTopX: int = Field(description="左上角X坐标")
-    LeftTopY: int = Field(description="左上角Y坐标")
-    RightBtmX: int = Field(description="右下角X坐标")
-    RightBtmY: int = Field(description="右下角Y坐标")
-    SubImageList: List[SubImageInfo] = Field(description="图像列表")
+    LeftTopX: int | None = Field(description="左上角X坐标")
+    LeftTopY: int | None = Field(description="左上角Y坐标")
+    RightBtmX: int | None = Field(description="右下角X坐标")
+    RightBtmY: int | None = Field(description="右下角Y坐标")
+    SubImageList: List[SubImageInfo] | None = Field(description="图像列表")
 
 
 class FaceList(BaseModel):
@@ -162,19 +162,27 @@ class ResponseStatus(BaseModel):
     RequestURL: str = Field(description="资源定位符")
     StatusCode: str = Field(description="状态码")
     StatusString: str = Field(description="状态描述")
-    Id: str = Field(description="资源ID")
-    LocalTime: VIIDDateTime = Field(description="日期时间")
+    Id: str | None = Field(default=None, description="资源ID")
+    LocalTime: VIIDDateTime | None = Field(description="日期时间")
 
 
 class ResponseStatusList(BaseModel):
     """GA/T 1400.3-2017 C.25 应答状态对象列表"""
 
-    ResponseStatusObject: List[ResponseStatus]
+    ResponseStatusObject: Union[ResponseStatus, List[ResponseStatus]]
 
 
 # 应答状态对象列表结构
 class ResponseStatusListSchema(BaseModel):
     ResponseStatusListObject: ResponseStatusList
+
+
+class PictureQueryCondition(BaseModel):
+    """GA/T 2350.5-2025 B.7 以图像搜图查询条件对象"""
+
+    SubImage: SubImageInfo | None = Field(description="对象小图")
+    Threshold: float | None = Field(description="相似度分数线")
+    SubjectID: str | None = Field(description="数据标识", max_length=48)
 
 
 class GeoRectangleType(BaseModel):
@@ -190,16 +198,8 @@ class DeviceSelector(BaseModel):
     """GA/T 2350.5-2025 B.13 检索设备范围对象"""
 
     # TODO 这里是个List，但是里面的device其实是个str，不是具有字段类型的model，所以这里直接使用List str来处理
-    DeviceIDs: List[str] = Field(description="设备ID列表")
-    DevicePlaceCode: str = Field(max_length=6, description="设备行政区划")
-
-
-class PictureQueryCondition(BaseModel):
-    """GA/T 2350.5-2025 B.7 以图像搜图查询条件对象"""
-
-    SubImage: SubImageInfo = Field(description="对象小图")
-    Threshold: float = Field(description="相似度分数线")
-    SubjectID: str = Field(description="数据标识", max_length=48)
+    DeviceIDs: List[str] | None = Field(description="设备ID列表")
+    DevicePlaceCode: str | None = Field(max_length=6, description="设备行政区划")
 
 
 # 以图像搜图查询条件对象列表
@@ -241,6 +241,16 @@ class ArchiveSubject(BaseModel):
     FaceObjectList: FaceList | None = Field(description="人脸完整信息列表")
 
 
+# 档案明细列表
+class ArchiveSubjectList(BaseModel):
+    ArchiveSubjectObject: List[ArchiveSubject]
+
+
+# 档案明细列表结构
+class ArchiveSubjectSchema(BaseModel):
+    ArchiveSubjectListObject: ArchiveSubjectList
+
+
 # TODO
 class ArchiveQueryBase(BaseModel):
     QueryID: str = Field(max_length=48, description="查询标识")
@@ -252,8 +262,6 @@ class ArchiveQueryBase(BaseModel):
     GeoRectangle: GeoRectangleType | None = Field(description="检索的区域范围")
     DeviceSelected: DeviceSelector = Field(description="检索的设备范围")
     Sort: str | None = Field(description="排序依据")
-    # TODO 这里的字段需要的内容很多，有需要的话再实现
-    Field: str = Field(description="其他结构化筛查条件")
 
 
 class ArchiveQuery(ArchiveQueryBase):
@@ -293,7 +301,7 @@ class ArchiveSubjectQuery(ArchiveQueryBase):
 
     # TODO 这里需要限制profileid的长度
     ArchiveIDList: List[str] = Field(description="档案标识列表")
-    ResultSubjectDetailDeclare: enums.ResultSubjectDetailDeclareEnum = Field(
+    ResultSubjectDetailDeclare: enums.ResultSubjectDetailDeclareEnum | None = Field(
         default=enums.ResultSubjectDetailDeclareEnum.EXCLUDE_DETAIL,
         description="返回结果轨迹详细信息约定",
     )
@@ -307,5 +315,6 @@ class ArchiveSubjectQuerySchema(BaseModel):
 class ArchiveSubjectQueryResult(ArchiveQueryResultBase):
     """GA/T 2350.5-2025 B.10 档案明细查询结果对象"""
 
-    # TODO 需要等待profilesubject的对象构建完毕处理完
-    ArchiveSubjectInfoList: int = Field(description="结果档案明细对象列表")
+    ArchiveSubjectInfoList: ArchiveSubjectSchema = Field(
+        description="结果档案明细对象列表"
+    )

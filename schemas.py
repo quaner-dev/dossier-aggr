@@ -15,10 +15,6 @@ VIIDDateTime = Annotated[
 ]
 
 
-class VIIDHeaders(BaseModel):
-    content_type: str = "application/VIID+JSON"
-
-
 class APEList(BaseModel):
     """GA/T 1400.3-2017 C.1 采集设备对象列表"""
 

@@ -1,7 +1,12 @@
 fastapi[standard]
-sqlmodel
 uvicorn
 pytest
+
+# DataBase
+sqlmodel
+alembic
+asyncpg
+psycopg2-binary
 
 # Taskiq
 taskiq

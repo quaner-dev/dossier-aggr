@@ -8,12 +8,14 @@ from sqlmodel import Session, create_engine, select
 import taskiq_fastapi
 
 import auth
+import enums
 import tasks
 import models
 import brokers
 import schemas
 import settings
 import constants
+import exceptions
 
 
 taskiq_fastapi.init(brokers.broker, "main:app")
@@ -31,7 +33,18 @@ security = auth.HTTPDigest1400()
     dependencies=[Depends(security)],
     description="GA/T 1400.4-2017 7.2.1 注册消息",
 )
-async def register() -> Any:
+async def register(data: schemas.RegisterSchema) -> Any:
+    device_id = data.RegisterObject.DeviceID
+    aps = session.get(models.APS, device_id)
+    if not aps:
+        raise exceptions.DataNotFoundError
+
+    if not aps.IsOnline == 1:
+        aps.IsOnline = enums.StatusTypeEnum.Online
+        session.add(aps)
+        session.commit()
+
+    # TODO 这里是硬编码，需要后期将输出的方法整体迁移到固定位置，防止反复描述
     response_status_object = schemas.ResponseStatus(
         RequestURL=constants.REGISTER_URL,
         StatusCode="0",
@@ -44,13 +57,23 @@ async def register() -> Any:
 @app.post(
     path=constants.UNREGISTER_URL,
     response_model=schemas.ResponseStatus,
-    description="GA/T 1400.4-2017 7.2.2 注册消息",
+    description="GA/T 1400.4-2017 7.2.2 注销消息",
 )
-async def unregister():
+async def unregister(data: schemas.UnRegisterSchema):
+    device_id = data.UnRegisterObject.DeviceID
+    aps = session.get(models.APS, device_id)
+    if not aps:
+        raise exceptions.DataNotFoundError
+
+    if not aps.IsOnline == 1:
+        aps.IsOnline = enums.StatusTypeEnum.Offline
+        session.add(aps)
+        session.commit()
+
     response_status_object = schemas.ResponseStatus(
         RequestURL=constants.UNREGISTER_URL,
         StatusCode="0",
-        StatusString="注销成功",
+        StatusString="注册成功",
         LocalTime=datetime.now(),
     )
     return schemas.ResponseStatusList(ResponseStatusObject=response_status_object)
@@ -61,7 +84,17 @@ async def unregister():
     response_model=schemas.ResponseStatus,
     description="GA/T 1400.4-2017 7.2.3 保活消息",
 )
-async def keepalive():
+async def keepalive(data: schemas.KeepaliveSchema):
+    device_id = data.KeepaliveObject.DeviceID
+    aps = session.get(models.APS, device_id)
+    if not aps:
+        raise exceptions.DataNotFoundError
+
+    if not aps.IsOnline == 1:
+        aps.IsOnline = enums.StatusTypeEnum.Online
+        session.add(aps)
+        session.commit()
+
     response_status_object = schemas.ResponseStatus(
         RequestURL=constants.KEEPALIVE_URL,
         StatusCode="0",
@@ -77,7 +110,8 @@ async def keepalive():
     description="GA/T 1400.4-2017 7.2.5 采集设备的查询",
 )
 async def apes():
-    apes = session.exec(select(models.APE)).all()
+    statement = select(models.APE)
+    apes = session.exec(statement)
     return schemas.APEListSchema(APEListObject=schemas.APEList(APEObject=list(apes)))
 
 
@@ -179,7 +213,7 @@ async def subscribe_notifications_create(
         data.SubscribeNotificationListObject.SubscribeNotificationObject
     )
     for subscribe_notification in subscribe_notifications:
-        logging.info("Subscribe Notification: %s", subscribe_notification)
+        await tasks.create_subscribe_notification.kiq(subscribe_notification)
 
     response_status_objects = [
         schemas.ResponseStatus(
@@ -203,7 +237,14 @@ async def subscribe_notifications_create(
     response_model=schemas.ArchiveQueryResultSchema,
     description="GA/T 2350.5-2025 A.9 人员档案查询接口",
 )
-async def archives_query_sync_read(data: schemas.ArchiveQuerySchema): ...
+async def archives_query_sync_read(data: schemas.ArchiveQuerySchema):
+    archive_query = data.ArchiveQueryObject
+    # TODO 这里的检索条件需要思考下
+    statement = select(models.APE).where(**archive_query.model_dump())
+    results = session.exec(statement)
+    for result in results:
+        logging.info(result)
+    # TODO 这里没有响应，需要整合下响应内容
 
 
 @app.post(

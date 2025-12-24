@@ -1,18 +1,9 @@
-from typing import Union, List, Annotated
-from datetime import datetime
+from typing import Union, List
 
-from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
+from pydantic import BaseModel, Field
 
 import enums
 import models
-import utils
-
-
-VIIDDateTime = Annotated[
-    datetime,
-    BeforeValidator(utils.parse_datetime),
-    PlainSerializer(utils.serialize_datetime),
-]
 
 
 class APEList(BaseModel):
@@ -159,7 +150,7 @@ class ResponseStatus(BaseModel):
     StatusCode: str = Field(description="状态码")
     StatusString: str = Field(description="状态描述")
     Id: str | None = Field(default=None, description="资源ID")
-    LocalTime: VIIDDateTime | None = Field(description="日期时间")
+    LocalTime: enums.VIIDDateTime | None = Field(description="日期时间")
 
 
 class ResponseStatusList(BaseModel):
@@ -171,6 +162,39 @@ class ResponseStatusList(BaseModel):
 # 应答状态对象列表结构
 class ResponseStatusListSchema(BaseModel):
     ResponseStatusListObject: ResponseStatusList
+
+
+class Register(BaseModel):
+    """GA/T 1400.3-2017 C.26 注册对象"""
+
+    DeviceID: str = Field(description="设备编码", max_length=20)
+
+
+# 注册对象结构
+class RegisterSchema(BaseModel):
+    RegisterObject: Register
+
+
+class Keepalive(BaseModel):
+    """GA/T 1400.3-2017 C.27 保活对象"""
+
+    DeviceID: str = Field(description="设备编码", max_length=20)
+
+
+# 保活对象结构
+class KeepaliveSchema(BaseModel):
+    KeepaliveObject: Keepalive
+
+
+class UnRegister(BaseModel):
+    """GA/T 1400.3-2017 C.28 注销对象"""
+
+    DeviceID: str = Field(description="设备编码", max_length=20)
+
+
+# 注销对象结构
+class UnRegisterSchema(BaseModel):
+    UnRegisterObject: UnRegister
 
 
 class PictureQueryCondition(BaseModel):
@@ -211,9 +235,9 @@ class Archive(BaseModel):
     IDType: str | None = Field(max_length=3, description="证件类型")
     IDNumber: str | None = Field(max_length=30, description="证件编号")
     Name: str | None = Field(max_length=50, description="姓名")
-    BirthTime: VIIDDateTime | None = Field(description="出生日期")
-    CreateTime: VIIDDateTime = Field(description="档案创建时间")
-    UpdateTime: VIIDDateTime = Field(description="档案更新时间")
+    BirthTime: enums.VIIDDateTime | None = Field(description="出生日期")
+    CreateTime: enums.VIIDDateTime = Field(description="档案创建时间")
+    UpdateTime: enums.VIIDDateTime = Field(description="档案更新时间")
     SubImageList: SubImageInfoList = Field(description="图片信息列表")
 
 
@@ -253,8 +277,8 @@ class ArchiveQueryBase(BaseModel):
     MaxNumRecordReturn: int | None = Field(description="最多返回记录数")
     PageRecordNum: int | None = Field(description="每页记录数")
     RecordStartNo: int | None = Field(description="起始记录号")
-    BeginTime: VIIDDateTime | None = Field(description="开始时间")
-    EndTime: VIIDDateTime | None = Field(description="结束时间")
+    BeginTime: enums.VIIDDateTime | None = Field(description="开始时间")
+    EndTime: enums.VIIDDateTime | None = Field(description="结束时间")
     GeoRectangle: GeoRectangleType | None = Field(description="检索的区域范围")
     DeviceSelected: DeviceSelector = Field(description="检索的设备范围")
     Sort: str | None = Field(description="排序依据")

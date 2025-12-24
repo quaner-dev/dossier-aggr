@@ -8,6 +8,15 @@ import utils
 import enums
 
 
+class APS(SQLModel, table=True):
+    ApsID: str = Field(description="设备ID", max_length=20, primary_key=True)
+    Name: str = Field(description="名称", max_length=100)
+    IPAddr: str = Field(description="IP地址", max_length=30)
+    IPV6Addr: str | None = Field(default=None, description="IPv6地址", max_length=64)
+    Port: int = Field(description="端口号")
+    IsOnline: enums.StatusTypeEnum = Field(description="是否在线")
+
+
 class APE(SQLModel, table=True):
     """GA/T 1400.3-2017 A.1 采集设备对象"""
 

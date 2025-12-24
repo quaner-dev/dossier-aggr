@@ -2,11 +2,19 @@ from typing import Annotated
 from datetime import datetime
 from enum import IntEnum, StrEnum
 
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, PlainSerializer
+
+import utils
 
 
 CompactDateTime = Annotated[
     datetime, BeforeValidator(lambda v: datetime.strptime(v, "%Y%m%d%H%M%S"))
+]
+
+VIIDDateTime = Annotated[
+    datetime,
+    BeforeValidator(utils.parse_datetime),
+    PlainSerializer(utils.serialize_datetime),
 ]
 
 

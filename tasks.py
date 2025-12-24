@@ -8,3 +8,9 @@ async def create_face(face: schemas.Face): ...
 
 @brokers.broker.task
 async def create_person(person: schemas.Person): ...
+
+
+@brokers.broker.task
+async def create_subscribe_notification(
+    subscribe_notification: schemas.SubscribeNotification,
+): ...

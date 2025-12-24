@@ -12,3 +12,14 @@ VIID 服务系统实现了公安部视频图像信息数据库（VIID）协议�
 - **任务队列**: Taskiq + RabbitMQ
 - **数据库**: SQLite
 - **部署**: Kubernetes + Docker
+
+## 迁移数据库
+
+alembic revision --autogenerate -m "xxx"
+alembic upgrade head
+
+## 启动服务
+
+uvicorn main:app --host 0.0.0.0 -p 8000
+
+taskiq worker broker:broker

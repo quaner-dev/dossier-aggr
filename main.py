@@ -3,7 +3,9 @@ from typing import Any
 from datetime import datetime
 
 from fastapi import FastAPI, Depends
-from sqlmodel import Session, create_engine, select
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 import taskiq_fastapi
 
@@ -17,13 +19,17 @@ import settings
 import constants
 import exceptions
 
+# TODO
+# 1. 将K8S中的内容迁移到helm创建的dossier-aggr中
+# 2. 需要将接收到的信息，通过前端展示出来
+# 3. 考量下imageid、sourceid是否不能重复，在数据库设计中是否需要加入uniq
 
 taskiq_fastapi.init(brokers.broker, "main:app")
 
 
 app = FastAPI(lifespan=brokers.lifespan)
-engine = create_engine(settings.DATABASE_URL)
-session = Session(engine)
+engine = create_async_engine(settings.DATABASE_URL)
+session = AsyncSession(engine)
 security = auth.HTTPDigest1400()
 
 
@@ -35,14 +41,14 @@ security = auth.HTTPDigest1400()
 )
 async def register(data: schemas.RegisterSchema) -> Any:
     device_id = data.RegisterObject.DeviceID
-    aps = session.get(models.APS, device_id)
+    aps = await session.get(models.APS, device_id)
     if not aps:
         raise exceptions.DataNotFoundError
 
     if not aps.IsOnline == 1:
         aps.IsOnline = enums.StatusTypeEnum.Online
         session.add(aps)
-        session.commit()
+        await session.commit()
 
     # TODO 这里是硬编码，需要后期将输出的方法整体迁移到固定位置，防止反复描述
     response_status_object = schemas.ResponseStatus(
@@ -61,14 +67,14 @@ async def register(data: schemas.RegisterSchema) -> Any:
 )
 async def unregister(data: schemas.UnRegisterSchema):
     device_id = data.UnRegisterObject.DeviceID
-    aps = session.get(models.APS, device_id)
+    aps = await session.get(models.APS, device_id)
     if not aps:
         raise exceptions.DataNotFoundError
 
     if not aps.IsOnline == 1:
         aps.IsOnline = enums.StatusTypeEnum.Offline
         session.add(aps)
-        session.commit()
+        await session.commit()
 
     response_status_object = schemas.ResponseStatus(
         RequestURL=constants.UNREGISTER_URL,
@@ -86,14 +92,14 @@ async def unregister(data: schemas.UnRegisterSchema):
 )
 async def keepalive(data: schemas.KeepaliveSchema):
     device_id = data.KeepaliveObject.DeviceID
-    aps = session.get(models.APS, device_id)
+    aps = await session.get(models.APS, device_id)
     if not aps:
         raise exceptions.DataNotFoundError
 
     if not aps.IsOnline == 1:
         aps.IsOnline = enums.StatusTypeEnum.Online
         session.add(aps)
-        session.commit()
+        await session.commit()
 
     response_status_object = schemas.ResponseStatus(
         RequestURL=constants.KEEPALIVE_URL,
@@ -110,8 +116,9 @@ async def keepalive(data: schemas.KeepaliveSchema):
     description="GA/T 1400.4-2017 7.2.5 采集设备的查询",
 )
 async def apes():
+    # TODO 后续增加关于单个设备检索的逻辑
     statement = select(models.APE)
-    apes = session.exec(statement)
+    apes = (await session.exec(statement)).all()
     return schemas.APEListSchema(APEListObject=schemas.APEList(APEObject=list(apes)))
 
 
@@ -121,6 +128,7 @@ async def apes():
     description="GA/T 1400.4-2017 7.2.11.1 人脸人员增加",
 )
 async def persons_create(data: schemas.PersonListObjectSchema):
+    # TODO 先编写face模块的逻辑，再编写face的逻辑就可以了
     persons = data.PersonListObject.PersonObject
     for person in persons:
         await tasks.create_person.kiq(person)
@@ -181,7 +189,7 @@ async def subscrbe(data: schemas.SubscribeListSchema):
     for subscribe in subscribes:
         session.add(models.Subscribe.model_validate(subscribe))
 
-    session.commit()
+    await session.commit()
 
     response_status_objects = [
         schemas.ResponseStatus(
@@ -241,7 +249,7 @@ async def archives_query_sync_read(data: schemas.ArchiveQuerySchema):
     archive_query = data.ArchiveQueryObject
     # TODO 这里的检索条件需要思考下
     statement = select(models.APE).where(**archive_query.model_dump())
-    results = session.exec(statement)
+    results = await session.exec(statement)
     for result in results:
         logging.info(result)
     # TODO 这里没有响应，需要整合下响应内容

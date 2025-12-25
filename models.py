@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import datetime
 
-from sqlmodel import Field, SQLModel  # type: ignore
+from sqlmodel import Field, SQLModel, Relationship  # type: ignore
 from pydantic import BeforeValidator, PlainSerializer
 
 import utils
@@ -9,7 +9,11 @@ import enums
 
 
 class APS(SQLModel, table=True):
-    ApsID: str = Field(description="设备ID", max_length=20, primary_key=True)
+    # TODO 增加注释
+
+    id: int | None = Field(default=None, primary_key=True)
+
+    ApsID: str = Field(description="设备ID", max_length=20)
     Name: str = Field(description="名称", max_length=100)
     IPAddr: str = Field(description="IP地址", max_length=30)
     IPV6Addr: str | None = Field(default=None, description="IPv6地址", max_length=64)
@@ -20,7 +24,9 @@ class APS(SQLModel, table=True):
 class APE(SQLModel, table=True):
     """GA/T 1400.3-2017 A.1 采集设备对象"""
 
-    ApeID: str = Field(description="设备ID", max_length=20, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
+
+    ApeID: str = Field(description="设备ID", max_length=20)
     Name: str = Field(description="名称", max_length=100)
     Model: str = Field(description="型号", max_length=100)
     IPAddr: str = Field(description="IP地址", max_length=30)
@@ -52,8 +58,12 @@ class APE(SQLModel, table=True):
     )
 
 
-class SubscribeBase(SQLModel):
-    SubscribeID: str = Field(description="订阅标识符", max_length=33, primary_key=True)
+class Subscribe(SQLModel, table=True):
+    """GA/T 1400.3-2017 A.19 订阅对象"""
+
+    id: int | None = Field(default=None, primary_key=True)
+
+    SubscribeID: str = Field(description="订阅标识符", max_length=33)
     Title: str = Field(description="订阅标题", max_length=256)
     SubscribeDetail: str = Field(description="订阅类别")
     ResourceClass: enums.ResourceClassEnum = Field(description="订阅资源类别")
@@ -96,5 +106,51 @@ class SubscribeBase(SQLModel):
     )
 
 
-class Subscribe(SubscribeBase, table=True):
-    """GA/T 1400.3-2017 A.19 订阅对象"""
+class FeatureInfo(SQLModel, table=True):
+    """视图库对接技术要求 A.7 特征值对象"""
+
+    id: int | None = Field(default=None, primary_key=True)
+    sub_image_info_id: str | None = Field(
+        default=None, foreign_key="subimageinfo.ImageID"
+    )
+
+    Vendor: str = Field(description="厂商", max_length=100)
+    AlgorithmVersion: str = Field(description="算法版本", max_length=100)
+    FeatureData: str = Field(description="特征值数据")
+
+
+class SubImageInfo(SQLModel, table=True):
+    """GA/T 1400.3-2017 C.6 图像子对象"""
+
+    id: int | None = Field(default=None, primary_key=True)
+    archive_id: str | None = Field(default=None, foreign_key="archive.ArchiveID")
+
+    ImageID: str | None = Field(
+        default=None, description="图像标识", max_length=41, unique=True
+    )
+    EventSort: int | None = Field(default=None, description="事件分类")
+    DeviceID: str | None = Field(default=None, description="设备编码", max_length=20)
+    StoragePath: str | None = Field(
+        default=None, description="存储路径", max_length=256
+    )
+    Type: enums.ImageTypeEnum = Field(description="图片类型")
+    FileFormat: enums.ImageFormatEnum = Field(description="图像文件格式")
+    ShotTime: str | None = Field(default=None, description="拍摄时间")
+    Width: int | None = Field(description="水平像素值")
+    Height: int | None = Field(description="垂直像素值")
+    Data: str | None = Field(description="图像数据")
+
+
+class Archive(SQLModel, table=True):
+    """GA/T 2350.5-2025 B.3 人员档案基础信息对象"""
+
+    id: int | None = Field(default=None, primary_key=True)
+
+    ArchiveID: str = Field(max_length=48, description="档案标识", unique=True)
+    ArchiveLibraryID: str | None = Field(max_length=48, description="所属目标档案库")
+    IDType: str | None = Field(max_length=3, description="证件类型")
+    IDNumber: str | None = Field(max_length=30, description="证件编号")
+    Name: str | None = Field(max_length=50, description="姓名")
+    BirthTime: enums.VIIDDateTime | None = Field(description="出生日期")
+    CreateTime: enums.VIIDDateTime = Field(description="档案创建时间")
+    UpdateTime: enums.VIIDDateTime = Field(description="档案更新时间")

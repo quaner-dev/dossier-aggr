@@ -41,7 +41,8 @@ security = auth.HTTPDigest1400()
 )
 async def register(data: schemas.RegisterSchema) -> Any:
     device_id = data.RegisterObject.DeviceID
-    aps = await session.get(models.APS, device_id)
+    statement = select(models.APS).where(models.APS.ApsID == device_id)
+    aps = (await session.exec(statement)).first()
     if not aps:
         raise exceptions.DataNotFoundError
 
@@ -67,7 +68,8 @@ async def register(data: schemas.RegisterSchema) -> Any:
 )
 async def unregister(data: schemas.UnRegisterSchema):
     device_id = data.UnRegisterObject.DeviceID
-    aps = await session.get(models.APS, device_id)
+    statement = select(models.APS).where(models.APS.ApsID == device_id)
+    aps = (await session.exec(statement)).first()
     if not aps:
         raise exceptions.DataNotFoundError
 
@@ -92,7 +94,8 @@ async def unregister(data: schemas.UnRegisterSchema):
 )
 async def keepalive(data: schemas.KeepaliveSchema):
     device_id = data.KeepaliveObject.DeviceID
-    aps = await session.get(models.APS, device_id)
+    statement = select(models.APS).where(models.APS.ApsID == device_id)
+    aps = (await session.exec(statement)).first()
     if not aps:
         raise exceptions.DataNotFoundError
 

@@ -1,9 +1,11 @@
+import logging
 import schemas
 import brokers
 
 
 @brokers.broker.task
-async def create_face(face: schemas.Face): ...
+async def create_face(face: schemas.Face):
+    logging.info(face)
 
 
 @brokers.broker.task

@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 6d3c65f0d052
+Revision ID: 06d755b039eb
 Revises: 
-Create Date: 2025-12-25 16:36:26.971656
+Create Date: 2025-12-26 02:02:21.595771
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6d3c65f0d052'
+revision: str = '06d755b039eb'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -44,7 +44,8 @@ def upgrade() -> None:
     sa.Column('Password', sqlmodel.sql.sqltypes.AutoString(length=32), nullable=True),
     sa.Column('FunctionType', sqlmodel.sql.sqltypes.AutoString(length=30), nullable=False),
     sa.Column('PositionType', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('ApeID')
     )
     op.create_table('aps',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -54,7 +55,8 @@ def upgrade() -> None:
     sa.Column('IPV6Addr', sqlmodel.sql.sqltypes.AutoString(length=64), nullable=True),
     sa.Column('Port', sa.Integer(), nullable=False),
     sa.Column('IsOnline', sa.Enum('Online', 'Offline', 'Other', name='statustypeenum'), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('ApsID')
     )
     op.create_table('archive',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -68,6 +70,47 @@ def upgrade() -> None:
     sa.Column('UpdateTime', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('ArchiveID')
+    )
+    op.create_table('face',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('FaceID', sqlmodel.sql.sqltypes.AutoString(length=33), nullable=False),
+    sa.Column('InfoKind', sa.Enum('Other', 'AutoCollect', 'ManualCollect', name='infokindenum'), nullable=False),
+    sa.Column('SourceID', sqlmodel.sql.sqltypes.AutoString(length=41), nullable=False),
+    sa.Column('DeviceID', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+    sa.Column('LeftTopX', sa.Integer(), nullable=True),
+    sa.Column('LeftTopY', sa.Integer(), nullable=True),
+    sa.Column('RightBtmX', sa.Integer(), nullable=True),
+    sa.Column('RightBtmY', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('FaceID')
+    )
+    op.create_table('person',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('PersonID', sqlmodel.sql.sqltypes.AutoString(length=33), nullable=False),
+    sa.Column('InfoKind', sa.Enum('Other', 'AutoCollect', 'ManualCollect', name='infokindenum'), nullable=False),
+    sa.Column('SourceID', sqlmodel.sql.sqltypes.AutoString(length=41), nullable=False),
+    sa.Column('DeviceID', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+    sa.Column('LeftTopX', sa.Integer(), nullable=True),
+    sa.Column('LeftTopY', sa.Integer(), nullable=True),
+    sa.Column('RightBtmX', sa.Integer(), nullable=True),
+    sa.Column('RightBtmY', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('PersonID')
+    )
+    op.create_table('subimageinfo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('ImageID', sqlmodel.sql.sqltypes.AutoString(length=41), nullable=True),
+    sa.Column('EventSort', sa.Integer(), nullable=True),
+    sa.Column('DeviceID', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=True),
+    sa.Column('StoragePath', sqlmodel.sql.sqltypes.AutoString(length=256), nullable=True),
+    sa.Column('Type', sa.Enum('VehicleLargeImage', 'LicensePlateColorSmallImage', 'LicensePlateBinaryImage', 'DriverFaceFeature', 'CoDriverFaceFeature', 'VehicleLogo', 'ViolationCompositeImage', 'PassingCompositeImage', 'VehicleCloseUpImage', 'PersonImage', 'FaceImage', 'NonMotorVehicleImage', 'ObjectImage', 'SceneImage', 'GeneralImage', name='imagetypeenum'), nullable=False),
+    sa.Column('FileFormat', sa.Enum('BMP', 'GIF', 'JPEG', 'PNG', name='imageformatenum'), nullable=False),
+    sa.Column('ShotTime', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('Width', sa.Integer(), nullable=True),
+    sa.Column('Height', sa.Integer(), nullable=True),
+    sa.Column('Data', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('ImageID')
     )
     op.create_table('subscribe',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -92,23 +135,36 @@ def upgrade() -> None:
     sa.Column('ResultImageDeclare', sa.Enum('Unknown', 'PersonImage', 'FaceImage', 'SceneImage', name='resultimagedeclareenum'), nullable=False),
     sa.Column('ResultFeatureDeclare', sa.Enum('WithoutFeatures', 'WithFeatures', name='resultfeaturedeclareenum'), nullable=False),
     sa.Column('TabID', sqlmodel.sql.sqltypes.AutoString(length=41), nullable=True),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('subimageinfo',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('archive_id', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('ImageID', sqlmodel.sql.sqltypes.AutoString(length=41), nullable=True),
-    sa.Column('EventSort', sa.Integer(), nullable=True),
-    sa.Column('DeviceID', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=True),
-    sa.Column('StoragePath', sqlmodel.sql.sqltypes.AutoString(length=256), nullable=True),
-    sa.Column('Type', sa.Enum('VehicleLargeImage', 'LicensePlateColorSmallImage', 'LicensePlateBinaryImage', 'DriverFaceFeature', 'CoDriverFaceFeature', 'VehicleLogo', 'ViolationCompositeImage', 'PassingCompositeImage', 'VehicleCloseUpImage', 'PersonImage', 'FaceImage', 'NonMotorVehicleImage', 'ObjectImage', 'SceneImage', 'GeneralImage', name='imagetypeenum'), nullable=False),
-    sa.Column('FileFormat', sa.Enum('BMP', 'GIF', 'JPEG', 'PNG', name='imageformatenum'), nullable=False),
-    sa.Column('ShotTime', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('Width', sa.Integer(), nullable=True),
-    sa.Column('Height', sa.Integer(), nullable=True),
-    sa.Column('Data', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.ForeignKeyConstraint(['archive_id'], ['archive.ArchiveID'], ),
     sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('SubscribeID')
+    )
+    op.create_table('subscribenotification',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('NotificationID', sqlmodel.sql.sqltypes.AutoString(length=33), nullable=False),
+    sa.Column('SubscribeID', sqlmodel.sql.sqltypes.AutoString(length=33), nullable=False),
+    sa.Column('Title', sqlmodel.sql.sqltypes.AutoString(length=256), nullable=False),
+    sa.Column('TriggerTime', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('InfoIDs', sqlmodel.sql.sqltypes.AutoString(length=1024), nullable=False),
+    sa.Column('DeviceList', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('DataClassTabObjectList', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('ExecuteOperation', sa.Enum('Add', 'Update', 'Delete', name='executeoperationenum'), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('NotificationID')
+    )
+    op.create_table('archivesubimageinfolink',
+    sa.Column('ArchiveID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('ImageID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['ArchiveID'], ['archive.ArchiveID'], ),
+    sa.ForeignKeyConstraint(['ImageID'], ['subimageinfo.ImageID'], ),
+    sa.PrimaryKeyConstraint('ArchiveID', 'ImageID'),
+    sa.UniqueConstraint('ImageID')
+    )
+    op.create_table('facesubimageinfolink',
+    sa.Column('FaceID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('ImageID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['FaceID'], ['face.FaceID'], ),
+    sa.ForeignKeyConstraint(['ImageID'], ['subimageinfo.ImageID'], ),
+    sa.PrimaryKeyConstraint('FaceID', 'ImageID'),
     sa.UniqueConstraint('ImageID')
     )
     op.create_table('featureinfo',
@@ -118,7 +174,32 @@ def upgrade() -> None:
     sa.Column('AlgorithmVersion', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
     sa.Column('FeatureData', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.ForeignKeyConstraint(['sub_image_info_id'], ['subimageinfo.ImageID'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('sub_image_info_id')
+    )
+    op.create_table('personsubimageinfolink',
+    sa.Column('PersonID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('ImageID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['ImageID'], ['subimageinfo.ImageID'], ),
+    sa.ForeignKeyConstraint(['PersonID'], ['person.PersonID'], ),
+    sa.PrimaryKeyConstraint('PersonID', 'ImageID'),
+    sa.UniqueConstraint('ImageID')
+    )
+    op.create_table('subscribenotificationfacelink',
+    sa.Column('NotificationID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('FaceID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['FaceID'], ['face.FaceID'], ),
+    sa.ForeignKeyConstraint(['NotificationID'], ['subscribenotification.NotificationID'], ),
+    sa.PrimaryKeyConstraint('NotificationID', 'FaceID'),
+    sa.UniqueConstraint('FaceID')
+    )
+    op.create_table('subscribenotificationpersonlink',
+    sa.Column('NotificationID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('PersonID', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['NotificationID'], ['subscribenotification.NotificationID'], ),
+    sa.ForeignKeyConstraint(['PersonID'], ['person.PersonID'], ),
+    sa.PrimaryKeyConstraint('NotificationID', 'PersonID'),
+    sa.UniqueConstraint('PersonID')
     )
     # ### end Alembic commands ###
 
@@ -126,9 +207,17 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('subscribenotificationpersonlink')
+    op.drop_table('subscribenotificationfacelink')
+    op.drop_table('personsubimageinfolink')
     op.drop_table('featureinfo')
-    op.drop_table('subimageinfo')
+    op.drop_table('facesubimageinfolink')
+    op.drop_table('archivesubimageinfolink')
+    op.drop_table('subscribenotification')
     op.drop_table('subscribe')
+    op.drop_table('subimageinfo')
+    op.drop_table('person')
+    op.drop_table('face')
     op.drop_table('archive')
     op.drop_table('aps')
     op.drop_table('ape')

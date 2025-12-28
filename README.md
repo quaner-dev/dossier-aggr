@@ -15,7 +15,7 @@ VIID 服务系统实现了公安部视频图像信息数据库（VIID）协议�
 
 ## 迁移数据库
 
-alembic revision --autogenerate -m "xxx"
+alembic revision --autogenerate -m "init"
 alembic upgrade head
 
 ## 启动服务

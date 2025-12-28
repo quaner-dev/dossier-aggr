@@ -1,11 +1,12 @@
 import logging
-from typing import Any
+from typing import AsyncGenerator
 from datetime import datetime
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
+from fastapi.responses import JSONResponse
 from sqlmodel import select
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
 
 import taskiq_fastapi
 
@@ -29,31 +30,55 @@ taskiq_fastapi.init(brokers.broker, "main:app")
 
 app = FastAPI(lifespan=brokers.lifespan)
 engine = create_async_engine(settings.DATABASE_URL)
-session = AsyncSession(engine)
 security = auth.HTTPDigest1400()
+
+
+@app.exception_handler(exceptions.DataNotFoundError)
+async def data_not_found_exception_handler(
+    request: Request, exc: exceptions.DataNotFoundError
+) -> JSONResponse:
+    return JSONResponse(
+        content=schemas.ResponseStatusList(
+            ResponseStatusObject=schemas.ResponseStatus(
+                RequestURL=str(request.url),
+                StatusCode="9",
+                StatusString=exc.detail,
+                LocalTime=datetime.now(),
+            )
+        ).model_dump()
+    )
+
+
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSession(engine) as session:
+        yield session
 
 
 @app.post(
     path=constants.REGISTER_URL,
-    response_model=schemas.ResponseStatus,
+    response_model=schemas.ResponseStatusList,
     dependencies=[Depends(security)],
     description="GA/T 1400.4-2017 7.2.1 注册消息",
 )
-async def register(data: schemas.RegisterSchema) -> Any:
+async def register(
+    request: Request,
+    data: schemas.RegisterSchema,
+    session: AsyncSession = Depends(get_session),
+):
     device_id = data.RegisterObject.DeviceID
     statement = select(models.APS).where(models.APS.ApsID == device_id)
     aps = (await session.exec(statement)).first()
     if not aps:
-        raise exceptions.DataNotFoundError
+        raise exceptions.DataNotFoundError(detail=f"{device_id} not exist")
 
-    if not aps.IsOnline == 1:
+    if not aps.IsOnline == enums.StatusTypeEnum.Offline:
         aps.IsOnline = enums.StatusTypeEnum.Online
         session.add(aps)
         await session.commit()
 
     # TODO 这里是硬编码，需要后期将输出的方法整体迁移到固定位置，防止反复描述
     response_status_object = schemas.ResponseStatus(
-        RequestURL=constants.REGISTER_URL,
+        RequestURL=str(request.url),
         StatusCode="0",
         StatusString="注册成功",
         LocalTime=datetime.now(),
@@ -66,12 +91,14 @@ async def register(data: schemas.RegisterSchema) -> Any:
     response_model=schemas.ResponseStatus,
     description="GA/T 1400.4-2017 7.2.2 注销消息",
 )
-async def unregister(data: schemas.UnRegisterSchema):
+async def unregister(
+    data: schemas.UnRegisterSchema, session: AsyncSession = Depends(get_session)
+):
     device_id = data.UnRegisterObject.DeviceID
     statement = select(models.APS).where(models.APS.ApsID == device_id)
     aps = (await session.exec(statement)).first()
     if not aps:
-        raise exceptions.DataNotFoundError
+        raise exceptions.DataNotFoundError(detail=f"{device_id} not exist")
 
     if not aps.IsOnline == 1:
         aps.IsOnline = enums.StatusTypeEnum.Offline
@@ -92,12 +119,14 @@ async def unregister(data: schemas.UnRegisterSchema):
     response_model=schemas.ResponseStatus,
     description="GA/T 1400.4-2017 7.2.3 保活消息",
 )
-async def keepalive(data: schemas.KeepaliveSchema):
+async def keepalive(
+    data: schemas.KeepaliveSchema, session: AsyncSession = Depends(get_session)
+):
     device_id = data.KeepaliveObject.DeviceID
     statement = select(models.APS).where(models.APS.ApsID == device_id)
     aps = (await session.exec(statement)).first()
     if not aps:
-        raise exceptions.DataNotFoundError
+        raise exceptions.DataNotFoundError(detail=f"{device_id} not exist")
 
     if not aps.IsOnline == 1:
         aps.IsOnline = enums.StatusTypeEnum.Online
@@ -118,7 +147,7 @@ async def keepalive(data: schemas.KeepaliveSchema):
     response_model=schemas.APEListSchema,
     description="GA/T 1400.4-2017 7.2.5 采集设备的查询",
 )
-async def apes():
+async def apes_read(session: AsyncSession = Depends(get_session)):
     # TODO 后续增加关于单个设备检索的逻辑
     statement = select(models.APE)
     apes = (await session.exec(statement)).all()
@@ -187,7 +216,9 @@ async def faces_create(data: schemas.FaceListObjectSchema):
     response_model=schemas.ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.20.1 批量订阅消息",
 )
-async def subscrbe(data: schemas.SubscribeListSchema):
+async def subscrbe(
+    data: schemas.SubscribeListSchema, session: AsyncSession = Depends(get_session)
+):
     subscribes = data.SubscribeListObject.SubscribeObject
     for subscribe in subscribes:
         session.add(models.Subscribe.model_validate(subscribe))
@@ -248,7 +279,9 @@ async def subscribe_notifications_create(
     response_model=schemas.ArchiveQueryResultSchema,
     description="GA/T 2350.5-2025 A.9 人员档案查询接口",
 )
-async def archives_query_sync_read(data: schemas.ArchiveQuerySchema):
+async def archives_query_sync_read(
+    data: schemas.ArchiveQuerySchema, session: AsyncSession = Depends(get_session)
+):
     archive_query = data.ArchiveQueryObject
     # TODO 这里的检索条件需要思考下
     statement = select(models.APE).where(**archive_query.model_dump())

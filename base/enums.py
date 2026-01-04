@@ -19,11 +19,15 @@ VIIDDateTime = Annotated[
 
 
 class CapDirectionEnum(IntEnum):
+    """车辆抓拍方向"""
+
     Front = 0  # 拍车头
     Rear = 1  # 拍车尾
 
 
 class MonitorDirectionEnum(IntEnum):
+    """监视方向"""
+
     WestToEast = 1  # 西向东（东）
     EastToWest = 2  # 东向西（西）
     NorthToSouth = 3  # 北向南（南）
@@ -36,6 +40,8 @@ class MonitorDirectionEnum(IntEnum):
 
 
 class StatusTypeEnum(IntEnum):
+    """视频设备工作状态"""
+
     Online = 1  # 在线
     Offline = 2  # 离线
     Other = 9  # 其他

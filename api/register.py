@@ -1,0 +1,38 @@
+from datetime import datetime
+
+from fastapi import Depends, Request, APIRouter
+
+import auth
+import base.enums as enums
+import schemas
+import services
+import constants
+
+router = APIRouter()
+security = auth.HTTPDigest1400()
+
+
+@router.post(
+    path=constants.REGISTER_URL,
+    response_model=schemas.ResponseStatusList,
+    dependencies=[Depends(security)],
+    description="GA/T 1400.4-2017 7.2.1 注册消息",
+)
+async def register(
+    request: Request,
+    data: schemas.RegisterSchema,
+    service: services.aps.APSService = Depends(services.aps.APSService),
+):
+    """注册接口"""
+    device_id = data.RegisterObject.DeviceID
+    aps = await service.query(device_id)
+    await service.update_IsOnline(aps, enums.StatusTypeEnum.Online)
+
+    # TODO 这里是硬编码，需要后期将输出的方法整体迁移到固定位置，防止反复描述
+    response_status_object = schemas.ResponseStatus(
+        RequestURL=str(request.url),
+        StatusCode="0",
+        StatusString="注册成功",
+        LocalTime=datetime.now(),
+    )
+    return schemas.ResponseStatusList(ResponseStatusObject=response_status_object)

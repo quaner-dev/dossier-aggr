@@ -1,30 +1,35 @@
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-import tasks
-import schemas
+from schemas import (
+    ResponseStatusListSchema,
+    SubscribeNotificationListSchema,
+    ResponseStatus,
+    ResponseStatusList,
+)
 import constants
+from services import SubscribeNotificationService
 
 router = APIRouter()
 
 
 @router.post(
     path=constants.SUBSCRIBE_NOTIFICATIONS_URL,
-    response_model=schemas.ResponseStatusListSchema,
+    response_model=ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.21.1 通知消息",
 )
 async def subscribe_notifications_create(
-    data: schemas.subscribe_notification.SubscribeNotificationListSchema,
+    data: SubscribeNotificationListSchema,
+    service: SubscribeNotificationService = Depends(SubscribeNotificationService),
 ):
     subscribe_notifications = (
         data.SubscribeNotificationListObject.SubscribeNotificationObject
     )
-    for subscribe_notification in subscribe_notifications:
-        await tasks.create_subscribe_notification.kiq(subscribe_notification)
+    await service.batch_create_subscribe_notifications(subscribe_notifications)
 
     response_status_objects = [
-        schemas.ResponseStatus(
+        ResponseStatus(
             RequestURL=constants.SUBSCRIBE_NOTIFICATIONS_URL,
             StatusCode="0",
             StatusString="通知成功",
@@ -33,8 +38,8 @@ async def subscribe_notifications_create(
         )
         for subscribe_notification in subscribe_notifications
     ]
-    return schemas.ResponseStatusListSchema(
-        ResponseStatusListObject=schemas.ResponseStatusList(
+    return ResponseStatusListSchema(
+        ResponseStatusListObject=ResponseStatusList(
             ResponseStatusObject=response_status_objects
         )
     )

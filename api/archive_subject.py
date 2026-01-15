@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from schemas.archive_subject_query import ArchiveSubjectQuerySchema
+from schemas import ArchiveSubjectQuerySchema
 import constants
 
 router = APIRouter()

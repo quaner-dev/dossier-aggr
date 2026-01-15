@@ -1,0 +1,29 @@
+﻿PUT /VIID/Subscribes/500000000000032020042210320810807 HTTP/1.1
+Charset: UTF-8
+Accept-Charset: UTF-8
+Accept: */*
+Accept-Language: zh-CN,en-US;q=0.8,en;q=0.6
+Content-Type: application/viid+json;charset=UTF-8
+User-Identify: 50000012345030000002
+Cache-Control: no-cache
+Pragma: no-cache
+User-Agent: Java/1.8.0_152
+Host: 50.37.117.120:8300
+Connection: keep-alive
+Content-Length: 1035
+
+{"SubscribeObject":{"viidServerId":"50019907005030000011","isSuccess":"0","receiveAddrType":0,"isLocal":"0","resourceType":"0","apeType":"2","packageSize":0,"packageOverTime":15,"isModelCascade":"0","isCluster":"0","notiDealType":"0","maxTransNum":500,"isCompressed":"0","isAutoStop":"0","motorVehicleType":"0","protocolVersion":"2018","isDefault":"1","netState":"0","SubscribeID":"500000000000032020042210320810807","Title":"市局订阅人脸设备目录","SubscribeDetail":"3","ResourceURI":"50019907005030000011","ApplicantName":"admin","ApplicantOrg":"bdbb04990cdd40949e742380e713981d","BeginTime":"20200422101054","EndTime":"20991231235959","ReceiveAddr":"http://50.1.43.75:8023/VIID/SubscribeNotifications","ReportInterval":0,"Reason":"市局订阅人脸设备目录","OperateType":1,"SubscribeStatus":1,"SubscribeCancelOrg":"bdbb04990cdd40949e742380e713981d","SubscribeCancelPerson":"admin","CancelTime":"20200422110315","CancelReason":"test2","ResourceClass":0,"ResultImageDeclare":"-1","ResultFeatureDeclare":-1}}HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json;charset=UTF-8
+Transfer-Encoding: chunked
+Date: Wed, 22 Apr 2020 03:04:02 GMT
+
+a8
+{"ResponseStatusObject":{"RequestURL":"/VIID/Subscribes/500000000000032020042210320810807","StatusCode":"0","StatusString":"OK","Id":null,"LocalTime":"20200422110402"}}
+0
+

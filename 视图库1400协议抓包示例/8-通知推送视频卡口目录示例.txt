@@ -1,0 +1,20 @@
+POST /VIID/SubscribeNotifications HTTP/1.1
+Content-Type: application/VIID+JSON;charset=utf-8
+Accept: */*
+User-Identify: 50011608005030476808
+Content-Length: 1890
+Host: 50.1.43.75:8023
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.5.6 (Java/1.8.0_222)
+Accept-Encoding: gzip,deflate
+
+{"SubscribeNotificationListObject":{"PageRecordNum":1,"TotalNum":1,"SubscribeNotificationObject":[{"ExecuteOperation":1,"NotificationID":"500116121926042020042416481000003","SubscribeID":"500000000000032020042416470814901","Title":"市局订阅江津视频卡口目录测试2","TriggerTime":"20200424164810","InfoIDs":"50011699051210020063,50011699051210020064,50011699051210020065,50011699051210020066,50011699051210020067,50011699051210020068,50011699051210020069","TollgateObjectList":{"PageRecordNum":5,"TotalNum":5,"TollgateObject":[{"TollgateID":"50011699051210020065","Name":"S107田苑公交站旁往滨江新城方向","Longitude":106.226272,"Latitude":29.291513,"PlaceCode":"500116","Place":"","Status":"1","TollgateCat":"31","TollgateUsage":"81","LaneNum":1,"OrgCode":"","OrgIndex":"50011600002160000021"},{"TollgateID":"50011699051210020066","Name":"滨江路社保中心旁","Longitude":106.244411,"Latitude":29.28744,"PlaceCode":"500116","Place":"","Status":"1","TollgateCat":"31","TollgateUsage":"81","LaneNum":1,"OrgCode":"","OrgIndex":"50011600002160000021"},{"TollgateID":"50011699051210020067","Name":"滨江路社保中心往通泰门方向","Longitude":106.247849,"Latitude":29.283699,"PlaceCode":"500116","Place":"","Status":"1","TollgateCat":"31","TollgateUsage":"81","LaneNum":1,"OrgCode":"","OrgIndex":"50011600002160000021"},{"TollgateID":"50011699051210020068","Name":"鼎山大道与体育路交口1","Longitude":106.271125,"Latitude":29.274137,"PlaceCode":"500116","Place":"","Status":"1","TollgateCat":"31","TollgateUsage":"81","LaneNum":1,"OrgCode":"","OrgIndex":"50011600002160000021"},{"TollgateID":"50011699051210020069","Name":"鼎山大道与体育路交口2","Longitude":106.271148,"Latitude":29.274087,"PlaceCode":"500116","Place":"","Status":"1","TollgateCat":"31","TollgateUsage":"81","LaneNum":1,"OrgCode":"","OrgIndex":"50011600002160000021"}]}}]}}HTTP/1.1 200 
+P3P: CP=CAO PSA OUR
+Content-Type: application/viid+json;charset=UTF-8
+Transfer-Encoding: chunked
+Date: Fri, 24 Apr 2020 08:47:12 GMT
+
+33e
+{"ResponseStatusListObject":{"ResponseStatusObject":[{"StatusCode":"0","StatusString":"操作成功,卡口编号：50011699051210020065","Id":"500000000000042020042416471210885","LocalTime":"20200424164712"},{"StatusCode":"0","StatusString":"操作成功,卡口编号：50011699051210020066","Id":"500000000000042020042416471213154","LocalTime":"20200424164712"},{"StatusCode":"0","StatusString":"操作成功,卡口编号：50011699051210020067","Id":"500000000000042020042416471215592","LocalTime":"20200424164712"},{"StatusCode":"0","StatusString":"操作成功,卡口编号：50011699051210020068","Id":"500000000000042020042416471217615","LocalTime":"20200424164712"},{"StatusCode":"0","StatusString":"操作成功,卡口编号：50011699051210020069","Id":"500000000000042020042416471219553","LocalTime":"20200424164712"}]}}
+0
+

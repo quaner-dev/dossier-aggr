@@ -3,6 +3,8 @@ from .ape import APEBase
 from .archive import ArchiveBase
 from .face import FaceBase
 from .feature_info import FeatureInfoBase
+from .motor_vehicle import MotorVehicleBase
+from .non_motor_vehicle import NonMotorVehicleBase
 from .person import PersonBase
 from .sub_image_info import SubImageInfoBase
 from .subscribe_notification import SubscribeNotificationBase
@@ -15,6 +17,8 @@ __all__ = [
     "ArchiveBase",
     "FaceBase",
     "FeatureInfoBase",
+    "MotorVehicleBase",
+    "NonMotorVehicleBase",
     "PersonBase",
     "SubImageInfoBase",
     "SubscribeNotificationBase",

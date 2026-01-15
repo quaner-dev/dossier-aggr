@@ -1,0 +1,23 @@
+POST /VIID/Subscribes HTTP/1.1
+Charset: UTF-8
+Accept-Charset: UTF-8
+Accept: */*
+Accept-Language: zh-CN,en-US;q=0.8,en;q=0.6
+Content-Type: application/viid+json;charset=UTF-8
+User-Identify: 50000012345030000002
+Cache-Control: no-cache
+Pragma: no-cache
+User-Agent: Java/1.8.0_152
+Host: 50.72.111.4:2530
+Connection: keep-alive
+Content-Length: 934
+
+{"SubscribeListObject":{"SubscribeObject":[{"viidServerId":"50011608005030476808","isSuccess":"0","receiveAddrType":0,"isLocal":"0","resourceType":"0","apeType":"2","packageSize":0,"packageOverTime":15,"isModelCascade":"0","isCluster":"0","notiDealType":"0","maxTransNum":500,"isCompressed":"0","isAutoStop":"0","motorVehicleType":"0","protocolVersion":"2018","isDefault":"1","netState":"0","SubscribeID":"500000000000032020042214403811591","Title":"市局订阅人脸设备目录1","SubscribeDetail":"3","ResourceURI":"50011608005030476808","ApplicantName":"admin","ApplicantOrg":"bdbb04990cdd40949e742380e713981d","BeginTime":"20200422140000","EndTime":"20991231235959","ReceiveAddr":"http://50.1.67.15:8023/VIID/SubscribeNotifications","ReportInterval":0,"Reason":"市局订阅人脸设备目录1","OperateType":0,"SubscribeStatus":0,"ResourceClass":4,"ResultImageDeclare":"-1","ResultFeatureDeclare":-1}]}}HTTP/1.1 201 
+Content-Type: application/json;charset=UTF-8
+Transfer-Encoding: chunked
+Date: Wed, 22 Apr 2020 06:41:32 GMT
+
+c4
+{"ResponseStatusListObject":{"ResponseStatusObject":[{"RequestURL":"/VIID/Subscribes","StatusCode":"0","StatusString":"OK","Id":"500000000000032020042214403811591","LocalTime":"20200422144132"}]}}
+0
+

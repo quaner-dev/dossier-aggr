@@ -53,7 +53,8 @@ async def update_face(face: Face):
 
 
 @brokers.broker.task
-async def delete_face(face_id: str):
+async def delete_face(face: Face):
     async with AsyncSession(engine) as session:
-        statement = select(Face).where(Face.FaceID == face_id)
-        face = (await session.exec(statement)).first()
+        await session.delete(face)
+        await session.commit()
+        return face

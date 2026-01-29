@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 import constants
 from models import (
     ResponseStatusListSchema,
 )
-from services import ArchiveService
 
 router = APIRouter()
 

@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 import taskiq_fastapi
 
 import brokers
-import schemas
+from models import ResponseStatusList, ResponseStatus
 import exceptions
 import api
 
@@ -27,8 +27,8 @@ async def data_not_found_exception_handler(
     request: Request, exc: exceptions.DataNotFoundError
 ) -> JSONResponse:
     return JSONResponse(
-        content=schemas.ResponseStatusList(
-            ResponseStatusObject=schemas.ResponseStatus(
+        content=ResponseStatusList(
+            ResponseStatusObject=ResponseStatus(
                 RequestURL=str(request.url),
                 StatusCode="9",
                 StatusString=exc.detail,

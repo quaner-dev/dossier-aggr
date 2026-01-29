@@ -1,4 +1,3 @@
-from typing import Union, List
 from fastapi import HTTPException
 
 
@@ -7,7 +6,7 @@ class DataNotFoundError(HTTPException):
 
     def __init__(
         self,
-        detail: Union[str, List[str]],
+        detail: str | list[str],
     ):
         super().__init__(status_code=200, detail=detail)
 
@@ -17,6 +16,16 @@ class InvalidParameterError(HTTPException):
 
     def __init__(
         self,
-        detail: Union[str, List[str]],
+        detail: str | list[str],
     ):
         super().__init__(status_code=400, detail=detail)
+
+
+class DataAlreadyExistsError(HTTPException):
+    """数据已存在"""
+
+    def __init__(
+        self,
+        detail: str | list[str],
+    ):
+        super().__init__(status_code=200, detail=detail)

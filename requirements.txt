@@ -1,6 +1,8 @@
 fastapi[standard]
 uvicorn
 pytest
+pytest-asyncio
+httpx
 
 # DataBase
 sqlmodel

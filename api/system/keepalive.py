@@ -2,9 +2,8 @@ from datetime import datetime
 
 from fastapi import Depends, APIRouter
 
-from models import enums
 import constants
-from models import ResponseStatus, KeepaliveSchema, ResponseStatusList
+from models import ResponseStatus, KeepaliveSchema
 from services import APSService
 from typing import Annotated
 
@@ -18,16 +17,14 @@ router = APIRouter()
 )
 async def keepalive(
     data: KeepaliveSchema, service: Annotated[APSService, Depends(APSService)]
-):
+) -> ResponseStatus:
     """保活接口"""
     device_id = data.KeepaliveObject.DeviceID
-    aps = await service.query(device_id)
-    await service.update_is_online(aps, enums.StatusTypeEnum.Online)
+    _ = await service.update_aps(aps_id=device_id)
 
-    response_status_object = ResponseStatus(
+    return ResponseStatus(
         RequestURL=constants.KEEPALIVE_URL,
         StatusCode="0",
         StatusString="保活成功",
         LocalTime=datetime.now(),
     )
-    return ResponseStatusList(ResponseStatusObject=response_status_object)

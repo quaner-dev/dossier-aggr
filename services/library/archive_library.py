@@ -1,9 +1,8 @@
 
 from models import ArchiveLibrary
-from services.common.common import BaseService
 
 
-class ArchiveLibraryService(BaseService):
+class ArchiveLibraryService():
     async def list_archive_libraries(self) -> list[ArchiveLibrary]: ...
 
     async def get_archive_library(self): ...

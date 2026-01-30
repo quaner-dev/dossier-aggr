@@ -2,10 +2,9 @@ from sqlmodel import select
 
 from models import Subscribe
 import exceptions
-from services.common.common import BaseService
 
 
-class SubscribeService(BaseService):
+class SubscribeService():
     async def batch_create_subscribe(self, subscribes: list[Subscribe]):
         for subscribe in subscribes:
             self.session.add(Subscribe.model_validate(subscribe))

@@ -2,10 +2,9 @@ from sqlmodel import select
 
 from models import Archive
 import exceptions
-from services.common.common import BaseService
 
 
-class ArchiveService(BaseService):
+class ArchiveService():
     async def list_archives(self):...
         # statement = select(Archive).where(**archive_query.model_dump())
         # archives = (await self.session.exec(statement)).all()

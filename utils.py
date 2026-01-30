@@ -11,3 +11,9 @@ def serialize_datetime(v: str | datetime) -> str:
     if isinstance(v, datetime):
         return datetime.strftime(v, "%Y%m%d%H%M%S")
     return v
+
+
+def parse_id_list(v: str | list[str]) -> list[str]:
+    if isinstance(v, list):
+        return v
+    return [x.strip() for x in str(v).split(",") if x.strip()]

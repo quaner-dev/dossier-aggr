@@ -7,7 +7,7 @@ import exceptions
 from collections.abc import Sequence
 
 
-async def get_face(face_id: str) -> Face:
+async def get_face_task(face_id: str) -> Face:
     async with AsyncSession(engine) as session:
         statement = select(Face).where(Face.FaceID == face_id)
         face = (await session.exec(statement)).first()
@@ -16,7 +16,7 @@ async def get_face(face_id: str) -> Face:
         return face
 
 
-async def list_faces() -> Sequence[Face]:
+async def list_faces_task() -> Sequence[Face]:
     async with AsyncSession(engine) as session:
         statement = select(Face)
         faces = (await session.exec(statement)).all()
@@ -26,7 +26,7 @@ async def list_faces() -> Sequence[Face]:
 
 
 @brokers.broker.task
-async def create_face(face: Face):
+async def create_face_task(face: Face):
     async with AsyncSession(engine) as session:
         session.add(face)
         await session.commit()
@@ -35,7 +35,7 @@ async def create_face(face: Face):
 
 
 @brokers.broker.task
-async def create_faces(faces: list[Face]):
+async def create_faces_task(faces: list[Face]):
     async with AsyncSession(engine) as session:
         session.add_all(faces)
         await session.commit()
@@ -44,7 +44,7 @@ async def create_faces(faces: list[Face]):
 
 
 @brokers.broker.task
-async def update_face(face: Face):
+async def update_face_task(face: Face):
     async with AsyncSession(engine) as session:
         session.add(face)
         await session.commit()
@@ -53,7 +53,7 @@ async def update_face(face: Face):
 
 
 @brokers.broker.task
-async def delete_face(face: Face):
+async def delete_face_task(face: Face):
     async with AsyncSession(engine) as session:
         await session.delete(face)
         await session.commit()

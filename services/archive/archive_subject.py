@@ -1,6 +1,2 @@
-
-from services.common.common import BaseService
-
-
-class ArchiveSubjectService(BaseService):
+class ArchiveSubjectService:
     async def get_archive_subject(self): ...

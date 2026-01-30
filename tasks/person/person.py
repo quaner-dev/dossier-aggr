@@ -7,7 +7,7 @@ import exceptions
 from database import engine
 
 
-async def get_person(person_id: str) -> Person:
+async def get_person_task(person_id: str) -> Person:
     async with AsyncSession(engine) as session:
         statement = select(Person).where(Person.PersonID == person_id)
         person = (await session.exec(statement)).first()
@@ -16,7 +16,7 @@ async def get_person(person_id: str) -> Person:
     return person
 
 
-async def list_persons() -> Sequence[Person]:
+async def list_persons_task() -> Sequence[Person]:
     async with AsyncSession(engine) as session:
         persons = (await session.exec(select(Person))).all()
         if not persons:
@@ -25,7 +25,7 @@ async def list_persons() -> Sequence[Person]:
 
 
 @brokers.broker.task
-async def create_person(person: Person) -> Person:
+async def create_person_task(person: Person) -> Person:
     async with AsyncSession(engine) as session:
         session.add(person)
         await session.commit()
@@ -34,7 +34,7 @@ async def create_person(person: Person) -> Person:
 
 
 @brokers.broker.task
-async def create_persons(persons: list[Person]) -> list[Person]:
+async def create_persons_task(persons: list[Person]) -> list[Person]:
     async with AsyncSession(engine) as session:
         session.add_all(persons)
         await session.commit()
@@ -43,7 +43,7 @@ async def create_persons(persons: list[Person]) -> list[Person]:
 
 
 @brokers.broker.task
-async def update_person(person: Person):
+async def update_person_task(person: Person):
     async with AsyncSession(engine) as session:
         session.add(person)
         await session.commit()
@@ -52,7 +52,7 @@ async def update_person(person: Person):
 
 
 @brokers.broker.task
-async def update_persons(persons: list[Person]):
+async def update_persons_task(persons: list[Person]):
     async with AsyncSession(engine) as session:
         session.add_all(persons)
         await session.commit()
@@ -61,8 +61,17 @@ async def update_persons(persons: list[Person]):
 
 
 @brokers.broker.task
-async def delete_person(person_id: str):
+async def delete_person_task(person_id: str):
     async with AsyncSession(engine) as session:
         await session.delete(Person.model_validate(person_id))
         await session.commit()
         return person_id
+
+
+@brokers.broker.task
+async def delete_persons_task(person_ids: list[str]):
+    async with AsyncSession(engine) as session:
+        for person_id in person_ids:
+            await session.delete(Person.model_validate(person_id))
+        await session.commit()
+        return person_ids

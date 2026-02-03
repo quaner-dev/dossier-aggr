@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from models import APE
-from tasks import list_ape_task, update_apes_task
+from tasks import list_apes_task, update_apes_task
 
 
 class APEService:
@@ -8,7 +8,7 @@ class APEService:
 
     async def list_apes(self) -> Sequence[APE]:
         """查询所有APE信息"""
-        apes = await list_ape_task()
+        apes = await list_apes_task()
         return apes
 
     async def update_apes(self, apes: list[APE]) -> Sequence[APE]:

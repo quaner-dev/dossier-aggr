@@ -7,7 +7,7 @@ import exceptions
 from database import engine
 
 
-async def list_ape_task() -> Sequence[APE]:
+async def list_apes_task() -> Sequence[APE]:
     async with AsyncSession(engine) as session:
         apes = (await session.exec(select(APE))).all()
         if not apes:

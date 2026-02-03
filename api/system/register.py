@@ -28,8 +28,7 @@ async def register(
 ):
     """注册接口"""
     device_id = data.RegisterObject.DeviceID
-    aps = await service.query(device_id)
-    await service.update_is_online(aps, enums.StatusTypeEnum.Online)
+    _ = await service.update_aps(aps_id=device_id)
 
     # TODO 这里是硬编码，需要后期将输出的方法整体迁移到固定位置，防止反复描述
     response_status_object = ResponseStatus(

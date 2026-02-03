@@ -36,3 +36,19 @@ async def data_not_found_exception_handler(
             )
         ).model_dump()
     )
+
+
+@app.exception_handler(exceptions.DataAlreadyExistsError)
+async def data_already_exists_exception_handler(
+    request: Request, exc: exceptions.DataAlreadyExistsError
+) -> JSONResponse:
+    return JSONResponse(
+        content=ResponseStatusList(
+            ResponseStatusObject=ResponseStatus(
+                RequestURL=str(request.url),
+                StatusCode="9",
+                StatusString=exc.detail,
+                LocalTime=datetime.now(),
+            )
+        ).model_dump()
+    )

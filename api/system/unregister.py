@@ -20,13 +20,10 @@ async def unregister(
 ):
     """注销接口"""
     device_id = data.UnRegisterObject.DeviceID
-    aps = await service.query(device_id)
-    await service.update_is_online(aps, enums.StatusTypeEnum.Offline)
-
-    response_status_object = ResponseStatus(
+    _ = await service.update_aps(aps_id=device_id)
+    return ResponseStatus(
         RequestURL=constants.UNREGISTER_URL,
         StatusCode="0",
         StatusString="注销成功",
         LocalTime=datetime.now(),
     )
-    return ResponseStatusList(ResponseStatusObject=response_status_object)

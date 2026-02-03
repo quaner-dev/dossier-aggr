@@ -78,7 +78,7 @@ async def faces_update(
     """批量人脸修改接口"""
     faces = data.FaceListObject.FaceObject
     for face in faces:
-        _ = await service.update_face(face.FaceID, face)
+        _ = await service.update_face(face)
 
     response_status_objects = [
         ResponseStatus(

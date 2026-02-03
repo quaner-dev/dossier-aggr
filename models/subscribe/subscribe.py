@@ -21,12 +21,12 @@ class Subscribe(SQLModel, table=True):
     ApplicantName: str = Field(description="申请人", max_length=50)
     ApplicantOrg: str = Field(description="申请单位", max_length=100)
     BeginTime: Annotated[
-        datetime,
+        str,
         BeforeValidator(utils.parse_datetime),
         PlainSerializer(utils.serialize_datetime),
     ] = Field(description="开始时间")
     EndTime: Annotated[
-        datetime,
+        str,
         BeforeValidator(utils.parse_datetime),
         PlainSerializer(utils.serialize_datetime),
     ] = Field(description="结束时间")

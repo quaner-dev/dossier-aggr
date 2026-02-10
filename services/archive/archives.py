@@ -4,8 +4,9 @@ from models import Archive
 import exceptions
 
 
-class ArchiveService():
-    async def list_archives(self):...
+class ArchiveService:
+    async def list_archives(self):
+        ...
         # statement = select(Archive).where(**archive_query.model_dump())
         # archives = (await self.session.exec(statement)).all()
         # return [Archive.model_validate(archive) for archive in archives]

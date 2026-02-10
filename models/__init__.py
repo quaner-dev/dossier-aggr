@@ -14,6 +14,7 @@ from .common.feature_info import FeatureInfo
 from .common import enums
 from .library.archive_library import ArchiveLibrary, ArchiveLibraryList
 from .archive.archive import Archive, ArchiveList
+from .archive.archive_subject import ArchiveSubject, ArchiveSubjectList, ArchiveSubjectSchema
 from .common.response_status import (
     ResponseStatus,
     ResponseStatusList,
@@ -49,6 +50,9 @@ __all__ = [
     "ArchiveLibraryList",
     "Archive",
     "ArchiveList",
+    "ArchiveSubject",
+    "ArchiveSubjectList",
+    "ArchiveSubjectSchema",
     "enums",
     "ResponseStatus",
     "ResponseStatusList",

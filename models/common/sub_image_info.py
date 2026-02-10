@@ -8,11 +8,7 @@ from .feature_info import FeatureInfo
 class SubImageInfo(SQLModel):
     """GA/T 1400.3-2017 C.6 图像子对象"""
 
-    id: int | None = Field(default=None, primary_key=True, exclude=True)
-
-    ImageID: str | None = Field(
-        default=None, description="图像标识", max_length=41, unique=True
-    )
+    ImageID: str | None = Field(default=None, description="图像标识", max_length=41)
     EventSort: int | None = Field(default=None, description="事件分类")
     DeviceID: str | None = Field(default=None, description="设备编码", max_length=20)
     StoragePath: str | None = Field(

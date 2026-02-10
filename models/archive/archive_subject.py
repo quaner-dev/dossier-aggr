@@ -13,7 +13,7 @@ class ArchiveSubject(SQLModel):
     PersonObjectList: PersonList | None = Field(description="人员完整信息列表")
     FaceObjectList: FaceList | None = Field(description="人脸完整信息列表")
 
-    ImageID: str | None = Field(description="图像标识", max_length=41, unique=True)
+    ImageID: str | None = Field(description="图像标识", max_length=41)
 
 
 # 档案明细列表

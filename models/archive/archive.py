@@ -17,7 +17,7 @@ class Archive(SQLModel, table=True):
     CreateTime: enums.VIIDDateTime = Field(description="档案创建时间")
     UpdateTime: enums.VIIDDateTime = Field(description="档案更新时间")
 
-    ImageID: str | None = Field(description="图像标识", max_length=41, unique=True)
+    ImageID: str | None = Field(description="图像标识", max_length=41)
 
 
 # 人员档案基础信息对象列表

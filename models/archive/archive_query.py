@@ -18,7 +18,7 @@ class ArchiveQuery(SQLModel):
     BeginTime: enums.VIIDDateTime | None = Field(description="开始时间")
     EndTime: enums.VIIDDateTime | None = Field(description="结束时间")
     GeoRectangle: GeoRectangleType | None = Field(description="检索的区域范围")
-    DeviceSelected: DeviceSelector = Field(description="检索的设备范围")
+    DeviceSelected: DeviceSelector | None = Field(description="检索的设备范围")
     Sort: str | None = Field(description="排序依据")
     Fields: FieldsType | None = Field(description="其他结构化筛查条件")
 

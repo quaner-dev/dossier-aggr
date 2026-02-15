@@ -9,6 +9,7 @@ sqlmodel
 alembic
 asyncpg
 psycopg2-binary
+aiosqlite
 
 # Taskiq
 taskiq

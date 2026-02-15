@@ -10,6 +10,6 @@ spec:
   containers:
     - name: wget
       image: busybox
-      command: ['wget']
-      args: ['{{ include "dossier-aggr.fullname" . }}:{{ .Values.service.port }}']
+      command: ["wget"]
+      args: ["-qO-", 'http://{{ include "dossier-aggr.fullname" . }}:{{ .Values.service.port }}/ready']
   restartPolicy: Never

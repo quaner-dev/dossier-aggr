@@ -1,7 +1,6 @@
 from models import Person
+from repositories.person.person import get_person_repo, list_persons_repo
 from tasks import (
-    get_person_task,
-    list_persons_task,
     create_person_task,
     create_persons_task,
     update_person_task,
@@ -10,39 +9,40 @@ from tasks import (
     delete_persons_task,
 )
 from collections.abc import Sequence
+from services.task_dispatch import dispatch_and_wait
 
 
 class PersonService():
     async def get_person(self, person_id: str) -> Person:
         """根据PersonID查询人员信息"""
-        person = await get_person_task(person_id=person_id)
+        person = await get_person_repo(person_id=person_id)
         return person
 
     async def list_persons(self) -> Sequence[Person]:
         """查询所有人员信息"""
-        persons = await list_persons_task()
+        persons = await list_persons_repo()
         return persons
 
     async def create_person(self, person: Person):
         """创建人员信息"""
-        _ = await create_person_task.kiq(person=person)
+        _ = await dispatch_and_wait(create_person_task, person=person)
 
     async def create_persons(self, persons: list[Person]):
         """创建多个人员信息"""
-        _ = await create_persons_task.kiq(persons=persons)
+        _ = await dispatch_and_wait(create_persons_task, persons=persons)
 
     async def update_person(self, person: Person) -> None:
         """更新人员信息"""
-        _ = await update_person_task.kiq(person=person)
+        _ = await dispatch_and_wait(update_person_task, person=person)
 
     async def update_persons(self, persons: list[Person]) -> None:
         """批量更新人员信息"""
-        _ = await update_persons_task.kiq(persons=persons)
+        _ = await dispatch_and_wait(update_persons_task, persons=persons)
 
     async def delete_person(self, person_id: str) -> None:
         """删除人员信息"""
-        _ = await delete_person_task.kiq(person_id=person_id)
+        _ = await dispatch_and_wait(delete_person_task, person_id=person_id)
 
     async def delete_persons(self, person_ids: list[str]) -> None:
         """批量删除人员信息"""
-        _ = await delete_persons_task.kiq(person_ids=person_ids)
+        _ = await dispatch_and_wait(delete_persons_task, person_ids=person_ids)

@@ -3,20 +3,19 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
+import constants
 from models import (
     FaceList,
     FaceListObjectSchema,
-    ResponseStatusListSchema,
-    ResponseStatusList,
     ResponseStatus,
+    ResponseStatusList,
+    ResponseStatusListSchema,
 )
-import constants
 from services import FaceService
 
 router = APIRouter()
 
 
-# TODO 这里的内容需要进行补充，当前的检索逻辑其实没有完成属性键值对的条件检索
 @router.get(
     path=constants.FACES_URL,
     response_model=FaceListObjectSchema,
@@ -24,17 +23,17 @@ router = APIRouter()
 )
 async def faces_query(
     service: Annotated[FaceService, Depends(FaceService)],
-    face_id: str | None,
+    FaceID: str | None = None,
 ):
     """人脸查询接口"""
-    if face_id:
-        face = await service.get_face(face_id)
-        return FaceListObjectSchema(FaceListObject=FaceList(FaceObject=[face]))
+    if FaceID:
+        faces = [await service.get_face(FaceID)]
     else:
         faces = await service.list_faces()
-        return FaceListObjectSchema(
-            FaceListObject=FaceList(FaceObject=[face for face in faces])
-        )
+
+    return FaceListObjectSchema(
+        FaceListObject=FaceList(FaceObject=[face for face in faces])
+    )
 
 
 @router.post(

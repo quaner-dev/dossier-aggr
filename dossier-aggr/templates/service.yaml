@@ -4,6 +4,17 @@ metadata:
   name: {{ include "dossier-aggr.fullname" . }}
   labels:
     {{- include "dossier-aggr.labels" . | nindent 4 }}
+  {{- if or .Values.monitoring.enabled .Values.service.annotations }}
+  annotations:
+    {{- if .Values.monitoring.enabled }}
+    prometheus.io/scrape: "true"
+    prometheus.io/path: {{ .Values.monitoring.metricsPath | quote }}
+    prometheus.io/port: {{ .Values.service.port | quote }}
+    {{- end }}
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:

@@ -27,9 +27,21 @@ router = APIRouter()
 )
 async def list_persons(
     service: Annotated[PersonService, Depends(PersonService)],
+    person_ids: str | None = None,
+    source_id: str | None = None,
+    device_id: str | None = None,
 ) -> PersonListObjectSchema:
     """批量人员查询接口"""
-    persons = await service.list_persons()
+    persons = list(await service.list_persons())
+
+    if person_ids:
+        person_id_set = set(parse_id_list(person_ids))
+        persons = [person for person in persons if person.PersonID in person_id_set]
+    if source_id:
+        persons = [person for person in persons if person.SourceID == source_id]
+    if device_id:
+        persons = [person for person in persons if person.DeviceID == device_id]
+
     return PersonListObjectSchema(
         PersonListObject=PersonList(PersonObject=[person for person in persons])
     )
@@ -122,7 +134,7 @@ async def delete_persons(
 
 
 @router.get(
-    path=f"{constants.PERSONS_URL}/{{person_id: str}}",
+    path=f"{constants.PERSONS_URL}/{{person_id}}",
     response_model=Person,
     description="GA/T 1400.4-2017 7.2.11.2 单个人员的查询",
 )

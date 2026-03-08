@@ -8,7 +8,7 @@ class DataNotFoundError(HTTPException):
         self,
         detail: str | list[str],
     ):
-        super().__init__(status_code=200, detail=detail)
+        super().__init__(status_code=404, detail=detail)
 
 
 class InvalidParameterError(HTTPException):
@@ -28,4 +28,14 @@ class DataAlreadyExistsError(HTTPException):
         self,
         detail: str | list[str],
     ):
-        super().__init__(status_code=200, detail=detail)
+        super().__init__(status_code=409, detail=detail)
+
+
+class TaskExecutionError(HTTPException):
+    """任务执行失败"""
+
+    def __init__(
+        self,
+        detail: str | list[str],
+    ):
+        super().__init__(status_code=503, detail=detail)

@@ -55,6 +55,7 @@ service:
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
   port: 8000
+  annotations: {}
 
 containerPort: 8000
 
@@ -71,6 +72,44 @@ args:
 env:
   ENV: dev
   DATABASE_URL: sqlite+aiosqlite:///app/db.sqlite3
+
+monitoring:
+  enabled: true
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  serviceMonitor:
+    enabled: false
+    additionalLabels: {}
+  grafanaDashboard:
+    enabled: true
+    # Labels for Grafana sidecar dashboard discovery.
+    labels:
+      grafana_dashboard: "1"
+    additionalLabels: {}
+    annotations: {}
+  prometheusRule:
+    enabled: false
+    additionalLabels: {}
+    groupName: dossier-aggr.rules
+    # Alert thresholds (5m window unless noted).
+    errorRateThreshold: 0.05
+    p95LatencySeconds: 1.0
+    ormP95Seconds: 0.2
+    for: 10m
+
+worker:
+  enabled: true
+  replicaCount: 1
+  command:
+    - taskiq
+  args:
+    - worker
+    - brokers:broker
+  env: {}
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:

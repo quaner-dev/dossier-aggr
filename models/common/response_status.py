@@ -15,7 +15,7 @@ class ResponseStatus(SQLModel):
 class ResponseStatusList(SQLModel):
     """GA/T 1400.3-2017 C.25 应答状态对象列表"""
 
-    ResponseStatusObject: ResponseStatus | list[ResponseStatus]
+    ResponseStatusObject: list[ResponseStatus]
 
 
 # 应答状态对象列表结构

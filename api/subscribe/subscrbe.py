@@ -8,6 +8,7 @@ from models import (
     ResponseStatus,
     ResponseStatusListSchema,
     ResponseStatusList,
+    Subscribe,
     SubscribeList,
     SubscribeListSchema,
 )
@@ -115,4 +116,28 @@ async def subscribes_delete(
                 for subscribe_id in subscribe_ids
             ]
         )
+    )
+
+
+@router.put(
+    path=f"{constants.SUBSCRIBES_URL}/{{subscribe_id}}",
+    response_model=ResponseStatus,
+    description="GA/T 1400.4-2017 7.2.20.3 取消订阅",
+)
+async def subscribe_cancel(
+    subscribe_id: str,
+    data: Subscribe,
+    service: Annotated[SubscribeService, Depends(SubscribeService)],
+) -> ResponseStatus:
+    """单条订阅取消接口"""
+    _ = await service.update_subscribe_by_id(
+        subscribe_id=subscribe_id,
+        subscribe=data,
+    )
+    return ResponseStatus(
+        RequestURL=f"{constants.SUBSCRIBES_URL}/{subscribe_id}",
+        StatusCode="0",
+        StatusString="取消订阅成功",
+        Id=subscribe_id,
+        LocalTime=datetime.now(),
     )

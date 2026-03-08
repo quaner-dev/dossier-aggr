@@ -1,14 +1,11 @@
-from datetime import datetime
-
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 import taskiq_fastapi
 
 import brokers
-from models import ResponseStatusList, ResponseStatus
-import exceptions
 import api
+from api.error_handlers import register_exception_handlers
+from observability import setup_observability
 
 # TODO
 # 1. 将K8S中的内容迁移到helm创建的dossier-aggr中
@@ -19,36 +16,6 @@ taskiq_fastapi.init(brokers.broker, "main:app")
 
 
 app = FastAPI(lifespan=brokers.lifespan)
+setup_observability(app)
 app.include_router(api.router)
-
-
-@app.exception_handler(exceptions.DataNotFoundError)
-async def data_not_found_exception_handler(
-    request: Request, exc: exceptions.DataNotFoundError
-) -> JSONResponse:
-    return JSONResponse(
-        content=ResponseStatusList(
-            ResponseStatusObject=ResponseStatus(
-                RequestURL=str(request.url),
-                StatusCode="9",
-                StatusString=exc.detail,
-                LocalTime=datetime.now(),
-            )
-        ).model_dump()
-    )
-
-
-@app.exception_handler(exceptions.DataAlreadyExistsError)
-async def data_already_exists_exception_handler(
-    request: Request, exc: exceptions.DataAlreadyExistsError
-) -> JSONResponse:
-    return JSONResponse(
-        content=ResponseStatusList(
-            ResponseStatusObject=ResponseStatus(
-                RequestURL=str(request.url),
-                StatusCode="9",
-                StatusString=exc.detail,
-                LocalTime=datetime.now(),
-            )
-        ).model_dump()
-    )
+register_exception_handlers(app)

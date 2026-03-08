@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import Depends, Request, APIRouter
 
 import auth
-from models import enums
 
 from models import ResponseStatusList, ResponseStatus, RegisterSchema
 from services import APSService
@@ -12,7 +11,6 @@ import constants
 
 router = APIRouter()
 security = auth.HTTPDigest1400()
-StatusTypeEnum = enums.StatusTypeEnum
 
 
 @router.post(
@@ -31,10 +29,13 @@ async def register(
     _ = await service.update_aps(aps_id=device_id)
 
     # TODO 这里是硬编码，需要后期将输出的方法整体迁移到固定位置，防止反复描述
-    response_status_object = ResponseStatus(
-        RequestURL=str(request.url),
-        StatusCode="0",
-        StatusString="注册成功",
-        LocalTime=datetime.now(),
+    return ResponseStatusList(
+        ResponseStatusObject=[
+            ResponseStatus(
+                RequestURL=str(request.url),
+                StatusCode="0",
+                StatusString="注册成功",
+                LocalTime=datetime.now(),
+            )
+        ]
     )
-    return ResponseStatusList(ResponseStatusObject=response_status_object)

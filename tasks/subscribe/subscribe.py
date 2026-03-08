@@ -1,19 +1,25 @@
 import brokers
-from models import Subscribe
-from sqlmodel.ext.asyncio.session import AsyncSession
-from database import engine
 from collections.abc import Sequence
-import exceptions
-from sqlmodel import select, delete
+
+from models import Subscribe
+from repositories.subscribe.subscribe import (
+    create_subscribes_repo,
+    delete_subscribes_repo,
+    get_subscribe_repo,
+    list_subscribes_repo,
+    update_subscribe_by_id_repo,
+    update_subscribes_repo,
+)
 
 
 async def list_subscribes_task() -> Sequence[Subscribe]:
     """查询所有订阅信息"""
-    async with AsyncSession(engine) as session:
-        subscribes = (await session.exec(select(Subscribe))).all()
-        if not subscribes:
-            raise exceptions.DataNotFoundError(detail="No Subscribe data exist")
-        return subscribes
+    return await list_subscribes_repo()
+
+
+async def get_subscribe_task(subscribe_id: str) -> Subscribe:
+    """根据SubscribeID查询订阅信息"""
+    return await get_subscribe_repo(subscribe_id=subscribe_id)
 
 
 @brokers.broker.task
@@ -21,21 +27,7 @@ async def create_subscribes_task(
     subscribes: list[Subscribe],
 ) -> Sequence[Subscribe]:
     """创建订阅任务"""
-    async with AsyncSession(engine) as session:
-        for subscribe in subscribes:
-            statement = select(Subscribe).where(
-                Subscribe.SubscribeID == subscribe.SubscribeID
-            )
-            if (await session.exec(statement)).first():
-                raise exceptions.DataAlreadyExistsError(
-                    detail=f"{subscribe.SubscribeID} already exists"
-                )
-
-            session.add(subscribe)
-        await session.commit()
-        for subscribe in subscribes:
-            await session.refresh(subscribe)
-    return subscribes
+    return await create_subscribes_repo(subscribes=subscribes)
 
 
 @brokers.broker.task
@@ -43,11 +35,19 @@ async def update_subscribes_task(
     subscribes: list[Subscribe],
 ) -> Sequence[Subscribe]:
     """更新订阅任务"""
-    async with AsyncSession(engine) as session:
-        session.add_all(subscribes)
-        await session.commit()
-        await session.refresh(subscribes)
-    return subscribes
+    return await update_subscribes_repo(subscribes=subscribes)
+
+
+@brokers.broker.task
+async def update_subscribe_by_id_task(
+    subscribe_id: str,
+    subscribe: Subscribe,
+) -> Subscribe:
+    """按订阅ID更新单条订阅信息"""
+    return await update_subscribe_by_id_repo(
+        subscribe_id=subscribe_id,
+        subscribe=subscribe,
+    )
 
 
 @brokers.broker.task
@@ -55,8 +55,4 @@ async def delete_subscribes_task(
     subscribe_ids: list[str],
 ) -> None:
     """删除订阅任务"""
-    async with AsyncSession(engine) as session:
-        _ = await session.exec(
-            delete(Subscribe).where(Subscribe.SubscribeID.in_(subscribe_ids))
-        )
-        await session.commit()
+    await delete_subscribes_repo(subscribe_ids=subscribe_ids)

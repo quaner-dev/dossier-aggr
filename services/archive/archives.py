@@ -1,28 +1,22 @@
-from sqlmodel import select
-
 from models import Archive
-import exceptions
+from repositories.archive.archives import list_archives_repo
+from tasks.archive.archives import (
+    create_archives_task,
+    update_archives_task,
+    delete_archives_task,
+)
+from services.task_dispatch import dispatch_and_wait
 
 
 class ArchiveService:
-    async def list_archives(self):
-        ...
-        # statement = select(Archive).where(**archive_query.model_dump())
-        # archives = (await self.session.exec(statement)).all()
-        # return [Archive.model_validate(archive) for archive in archives]
+    async def list_archives(self) -> list[Archive]:
+        return list(await list_archives_repo())
 
-    async def batch_create_archive(self, archives: list[Archive]):
-        for archive in archives:
-            self.session.add(Archive.model_validate(archive))
+    async def create_archives(self, archives: list[Archive]) -> list[Archive]:
+        return await dispatch_and_wait(create_archives_task, archives=archives)
 
-        await self.session.commit()
+    async def update_archives(self, archives: list[Archive]) -> list[Archive]:
+        return await dispatch_and_wait(update_archives_task, archives=archives)
 
-    async def delete_archive(self, archive_id: str) -> None:
-        """删除档案信息"""
-        statement = select(Archive).where(Archive.ArchiveID == archive_id)
-        db_archive = (await self.session.exec(statement)).first()
-        if not db_archive:
-            raise exceptions.DataNotFoundError(detail=f"{archive_id} not exist")
-
-        await self.session.delete(db_archive)
-        await self.session.commit()
+    async def delete_archives(self, archive_ids: list[str]) -> list[str]:
+        return await dispatch_and_wait(delete_archives_task, archive_ids=archive_ids)

@@ -5,10 +5,16 @@ from .person.person import PersonService
 from .face.face import FaceService
 from .subscribe.subscribe import SubscribeService
 from .subscribe.subscribe_notification import SubscribeNotificationService
+from .system.time import SystemTimeService
 
 from .library.archive_library import ArchiveLibraryService
 from .archive.archives import ArchiveService
 from .archive.archive_subject import ArchiveSubjectService
+from .task.archive_task import ArchiveTaskService
+from .vehicle.vehicle_archive import VehicleArchiveService
+from .vehicle.vehicle_archive_subject import VehicleArchiveSubjectService
+from .verify.archive_confidence import ArchiveConfidenceService
+from .verify.vehicle_archive_confidence import VehicleArchiveConfidenceService
 
 __all__ = [
     "APEService",
@@ -17,7 +23,13 @@ __all__ = [
     "FaceService",
     "PersonService",
     "SubscribeNotificationService",
+    "SystemTimeService",
     "ArchiveService",
     "ArchiveLibraryService",
     "ArchiveSubjectService",
+    "ArchiveTaskService",
+    "VehicleArchiveService",
+    "VehicleArchiveSubjectService",
+    "ArchiveConfidenceService",
+    "VehicleArchiveConfidenceService",
 ]

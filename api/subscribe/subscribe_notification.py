@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 
 from models import (
     ResponseStatusListSchema,
+    SubscribeNotification,
     SubscribeNotificationListSchema,
     ResponseStatus,
     ResponseStatusList,
@@ -45,3 +46,18 @@ async def subscribe_notifications_create(
             ]
         )
     )
+
+
+@router.get(
+    path=f"{constants.SUBSCRIBE_NOTIFICATIONS_URL}/{{notification_id}}",
+    response_model=SubscribeNotification,
+    description="GA/T 1400.4-2017 7.2.21.2 单条通知记录查询",
+)
+async def subscribe_notification_get(
+    notification_id: str,
+    service: Annotated[
+        SubscribeNotificationService, Depends(SubscribeNotificationService)
+    ],
+) -> SubscribeNotification:
+    """单条通知记录查询接口"""
+    return await service.get_subscribe_notification(notification_id=notification_id)

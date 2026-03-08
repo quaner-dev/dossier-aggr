@@ -8,6 +8,7 @@ RABBITMQ_IP: str = os.getenv("RABBITMQ_IP", "localhost")
 RABBITMQ_PORT: str = os.getenv("RABBITMQ_PORT", "5672")
 
 DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///db.sqlite3")
+TASK_RESULT_TIMEOUT_SECONDS: float = float(os.getenv("TASK_RESULT_TIMEOUT_SECONDS", "10"))
 # DATABASE_URL: str = os.getenv(
 #     "DATABASE_URL",
 #     "postgresql+asyncpg://postgres:OKuzbIJowf@127.0.0.1:5432/postgres",

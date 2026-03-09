@@ -8,7 +8,8 @@ from .subscribe import (
 )
 from .subscribe_notification import (
     create_subscribe_notifications_repo,
-    get_subscribe_notification_repo,
+    delete_subscribe_notifications_repo,
+    list_subscribe_notifications_repo,
 )
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "update_subscribes_repo",
     "update_subscribe_by_id_repo",
     "delete_subscribes_repo",
-    "get_subscribe_notification_repo",
+    "list_subscribe_notifications_repo",
     "create_subscribe_notifications_repo",
+    "delete_subscribe_notifications_repo",
 ]

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, Request
 from datetime import datetime
 from typing import Annotated
 from pydantic import BeforeValidator
@@ -18,22 +18,23 @@ router = APIRouter()
 
 
 @router.get(
-    path=constants.ARCHIVE_LIBRARY_QUERY_SYNC_URL,
-    description="GA/T 2350.5-2025 A.5 档案库查询接口",
+    path=constants.ARCHIVE_LIBRARIES_URL,
+    description="GA/T 2350.5-2025 A.5 目标档案库查询接口",
 )
-async def archive_library_query_sync_read(
+async def archive_libraries_query(
+    request: Request,
     service: ArchiveLibraryService = Depends(ArchiveLibraryService),
 ) -> ArchiveLibraryListSchema:
-    libraries = await service.list_archive_libraries()
+    libraries = await service.list_archive_libraries(filters=dict(request.query_params))
     return ArchiveLibraryListSchema(
         ArchiveLibraryListObject=ArchiveLibraryList(ArchiveLibraryObject=libraries)
     )
 
 
 @router.post(
-    path=constants.ARCHIVE_LIBRARY_URL,
+    path=constants.ARCHIVE_LIBRARIES_URL,
     response_model=ResponseStatusListSchema,
-    description="GA/T 2350.5-2025 A.6 档案库增加接口",
+    description="GA/T 2350.5-2025 A.5 目标档案库增加接口",
 )
 async def archive_library_create(
     data: ArchiveLibraryListSchema,
@@ -45,7 +46,7 @@ async def archive_library_create(
         ResponseStatusListObject=ResponseStatusList(
             ResponseStatusObject=[
                 ResponseStatus(
-                    RequestURL=constants.ARCHIVE_LIBRARY_URL,
+                    RequestURL=constants.ARCHIVE_LIBRARIES_URL,
                     StatusCode="0",
                     StatusString="新增成功",
                     Id=library.ArchiveLibraryID,
@@ -58,9 +59,9 @@ async def archive_library_create(
 
 
 @router.put(
-    path=constants.ARCHIVE_LIBRARY_URL,
+    path=constants.ARCHIVE_LIBRARIES_URL,
     response_model=ResponseStatusListSchema,
-    description="GA/T 2350.5-2025 A.7 档案库更新接口",
+    description="GA/T 2350.5-2025 A.5 目标档案库更新接口",
 )
 async def archive_library_update(
     data: ArchiveLibraryListSchema,
@@ -72,7 +73,7 @@ async def archive_library_update(
         ResponseStatusListObject=ResponseStatusList(
             ResponseStatusObject=[
                 ResponseStatus(
-                    RequestURL=constants.ARCHIVE_LIBRARY_URL,
+                    RequestURL=constants.ARCHIVE_LIBRARIES_URL,
                     StatusCode="0",
                     StatusString="修改成功",
                     Id=library.ArchiveLibraryID,
@@ -85,12 +86,12 @@ async def archive_library_update(
 
 
 @router.delete(
-    path=constants.ARCHIVE_LIBRARY_URL,
+    path=constants.ARCHIVE_LIBRARIES_URL,
     response_model=ResponseStatusListSchema,
-    description="GA/T 2350.5-2025 A.8 档案库删除接口",
+    description="GA/T 2350.5-2025 A.5 目标档案库删除接口",
 )
 async def archive_library_delete(
-    id_list: Annotated[list[str], BeforeValidator(parse_id_list)],
+    id_list: Annotated[list[str], BeforeValidator(parse_id_list), Query(alias="IDList")],
     service: ArchiveLibraryService = Depends(ArchiveLibraryService),
 ) -> ResponseStatusListSchema:
     _ = await service.delete_archive_libraries(library_ids=id_list)
@@ -98,7 +99,7 @@ async def archive_library_delete(
         ResponseStatusListObject=ResponseStatusList(
             ResponseStatusObject=[
                 ResponseStatus(
-                    RequestURL=constants.ARCHIVE_LIBRARY_URL,
+                    RequestURL=constants.ARCHIVE_LIBRARIES_URL,
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=library_id,

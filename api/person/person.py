@@ -19,28 +19,16 @@ from services import PersonService
 router = APIRouter()
 
 
-# TODO 这里的问题是当前没有检索条件的输入，需要加入检索条件的问题
 @router.get(
     path=constants.PERSONS_URL,
     response_model=PersonListObjectSchema,
     description="GA/T 1400.4-2017 7.2.11.1 批量人员的查询",
 )
-async def list_persons(
+async def persons_query(
     service: Annotated[PersonService, Depends(PersonService)],
-    person_ids: str | None = None,
-    source_id: str | None = None,
-    device_id: str | None = None,
 ) -> PersonListObjectSchema:
     """批量人员查询接口"""
-    persons = list(await service.list_persons())
-
-    if person_ids:
-        person_id_set = set(parse_id_list(person_ids))
-        persons = [person for person in persons if person.PersonID in person_id_set]
-    if source_id:
-        persons = [person for person in persons if person.SourceID == source_id]
-    if device_id:
-        persons = [person for person in persons if person.DeviceID == device_id]
+    persons = await service.list_persons()
 
     return PersonListObjectSchema(
         PersonListObject=PersonList(PersonObject=[person for person in persons])
@@ -52,7 +40,7 @@ async def list_persons(
     response_model=ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.11.1 批量人员的增加",
 )
-async def create_persons(
+async def persons_create(
     data: PersonListObjectSchema,
     service: Annotated[PersonService, Depends(PersonService)],
 ) -> ResponseStatusListSchema:
@@ -81,7 +69,7 @@ async def create_persons(
     response_model=ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.11.1 批量人员的修改",
 )
-async def update_persons(
+async def persons_update(
     data: PersonListObjectSchema,
     service: Annotated[PersonService, Depends(PersonService)],
 ) -> ResponseStatusListSchema:
@@ -110,7 +98,7 @@ async def update_persons(
     response_model=ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.11.1 批量人员的删除",
 )
-async def delete_persons(
+async def persons_delete(
     service: Annotated[PersonService, Depends(PersonService)],
     person_ids: Annotated[list[str], BeforeValidator(parse_id_list)],
 ) -> ResponseStatusListSchema:
@@ -138,10 +126,52 @@ async def delete_persons(
     response_model=Person,
     description="GA/T 1400.4-2017 7.2.11.2 单个人员的查询",
 )
-async def get_person(
+async def person_query(
     person_id: str,
     service: Annotated[PersonService, Depends(PersonService)],
 ) -> Person:
     """单个人员查询接口"""
     person = await service.get_person(person_id)
     return person
+
+
+@router.put(
+    path=f"{constants.PERSONS_URL}/{{person_id}}",
+    response_model=ResponseStatus,
+    description="GA/T 1400.4-2017 7.2.11.2 单个人员的修改",
+)
+async def person_update(
+    person_id: str,
+    data: Person,
+    service: Annotated[PersonService, Depends(PersonService)],
+) -> ResponseStatus:
+    """单个人员修改接口"""
+    data.PersonID = person_id
+    _ = await service.update_person(data)
+    return ResponseStatus(
+        RequestURL=f"{constants.PERSONS_URL}/{person_id}",
+        StatusCode="0",
+        StatusString="修改成功",
+        Id=person_id,
+        LocalTime=datetime.now(),
+    )
+
+
+@router.delete(
+    path=f"{constants.PERSONS_URL}/{{person_id}}",
+    response_model=ResponseStatus,
+    description="GA/T 1400.4-2017 7.2.11.2 单个人员的删除",
+)
+async def person_delete(
+    person_id: str,
+    service: Annotated[PersonService, Depends(PersonService)],
+) -> ResponseStatus:
+    """单个人员删除接口"""
+    _ = await service.delete_person(person_id)
+    return ResponseStatus(
+        RequestURL=f"{constants.PERSONS_URL}/{person_id}",
+        StatusCode="0",
+        StatusString="删除成功",
+        Id=person_id,
+        LocalTime=datetime.now(),
+    )

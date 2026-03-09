@@ -19,6 +19,7 @@ from .library.archive_library import (
     ArchiveLibraryListSchema,
 )
 from .archive.archive import Archive, ArchiveList, ArchiveListSchema
+from .archive.archive_query import ArchiveQuery, ArchiveQuerySchema
 from .archive.vehicle_archive import (
     VehicleArchive,
     VehicleArchiveList,
@@ -75,6 +76,8 @@ __all__ = [
     "Archive",
     "ArchiveList",
     "ArchiveListSchema",
+    "ArchiveQuery",
+    "ArchiveQuerySchema",
     "VehicleArchive",
     "VehicleArchiveList",
     "VehicleArchiveListSchema",

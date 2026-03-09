@@ -92,20 +92,26 @@ taskiq worker brokers:broker
 | APS 查询 | GET | `/VIID/APSs` | `APSListSchema` 包装 | 已实现 |
 | APE 查询 | GET | `/VIID/APEs` | `APEListSchema` 包装 | 已实现 |
 | APE 更新 | PUT | `/VIID/APEs` | 批量输入与返回状态逐条对齐 | 已实现 |
-| Face 查询 | GET | `/VIID/Faces` | `FaceID` 单条查询，或无 `FaceID` 时返回默认 `TOP100` 列表 | 已实现 |
+| Face 查询（批量） | GET | `/VIID/Faces` | 返回默认 `TOP100` 列表 | 已实现 |
+| Face 查询（单条） | GET | `/VIID/Faces/{face_id}` | 路径参数单查，返回 `Face` 对象 | 已实现 |
+| Face 修改（单条） | PUT | `/VIID/Faces/{face_id}` | 路径参数单条修改，返回 `ResponseStatus` | 已实现 |
+| Face 删除（单条） | DELETE | `/VIID/Faces/{face_id}` | 路径参数单条删除，返回 `ResponseStatus` | 已实现 |
 | Face 增删改 | POST/PUT/DELETE | `/VIID/Faces` | 写后可查、响应 `ResponseStatusListSchema` | 已实现 |
-| Person 查询 | GET | `/VIID/Persons` | 列表包装与字段完整性 | 已实现 |
+| Person 查询 | GET | `/VIID/Persons` | 返回默认 `TOP100` 列表 | 已实现 |
 | Person 单查 | GET | `/VIID/Persons/{person_id}` | 单对象返回 | 已实现 |
+| Person 修改（单条） | PUT | `/VIID/Persons/{person_id}` | 路径参数单条修改，返回 `ResponseStatus` | 已实现 |
+| Person 删除（单条） | DELETE | `/VIID/Persons/{person_id}` | 路径参数单条删除，返回 `ResponseStatus` | 已实现 |
 | Person 增删改 | POST/PUT/DELETE | `/VIID/Persons` | 批量状态回包、删除参数解析 | 已实现 |
 | Subscribe 增删改查 | GET/POST/PUT/DELETE | `/VIID/Subscribes` | 时间格式、唯一约束、状态回包 | 已实现 |
 | Subscribe 单条取消 | PUT | `/VIID/Subscribes/{subscribe_id}` | 路径参数与 `Subscribe` 负载一致性、`ResponseStatus` 回包 | 已实现 |
 | SubscribeNotification 新增 | POST | `/VIID/SubscribeNotifications` | 通知对象批量写入与状态回包 | 已实现 |
-| SubscribeNotification 单查 | GET | `/VIID/SubscribeNotifications/{notification_id}` | 单条通知对象查询 | 已实现 |
-| ArchiveLibrary | GET/POST/PUT/DELETE | `/VIID/ArchiveLibraryQuerySync`、`/VIID/ArchiveLibraries` | 批量查询/增改删与状态回包 | 已实现（A.5 主链路） |
-| ArchiveTask | GET/POST/PUT/DELETE | `/VIAS/Tasks` | 任务批量查询/增改删与状态回包 | 已实现（A.6 主链路） |
+| SubscribeNotification 查询 | GET | `/VIID/SubscribeNotifications` | 通知对象批量查询与列表包装 | 已实现 |
+| SubscribeNotification 删除 | DELETE | `/VIID/SubscribeNotifications` | `IDList` 批量删除与状态回包 | 已实现 |
+| ArchiveLibrary | GET/POST/PUT/DELETE | `/VIID/ArchiveLibraries` | 批量查询/增改删与状态回包；GET 支持 `ArchiveLibrary` 属性键值对查询，DELETE 使用 `IDList` | 已实现（A.5 主链路） |
+| ArchiveTask | - | `/VIAS/Tasks` | 按当前交付范围省略，不在 OpenAPI 中暴露，也不纳入回归测试 | 未实现 |
 | Archive | GET/POST/PUT/DELETE | `/VIID/ArchivesQuerySync`、`/VIID/Archives` | 查询结果包装、批量增改删状态回包 | 已实现（A.9/A.10 主链路） |
-| VehicleArchive | GET/POST/PUT/DELETE | `/VIID/VehicleArchivesQuerySync`、`/VIID/VehicleArchives` | 车辆档案查询与批量增改删状态回包 | 已实现（A.11/A.12 主链路） |
-| ArchiveSubject | POST/PUT/DELETE | `/VIID/ArchiveSubjectQuerySync`、`/VIID/ArchiveSubjects` | 明细查询与批量增改删状态回包 | 已实现（A.13/A.14 主链路） |
+| VehicleArchive | POST/POST/PUT/DELETE | `/VIID/VehicleArchivesQuerySync`、`/VIID/VehicleArchives` | `POST /VIID/VehicleArchivesQuerySync` 使用 `ArchiveQuery` 查询并返回 `ArchiveQueryResult`；`DELETE /VIID/VehicleArchives` 使用 `IDList` | 已实现（A.11/A.12 主链路） |
+| ArchiveSubject | POST/PUT/DELETE | `/VIID/ArchiveSubjectQuerySync`、`/VIID/ArchiveSubjects` | 明细查询与批量增改删状态回包；删除仅按 `ArchiveID` | 已实现（A.13/A.14 主链路） |
 | VehicleArchiveSubject | POST/PUT/DELETE | `/VIID/VehicleArchiveSubjectQuerySync`、`/VIID/VehicleArchiveSubjects` | 车辆明细查询与批量增改删状态回包 | 已实现（A.15/A.16 主链路） |
 | ArchiveConfidence | POST | `/VIID/ArchiveConfidence` | 人员档案核验状态回包 | 已实现（A.17 主链路） |
 | VehicleArchiveConfidence | POST | `/VIID/VehicleArchiveConfidence` | 车辆档案核验状态回包 | 已实现（A.18 主链路） |

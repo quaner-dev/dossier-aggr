@@ -43,6 +43,11 @@ def _sample_subjects() -> list[ArchiveSubject]:
     ]
 
 
+async def _cleanup_subjects_by_id(archive_ids: list[str]) -> None:
+    for archive_id in archive_ids:
+        await delete_archive_subjects_repo(archive_id=archive_id)
+
+
 async def _wait_until(predicate, timeout_seconds: float = 5.0, interval_seconds: float = 0.05):
     deadline = asyncio.get_running_loop().time() + timeout_seconds
     while asyncio.get_running_loop().time() < deadline:
@@ -56,16 +61,10 @@ def test_async_write_is_eventually_visible_after_taskiq_dispatch():
     async def _run():
         await brokers.broker.startup()
         try:
-            await delete_archive_subjects_repo(
-                archive_id=None,
-                face_id_list=None,
-                person_id_list=None,
-                motor_vehicle_id_list=None,
-                non_motor_vehicle_id_list=None,
-            )
-
             service = ArchiveSubjectService()
             subjects = _sample_subjects()
+            archive_ids = [subject.ArchiveID for subject in subjects]
+            await _cleanup_subjects_by_id(archive_ids)
 
             # Create path uses .kiq asynchronous dispatch.
             _ = await service.create_archive_subjects(subjects=subjects)
@@ -80,13 +79,7 @@ def test_async_write_is_eventually_visible_after_taskiq_dispatch():
 
             assert await _wait_until(_is_visible, timeout_seconds=5.0)
         finally:
-            await delete_archive_subjects_repo(
-                archive_id=None,
-                face_id_list=None,
-                person_id_list=None,
-                motor_vehicle_id_list=None,
-                non_motor_vehicle_id_list=None,
-            )
+            await _cleanup_subjects_by_id(["AS-E2E-001", "AS-E2E-002"])
             await brokers.broker.shutdown()
 
     asyncio.run(_run())

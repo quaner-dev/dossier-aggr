@@ -1,7 +1,8 @@
 import asyncio
+from types import SimpleNamespace
 
 from api.library.archive_library import (
-    archive_library_query_sync_read,
+    archive_libraries_query,
     archive_library_create,
     archive_library_update,
     archive_library_delete,
@@ -20,9 +21,17 @@ class _FakeArchiveLibraryService:
         self.created_with: list[ArchiveLibrary] | None = None
         self.updated_with: list[ArchiveLibrary] | None = None
         self.deleted_with: list[str] | None = None
+        self.query_filters: dict[str, str] | None = None
 
-    async def list_archive_libraries(self):
-        return self._libraries
+    async def list_archive_libraries(self, filters: dict[str, str] | None = None):
+        self.query_filters = filters or {}
+        if not filters:
+            return self._libraries
+        return [
+            library
+            for library in self._libraries
+            if all(str(getattr(library, field)) == value for field, value in filters.items())
+        ]
 
     async def create_archive_libraries(self, libraries: list[ArchiveLibrary]):
         self.created_with = libraries
@@ -54,15 +63,20 @@ def _sample_libraries() -> list[ArchiveLibrary]:
     ]
 
 
-def test_archive_library_query_sync_read_returns_list_schema():
+def test_archive_libraries_query_returns_list_schema():
     async def _run():
         libraries = _sample_libraries()
         fake = _FakeArchiveLibraryService(libraries)
+        request = SimpleNamespace(query_params={"ArchiveLibraryID": "LIB-001"})
 
-        res = await archive_library_query_sync_read(service=as_service(fake))
+        res = await archive_libraries_query(request=request, service=as_service(fake))
 
-        assert res.ArchiveLibraryListObject.ArchiveLibraryObject[0].ArchiveLibraryID == "LIB-001"
-        assert len(res.ArchiveLibraryListObject.ArchiveLibraryObject) == 2
+        assert (
+            res.ArchiveLibraryListObject.ArchiveLibraryObject[0].ArchiveLibraryID
+            == "LIB-001"
+        )
+        assert len(res.ArchiveLibraryListObject.ArchiveLibraryObject) == 1
+        assert fake.query_filters == {"ArchiveLibraryID": "LIB-001"}
 
     asyncio.run(_run())
 
@@ -78,7 +92,8 @@ def test_archive_library_create_update_delete_return_status_list():
         create_res = await archive_library_create(data=payload, service=as_service(fake))
         update_res = await archive_library_update(data=payload, service=as_service(fake))
         delete_res = await archive_library_delete(
-            id_list=["LIB-001", "LIB-002"], service=as_service(fake)
+            id_list=["LIB-001", "LIB-002"],
+            service=as_service(fake),
         )
 
         create_status = as_status_list(

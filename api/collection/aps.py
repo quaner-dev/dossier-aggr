@@ -17,7 +17,7 @@ router = APIRouter()
     response_model=APSListSchema,
     description="GA/T 1400.4-2017 7.2.6 采集系统查询",
 )
-async def list_aps(
+async def apss_query(
     service: Annotated[APSService, Depends(APSService)],
 ) -> APSListSchema:
     """查询所有APS信息"""

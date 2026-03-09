@@ -1,7 +1,7 @@
 import asyncio
 
 from api.archive.archives import (
-    archives_query_sync_read,
+    archives_query_sync,
     archives_create,
     archives_update,
     archives_delete,
@@ -60,12 +60,12 @@ def _sample_archives() -> list[Archive]:
     ]
 
 
-def test_archives_query_sync_read_returns_query_result_schema():
+def test_archives_query_sync_returns_query_result_schema():
     async def _run():
         archives = _sample_archives()
         fake = _FakeArchiveService(archives)
 
-        res = await archives_query_sync_read(service=as_service(fake))
+        res = await archives_query_sync(service=as_service(fake))
 
         assert res.ArchiveQueryResultObject.TotalNum == 2
         assert (

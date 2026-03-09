@@ -10,7 +10,6 @@ from .system.time import SystemTimeService
 from .library.archive_library import ArchiveLibraryService
 from .archive.archives import ArchiveService
 from .archive.archive_subject import ArchiveSubjectService
-from .task.archive_task import ArchiveTaskService
 from .vehicle.vehicle_archive import VehicleArchiveService
 from .vehicle.vehicle_archive_subject import VehicleArchiveSubjectService
 from .verify.archive_confidence import ArchiveConfidenceService
@@ -27,7 +26,6 @@ __all__ = [
     "ArchiveService",
     "ArchiveLibraryService",
     "ArchiveSubjectService",
-    "ArchiveTaskService",
     "VehicleArchiveService",
     "VehicleArchiveSubjectService",
     "ArchiveConfidenceService",

@@ -1,5 +1,8 @@
-from models import VehicleArchive
-from repositories.vehicle.vehicle_archive import list_vehicle_archives_repo
+from models import ArchiveQuery, VehicleArchive
+from repositories.vehicle.vehicle_archive import (
+    list_vehicle_archives_repo,
+    query_vehicle_archives_repo,
+)
 from tasks.vehicle.vehicle_archive import (
     create_vehicle_archives_task,
     update_vehicle_archives_task,
@@ -9,6 +12,9 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class VehicleArchiveService:
+    async def query_vehicle_archives(self, query: ArchiveQuery) -> list[VehicleArchive]:
+        return list(await query_vehicle_archives_repo(query=query))
+
     async def list_vehicle_archives(self) -> list[VehicleArchive]:
         return list(await list_vehicle_archives_repo())
 

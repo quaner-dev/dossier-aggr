@@ -1,25 +1,21 @@
 import asyncio
 
-from models import APE, APS, Archive, ArchiveLibrary, VehicleArchive
+from models import APE, APS, Archive, ArchiveLibrary, ArchiveQuery, VehicleArchive
 from models.common import enums
-from models.task.archive_task import ArchiveTask
 from services.archive.archives import ArchiveService
 from services.collection.ape import APEService
 from services.collection.aps import APSService
 from services.library.archive_library import ArchiveLibraryService
-from services.task.archive_task import ArchiveTaskService
 from services.vehicle.vehicle_archive import VehicleArchiveService
 import services.archive.archives as archive_service_module
 import services.collection.ape as ape_service_module
 import services.collection.aps as aps_service_module
 import services.library.archive_library as library_service_module
-import services.task.archive_task as task_service_module
 import services.vehicle.vehicle_archive as vehicle_service_module
 import tasks.archive.archives as archive_task_module
 import tasks.collection.ape as ape_task_module
 import tasks.collection.aps as aps_task_module
 import tasks.library.archive_library as library_task_module
-import tasks.task.archive_task as task_task_module
 import tasks.vehicle.vehicle_archive as vehicle_task_module
 from tests.type_helpers import dt
 
@@ -83,18 +79,6 @@ def _sample_archive() -> Archive:
     )
 
 
-def _sample_archive_task() -> ArchiveTask:
-    return ArchiveTask(
-        TaskID="T-LAYER-001",
-        TaskName="task-layer",
-        ArchiveLibraryID="LIB-LAYER-001",
-        EventType="1",
-        Status="Active",
-        CreateTime=dt("20260101120000"),
-        UpdateTime=dt("20260101120000"),
-    )
-
-
 def _sample_vehicle_archive() -> VehicleArchive:
     return VehicleArchive(
         ArchiveID="VA-LAYER-001",
@@ -113,14 +97,12 @@ def test_services_sync_reads_use_repositories(monkeypatch):
         ape = _sample_ape()
         library = _sample_library()
         archive = _sample_archive()
-        task = _sample_archive_task()
         vehicle_archive = _sample_vehicle_archive()
         called = {
             "aps_repo": False,
             "ape_repo": False,
             "library_repo": False,
             "archive_repo": False,
-            "task_repo": False,
             "vehicle_repo": False,
         }
 
@@ -132,20 +114,18 @@ def test_services_sync_reads_use_repositories(monkeypatch):
             called["ape_repo"] = True
             return [ape]
 
-        async def fake_list_archive_libraries_repo():
+        async def fake_list_archive_libraries_repo(filters: dict[str, str] | None = None):
             called["library_repo"] = True
+            assert filters == {"ArchiveLibraryID": "LIB-LAYER-001"}
             return [library]
 
         async def fake_list_archives_repo():
             called["archive_repo"] = True
             return [archive]
 
-        async def fake_list_archive_tasks_repo():
-            called["task_repo"] = True
-            return [task]
-
-        async def fake_list_vehicle_archives_repo():
+        async def fake_query_vehicle_archives_repo(query: ArchiveQuery):
             called["vehicle_repo"] = True
+            assert query.QueryID == "Q-VA-LAYER-001"
             return [vehicle_archive]
 
         monkeypatch.setattr(
@@ -164,30 +144,26 @@ def test_services_sync_reads_use_repositories(monkeypatch):
             archive_service_module, "list_archives_repo", fake_list_archives_repo, raising=False
         )
         monkeypatch.setattr(
-            task_service_module,
-            "list_archive_tasks_repo",
-            fake_list_archive_tasks_repo,
-            raising=False,
-        )
-        monkeypatch.setattr(
             vehicle_service_module,
-            "list_vehicle_archives_repo",
-            fake_list_vehicle_archives_repo,
+            "query_vehicle_archives_repo",
+            fake_query_vehicle_archives_repo,
             raising=False,
         )
 
         aps_res = await APSService().list_apss()
         ape_res = await APEService().list_apes()
-        library_res = await ArchiveLibraryService().list_archive_libraries()
+        library_res = await ArchiveLibraryService().list_archive_libraries(
+            {"ArchiveLibraryID": "LIB-LAYER-001"}
+        )
         archive_res = await ArchiveService().list_archives()
-        task_res = await ArchiveTaskService().list_archive_tasks()
-        vehicle_res = await VehicleArchiveService().list_vehicle_archives()
+        vehicle_res = await VehicleArchiveService().query_vehicle_archives(
+            ArchiveQuery(QueryID="Q-VA-LAYER-001")
+        )
 
         assert aps_res[0].ApsID == "APS-LAYER-001"
         assert ape_res[0].ApeID == "APE-LAYER-001"
         assert library_res[0].ArchiveLibraryID == "LIB-LAYER-001"
         assert archive_res[0].ArchiveID == "A-LAYER-001"
-        assert task_res[0].TaskID == "T-LAYER-001"
         assert vehicle_res[0].ArchiveID == "VA-LAYER-001"
         assert all(called.values())
 
@@ -225,7 +201,6 @@ def test_tasks_delegate_to_repositories(monkeypatch):
         ape = _sample_ape()
         library = _sample_library()
         archive = _sample_archive()
-        task = _sample_archive_task()
         vehicle_archive = _sample_vehicle_archive()
         called = {
             "aps_list_repo": False,
@@ -236,8 +211,6 @@ def test_tasks_delegate_to_repositories(monkeypatch):
             "library_delete_repo": False,
             "archive_list_repo": False,
             "archive_delete_repo": False,
-            "task_list_repo": False,
-            "task_delete_repo": False,
             "vehicle_list_repo": False,
             "vehicle_delete_repo": False,
         }
@@ -278,15 +251,6 @@ def test_tasks_delegate_to_repositories(monkeypatch):
             assert archive_ids == ["A-LAYER-001"]
             return archive_ids
 
-        async def fake_list_archive_tasks_repo():
-            called["task_list_repo"] = True
-            return [task]
-
-        async def fake_delete_archive_tasks_repo(task_ids: list[str]):
-            called["task_delete_repo"] = True
-            assert task_ids == ["T-LAYER-001"]
-            return task_ids
-
         async def fake_list_vehicle_archives_repo():
             called["vehicle_list_repo"] = True
             return [vehicle_archive]
@@ -326,18 +290,6 @@ def test_tasks_delegate_to_repositories(monkeypatch):
             raising=False,
         )
         monkeypatch.setattr(
-            task_task_module,
-            "list_archive_tasks_repo",
-            fake_list_archive_tasks_repo,
-            raising=False,
-        )
-        monkeypatch.setattr(
-            task_task_module,
-            "delete_archive_tasks_repo",
-            fake_delete_archive_tasks_repo,
-            raising=False,
-        )
-        monkeypatch.setattr(
             vehicle_task_module,
             "list_vehicle_archives_repo",
             fake_list_vehicle_archives_repo,
@@ -362,10 +314,6 @@ def test_tasks_delegate_to_repositories(monkeypatch):
         archive_delete_res = await archive_task_module.delete_archives_task.original_func(
             ["A-LAYER-001"]
         )
-        task_list_res = await task_task_module.list_archive_tasks_task()
-        task_delete_res = await task_task_module.delete_archive_tasks_task.original_func(
-            ["T-LAYER-001"]
-        )
         vehicle_list_res = await vehicle_task_module.list_vehicle_archives_task()
         vehicle_delete_res = await vehicle_task_module.delete_vehicle_archives_task.original_func(
             ["VA-LAYER-001"]
@@ -379,8 +327,6 @@ def test_tasks_delegate_to_repositories(monkeypatch):
         assert library_delete_res == ["LIB-LAYER-001"]
         assert archive_list_res[0].ArchiveID == "A-LAYER-001"
         assert archive_delete_res == ["A-LAYER-001"]
-        assert task_list_res[0].TaskID == "T-LAYER-001"
-        assert task_delete_res == ["T-LAYER-001"]
         assert vehicle_list_res[0].ArchiveID == "VA-LAYER-001"
         assert vehicle_delete_res == ["VA-LAYER-001"]
         assert all(called.values())

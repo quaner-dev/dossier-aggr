@@ -1,6 +1,6 @@
 import asyncio
 
-from api.collection.ape import list_apes, update_apes
+from api.collection.ape import apes_query, apes_update
 from models import APE, APEList, APEListSchema
 from models.common import enums
 from tests.type_helpers import as_service, as_status_list
@@ -68,11 +68,11 @@ def _sample_apes() -> list[APE]:
     ]
 
 
-def test_list_apes_returns_list():
+def test_apes_query_returns_list():
     async def _run():
         apes = _sample_apes()
         fake = _FakeAPEService(apes)
-        res = await list_apes(service=as_service(fake))
+        res = await apes_query(service=as_service(fake))
 
         assert res.APEListObject.APEObject[0].ApeID == "APE-001"
         assert len(res.APEListObject.APEObject) == 2
@@ -80,13 +80,13 @@ def test_list_apes_returns_list():
     asyncio.run(_run())
 
 
-def test_update_apes_returns_status_list():
+def test_apes_update_returns_status_list():
     async def _run():
         apes = _sample_apes()
         fake = _FakeAPEService(apes)
         payload = APEListSchema(APEListObject=APEList(APEObject=apes))
 
-        res = await update_apes(data=payload, service=as_service(fake))
+        res = await apes_update(data=payload, service=as_service(fake))
 
         status_obj = as_status_list(res.ResponseStatusListObject.ResponseStatusObject)
         assert len(status_obj) == 2

@@ -5,7 +5,9 @@ from .face.face import (
     create_face_task,
     create_faces_task,
     update_face_task,
+    update_faces_task,
     delete_face_task,
+    delete_faces_task,
 )
 from .person.person import (
     get_person_task,
@@ -28,7 +30,8 @@ from .subscribe.subscribe import (
 )
 from .subscribe.subscribe_notification import (
     create_subscribe_notifications_task,
-    get_subscribe_notification_task,
+    delete_subscribe_notifications_task,
+    list_subscribe_notifications_task,
 )
 from .library.archive_library import (
     list_archive_libraries_task,
@@ -47,12 +50,6 @@ from .archive.archive_subject import (
     create_archive_subjects_task,
     update_archive_subjects_task,
     delete_archive_subjects_task,
-)
-from .task.archive_task import (
-    list_archive_tasks_task,
-    create_archive_tasks_task,
-    update_archive_tasks_task,
-    delete_archive_tasks_task,
 )
 from .vehicle.vehicle_archive import (
     list_vehicle_archives_task,
@@ -81,7 +78,9 @@ __all__ = [
     "create_face_task",
     "create_faces_task",
     "update_face_task",
+    "update_faces_task",
     "delete_face_task",
+    "delete_faces_task",
     # Person
     "get_person_task",
     "list_persons_task",
@@ -100,7 +99,8 @@ __all__ = [
     "delete_subscribes_task",
     # Subscribe Notification
     "create_subscribe_notifications_task",
-    "get_subscribe_notification_task",
+    "list_subscribe_notifications_task",
+    "delete_subscribe_notifications_task",
     # Archive Library
     "list_archive_libraries_task",
     "create_archive_libraries_task",
@@ -115,11 +115,6 @@ __all__ = [
     "create_archive_subjects_task",
     "update_archive_subjects_task",
     "delete_archive_subjects_task",
-    # Archive Task
-    "list_archive_tasks_task",
-    "create_archive_tasks_task",
-    "update_archive_tasks_task",
-    "delete_archive_tasks_task",
     # Vehicle Archive
     "list_vehicle_archives_task",
     "create_vehicle_archives_task",

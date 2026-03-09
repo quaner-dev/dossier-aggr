@@ -112,36 +112,37 @@ def test_subscribe_service_sync_reads_use_repository(monkeypatch):
 def test_subscribe_notification_service_sync_read_uses_repository(monkeypatch):
     async def _run():
         notification = _sample_notification()
-        called = {"get": False}
+        called = {"list": False}
 
-        async def fake_get_repo(notification_id: str):
-            called["get"] = True
-            assert notification_id == "N-LAYER-001"
-            return notification
+        async def fake_list_repo(filters: dict[str, str] | None = None):
+            called["list"] = True
+            assert filters == {"NotificationID": "N-LAYER-001"}
+            return [notification]
 
         monkeypatch.setattr(
             notification_service_module,
-            "get_subscribe_notification_repo",
-            fake_get_repo,
+            "list_subscribe_notifications_repo",
+            fake_list_repo,
             raising=False,
         )
         # Service sync-read path should not call task layer.
         monkeypatch.setattr(
             notification_service_module,
-            "get_subscribe_notification_task",
+            "list_subscribe_notifications_task",
             lambda *args, **kwargs: (_ for _ in ()).throw(
-                AssertionError("get_subscribe_notification_task should not be called")
+                AssertionError("list_subscribe_notifications_task should not be called")
             ),
             raising=False,
         )
 
         service = SubscribeNotificationService()
         res = await asyncio.wait_for(
-            service.get_subscribe_notification("N-LAYER-001"), timeout=1
+            service.list_subscribe_notifications({"NotificationID": "N-LAYER-001"}),
+            timeout=1,
         )
 
-        assert called["get"] is True
-        assert res.NotificationID == "N-LAYER-001"
+        assert called["list"] is True
+        assert res[0].NotificationID == "N-LAYER-001"
 
     asyncio.run(_run())
 
@@ -150,7 +151,12 @@ def test_subscribe_tasks_delegate_to_repository(monkeypatch):
     async def _run():
         subscribe = _sample_subscribe()
         notification = _sample_notification()
-        called = {"list_subscribe": False, "get_subscribe": False, "get_notification": False}
+        called = {
+            "list_subscribe": False,
+            "get_subscribe": False,
+            "list_notification": False,
+            "delete_notification": False,
+        }
 
         async def fake_list_repo():
             called["list_subscribe"] = True
@@ -161,10 +167,15 @@ def test_subscribe_tasks_delegate_to_repository(monkeypatch):
             assert subscribe_id == "S-LAYER-001"
             return subscribe
 
-        async def fake_get_notification_repo(notification_id: str):
-            called["get_notification"] = True
-            assert notification_id == "N-LAYER-001"
-            return notification
+        async def fake_list_notification_repo(filters: dict[str, str] | None = None):
+            called["list_notification"] = True
+            assert filters == {"NotificationID": "N-LAYER-001"}
+            return [notification]
+
+        async def fake_delete_notification_repo(notification_ids: list[str]):
+            called["delete_notification"] = True
+            assert notification_ids == ["N-LAYER-001"]
+            return notification_ids
 
         monkeypatch.setattr(
             subscribe_task_module, "list_subscribes_repo", fake_list_repo, raising=False
@@ -174,8 +185,14 @@ def test_subscribe_tasks_delegate_to_repository(monkeypatch):
         )
         monkeypatch.setattr(
             notification_task_module,
-            "get_subscribe_notification_repo",
-            fake_get_notification_repo,
+            "list_subscribe_notifications_repo",
+            fake_list_notification_repo,
+            raising=False,
+        )
+        monkeypatch.setattr(
+            notification_task_module,
+            "delete_subscribe_notifications_repo",
+            fake_delete_notification_repo,
             raising=False,
         )
         # Task layer should delegate to repositories, not open DB sessions directly.
@@ -203,15 +220,25 @@ def test_subscribe_tasks_delegate_to_repository(monkeypatch):
             subscribe_task_module.get_subscribe_task("S-LAYER-001"), timeout=1
         )
         n_res = await asyncio.wait_for(
-            notification_task_module.get_subscribe_notification_task("N-LAYER-001"),
+            notification_task_module.list_subscribe_notifications_task(
+                {"NotificationID": "N-LAYER-001"}
+            ),
+            timeout=1,
+        )
+        delete_notification_res = await asyncio.wait_for(
+            notification_task_module.delete_subscribe_notifications_task.original_func(
+                notification_ids=["N-LAYER-001"]
+            ),
             timeout=1,
         )
 
         assert called["list_subscribe"] is True
         assert called["get_subscribe"] is True
-        assert called["get_notification"] is True
+        assert called["list_notification"] is True
+        assert called["delete_notification"] is True
         assert list_res[0].SubscribeID == "S-LAYER-001"
         assert get_res.SubscribeID == "S-LAYER-001"
-        assert n_res.NotificationID == "N-LAYER-001"
+        assert n_res[0].NotificationID == "N-LAYER-001"
+        assert delete_notification_res == ["N-LAYER-001"]
 
     asyncio.run(_run())

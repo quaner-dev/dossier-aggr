@@ -9,8 +9,10 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class ArchiveLibraryService:
-    async def list_archive_libraries(self) -> list[ArchiveLibrary]:
-        return list(await list_archive_libraries_repo())
+    async def list_archive_libraries(
+        self, filters: dict[str, str] | None = None
+    ) -> list[ArchiveLibrary]:
+        return list(await list_archive_libraries_repo(filters=filters))
 
     async def create_archive_libraries(
         self, libraries: list[ArchiveLibrary]

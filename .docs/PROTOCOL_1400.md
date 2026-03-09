@@ -24,13 +24,14 @@
 - 7.2.5 采集设备查询/修改
 - 7.2.6 采集系统查询
 - 7.2.11.1 批量人员增删改查
-- 7.2.11.2 单个人员查询
+- 7.2.11.2 单个人员查询/修改/删除
 - 7.2.12.1 批量人脸增删改查
+- 7.2.12.2 单个人脸查询/修改/删除
 - 7.2.20.1 批量订阅创建
 - 7.2.20.2 订阅查询/更新/删除
 - 7.2.20.3 取消订阅
 - 7.2.21.1 通知消息
-- 7.2.21.2 单条通知记录查询
+- 7.2.21.2 通知记录查询/删除
 
 ### 2.2 GA/T 1400.3-2017（对象）
 
@@ -116,17 +117,22 @@
 
 | 方法 | 路径 | 请求模型 | 响应模型 | 说明 |
 | --- | --- | --- | --- | --- |
-| GET | `/VIID/Persons` | 可选查询参数 `person_ids`/`source_id`/`device_id` | `PersonListObjectSchema` | 批量人员查询 |
+| GET | `/VIID/Persons` | 无 | `PersonListObjectSchema` | 批量人员查询（默认 `TOP100` 列表） |
 | POST | `/VIID/Persons` | `PersonListObjectSchema` | `ResponseStatusListSchema` | 批量人员增加 |
 | PUT | `/VIID/Persons` | `PersonListObjectSchema` | `ResponseStatusListSchema` | 批量人员修改 |
 | DELETE | `/VIID/Persons` | `person_ids`（逗号分隔或列表） | `ResponseStatusListSchema` | 批量人员删除 |
 | GET | `/VIID/Persons/{person_id}` | 路径参数 `person_id` | `Person` | 单个人员查询 |
+| PUT | `/VIID/Persons/{person_id}` | 路径参数 `person_id` + `Person` | `ResponseStatus` | 单个人员修改 |
+| DELETE | `/VIID/Persons/{person_id}` | 路径参数 `person_id` | `ResponseStatus` | 单个人员删除 |
 
 ## 4.4 Face
 
 | 方法 | 路径 | 请求模型 | 响应模型 | 说明 |
 | --- | --- | --- | --- | --- |
-| GET | `/VIID/Faces` | 当前实现仅支持 `FaceID` 单条查询，或无 `FaceID` 时返回默认 `TOP100` 列表；未开放其他 Face 属性过滤键 | `FaceListObjectSchema` | 人脸查询 |
+| GET | `/VIID/Faces` | 无 | `FaceListObjectSchema` | 批量人脸查询（默认 `TOP100` 列表） |
+| GET | `/VIID/Faces/{face_id}` | 路径参数 `face_id` | `Face` | 单个人脸查询 |
+| PUT | `/VIID/Faces/{face_id}` | 路径参数 `face_id` + `Face` | `ResponseStatus` | 单个人脸修改 |
+| DELETE | `/VIID/Faces/{face_id}` | 路径参数 `face_id` | `ResponseStatus` | 单个人脸删除 |
 | POST | `/VIID/Faces` | `FaceListObjectSchema` | `ResponseStatusListSchema` | 批量人脸增加 |
 | PUT | `/VIID/Faces` | `FaceListObjectSchema` | `ResponseStatusListSchema` | 批量人脸修改 |
 | DELETE | `/VIID/Faces` | `id_list`（逗号分隔） | `ResponseStatusListSchema` | 批量人脸删除 |
@@ -146,7 +152,8 @@
 | 方法 | 路径 | 请求模型 | 响应模型 | 说明 |
 | --- | --- | --- | --- | --- |
 | POST | `/VIID/SubscribeNotifications` | `SubscribeNotificationListSchema` | `ResponseStatusListSchema` | 通知消息上报 |
-| GET | `/VIID/SubscribeNotifications/{notification_id}` | 路径参数 `notification_id` | `SubscribeNotification` | 单条通知记录查询 |
+| GET | `/VIID/SubscribeNotifications` | `SubscribeNotification` 属性键值对（查询字符串） | `SubscribeNotificationListSchema` | 通知记录批量查询 |
+| DELETE | `/VIID/SubscribeNotifications` | `IDList`（逗号分隔） | `ResponseStatusListSchema` | 通知记录批量删除 |
 
 ## 5. 对象契约（摘要）
 

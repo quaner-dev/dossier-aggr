@@ -1,11 +1,14 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BeforeValidator
 
 import constants
 from models import (
+    ArchiveQueryResult,
+    ArchiveQueryResultSchema,
+    ArchiveQuerySchema,
     ResponseStatus,
     ResponseStatusList,
     ResponseStatusListSchema,
@@ -18,17 +21,28 @@ from utils import parse_id_list
 router = APIRouter()
 
 
-@router.get(
+@router.post(
     path=constants.VEHICLE_ARCHIVES_QUERY_SYNC_URL,
     description="GA/T 2350.5-2025 A.11 车辆档案查询接口",
 )
-async def vehicle_archives_query_sync_read(
+async def vehicle_archives_query_sync(
+    data: ArchiveQuerySchema,
     service: Annotated[VehicleArchiveService, Depends(VehicleArchiveService)],
-) -> VehicleArchiveListSchema:
-    archives = await service.list_vehicle_archives()
-    return VehicleArchiveListSchema(
-        VehicleArchiveListObject=VehicleArchiveList(
-            VehicleArchiveObject=[archive for archive in archives]
+) -> ArchiveQueryResultSchema:
+    query = data.ArchiveQueryObject
+    archives = await service.query_vehicle_archives(query=query)
+    record_start_no = query.RecordStartNo or 0
+    record_limit = query.PageRecordNum or query.MaxNumRecordReturn or len(archives)
+    page_archives = archives[record_start_no : record_start_no + record_limit]
+    return ArchiveQueryResultSchema(
+        ArchiveQueryResultObject=ArchiveQueryResult(
+            QueryID=query.QueryID,
+            RecordStartNo=record_start_no,
+            PageRecordNum=len(page_archives),
+            TotalNum=len(archives),
+            VehicleArchiveListObject=VehicleArchiveList(
+                VehicleArchiveObject=[archive for archive in page_archives]
+            ),
         )
     )
 
@@ -93,10 +107,12 @@ async def vehicle_archives_update(
     description="GA/T 2350.5-2025 A.12 车辆档案删除接口",
 )
 async def vehicle_archives_delete(
-    archive_ids: Annotated[list[str], BeforeValidator(parse_id_list)],
+    id_list: Annotated[
+        list[str], BeforeValidator(parse_id_list), Query(alias="IDList")
+    ],
     service: Annotated[VehicleArchiveService, Depends(VehicleArchiveService)],
 ):
-    _ = await service.delete_vehicle_archives(archive_ids=archive_ids)
+    _ = await service.delete_vehicle_archives(archive_ids=id_list)
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
             ResponseStatusObject=[
@@ -107,7 +123,7 @@ async def vehicle_archives_delete(
                     Id=archive_id,
                     LocalTime=datetime.now(),
                 )
-                for archive_id in archive_ids
+                for archive_id in id_list
             ]
         )
     )

@@ -15,7 +15,6 @@ from .subscribe.subscribe_notification import router as subscribe_notification_r
 from .library.archive_library import router as archive_library_router
 from .archive.archives import router as archives_router
 from .archive.archive_subject import router as archive_subject_router
-from .task.archive_task import router as archive_task_router
 from .vehicle.vehicle_archive import router as vehicle_archive_router
 from .vehicle.vehicle_archive_subject import router as vehicle_archive_subject_router
 from .verify.archive_confidence import router as archive_confidence_router
@@ -39,7 +38,6 @@ router.include_router(subscribe_notification_router)
 router.include_router(archive_library_router)
 router.include_router(archives_router)
 router.include_router(archive_subject_router)
-router.include_router(archive_task_router)
 router.include_router(vehicle_archive_router)
 router.include_router(vehicle_archive_subject_router)
 router.include_router(archive_confidence_router)

@@ -1,11 +1,13 @@
 import asyncio
 
 from api.person.person import (
-    list_persons,
-    create_persons,
-    update_persons,
-    delete_persons,
-    get_person,
+    persons_query,
+    persons_create,
+    persons_update,
+    persons_delete,
+    person_query,
+    person_update,
+    person_delete,
 )
 from models import Person, PersonList, PersonListObjectSchema
 from models.common import enums
@@ -36,6 +38,14 @@ class _FakePersonService:
     async def delete_persons(self, person_ids: list[str]):
         self.deleted_with = person_ids
         return person_ids
+
+    async def update_person(self, person: Person):
+        self.updated_with = [person]
+        return person
+
+    async def delete_person(self, person_id: str):
+        self.deleted_with = [person_id]
+        return person_id
 
 
 def _sample_persons() -> list[Person]:
@@ -70,8 +80,8 @@ def test_persons_query_and_get_return_expected_schema():
         persons = _sample_persons()
         fake = _FakePersonService(persons)
 
-        list_res = await list_persons(service=as_service(fake))
-        one_res = await get_person(person_id="P-001", service=as_service(fake))
+        list_res = await persons_query(service=as_service(fake))
+        one_res = await person_query(person_id="P-001", service=as_service(fake))
 
         assert len(list_res.PersonListObject.PersonObject) == 2
         assert list_res.PersonListObject.PersonObject[0].PersonID == "P-001"
@@ -86,9 +96,9 @@ def test_persons_create_update_delete_return_status_list():
         fake = _FakePersonService(persons)
         payload = PersonListObjectSchema(PersonListObject=PersonList(PersonObject=persons))
 
-        create_res = await create_persons(data=payload, service=as_service(fake))
-        update_res = await update_persons(data=payload, service=as_service(fake))
-        delete_res = await delete_persons(
+        create_res = await persons_create(data=payload, service=as_service(fake))
+        update_res = await persons_update(data=payload, service=as_service(fake))
+        delete_res = await persons_delete(
             service=as_service(fake), person_ids=["P-001", "P-002"]
         )
 
@@ -115,5 +125,35 @@ def test_persons_create_update_delete_return_status_list():
         assert fake.updated_with is not None
         assert len(fake.updated_with) == 2
         assert fake.deleted_with == ["P-001", "P-002"]
+
+    asyncio.run(_run())
+
+
+def test_person_update_delete_return_status():
+    async def _run():
+        persons = _sample_persons()
+        fake = _FakePersonService(persons)
+        payload = persons[0]
+
+        update_res = await person_update(
+            person_id="P-001",
+            data=payload,
+            service=as_service(fake),
+        )
+        delete_res = await person_delete(
+            person_id="P-001",
+            service=as_service(fake),
+        )
+
+        assert update_res.StatusCode == "0"
+        assert update_res.Id == "P-001"
+        assert update_res.RequestURL.endswith("/VIID/Persons/P-001")
+        assert delete_res.StatusCode == "0"
+        assert delete_res.Id == "P-001"
+        assert delete_res.RequestURL.endswith("/VIID/Persons/P-001")
+        assert fake.updated_with is not None
+        assert len(fake.updated_with) == 1
+        assert fake.updated_with[0].PersonID == "P-001"
+        assert fake.deleted_with == ["P-001"]
 
     asyncio.run(_run())

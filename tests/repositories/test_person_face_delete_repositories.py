@@ -36,6 +36,9 @@ class _FakeResult:
     def first(self):
         return self._obj
 
+    def all(self):
+        return self._obj
+
 
 class _FakeAsyncSession:
     def __init__(self, found_obj):
@@ -59,6 +62,44 @@ class _FakeAsyncSession:
 
     async def commit(self):
         self.committed = True
+
+
+def test_list_persons_repo_orders_and_limits_without_not_found(monkeypatch):
+    async def _run():
+        expected = [_sample_person("P-002"), _sample_person("P-001")]
+        fake_session = _FakeAsyncSession(found_obj=expected)
+        monkeypatch.setattr(person_repo, "AsyncSession", lambda _engine: fake_session)
+
+        result = await person_repo.list_persons_repo()
+
+        assert result == expected
+        assert fake_session.statement is not None
+        statement_text = str(fake_session.statement)
+        assert "ORDER BY" in statement_text
+        assert "PersonID" in statement_text
+        assert "LIMIT" in statement_text
+        assert "ASC" not in statement_text
+
+    asyncio.run(_run())
+
+
+def test_list_faces_repo_orders_and_limits_without_explicit_asc(monkeypatch):
+    async def _run():
+        expected = [_sample_face("F-002"), _sample_face("F-001")]
+        fake_session = _FakeAsyncSession(found_obj=expected)
+        monkeypatch.setattr(face_repo, "AsyncSession", lambda _engine: fake_session)
+
+        result = await face_repo.list_faces_repo()
+
+        assert result == expected
+        assert fake_session.statement is not None
+        statement_text = str(fake_session.statement)
+        assert "ORDER BY" in statement_text
+        assert "FaceID" in statement_text
+        assert "LIMIT" in statement_text
+        assert "ASC" not in statement_text
+
+    asyncio.run(_run())
 
 
 def test_delete_person_repo_deletes_by_person_id(monkeypatch):

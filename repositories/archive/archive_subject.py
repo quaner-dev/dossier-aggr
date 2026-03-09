@@ -79,38 +79,16 @@ async def update_archive_subjects_repo(
 
 
 async def delete_archive_subjects_repo(
-    archive_id: str | None,
-    face_id_list: list[str] | None,
-    person_id_list: list[str] | None,
-    motor_vehicle_id_list: list[str] | None,
-    non_motor_vehicle_id_list: list[str] | None,
+    archive_id: str,
 ) -> list[str]:
-    # ArchiveSubject has no vehicle id fields; keep params for protocol compatibility.
-    _ = motor_vehicle_id_list, non_motor_vehicle_id_list
-
     await _ensure_table()
     async with AsyncSession(engine) as session:
-        all_subjects = (await session.exec(select(ArchiveSubject))).all()
+        statement = select(ArchiveSubject).where(ArchiveSubject.ArchiveID == archive_id)
+        subject = (await session.exec(statement)).first()
 
-        face_ids = set(face_id_list or [])
-        person_ids = set(person_id_list or [])
-
-        def _matched(subject: ArchiveSubject) -> bool:
-            if archive_id and subject.ArchiveID != archive_id:
-                return False
-            if face_ids and not face_ids.intersection(subject.FaceIDList or []):
-                return False
-            if person_ids and not person_ids.intersection(subject.PersonIDList or []):
-                return False
-            return True
-
-        matched_subjects = [subject for subject in all_subjects if _matched(subject)]
-        deleted_ids = [subject.ArchiveID for subject in matched_subjects]
-
-        for subject in matched_subjects:
+        if subject:
             await session.delete(subject)
-
-        if matched_subjects:
             await session.commit()
+            return [archive_id]
 
-    return deleted_ids
+    return []

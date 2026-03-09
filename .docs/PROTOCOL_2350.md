@@ -80,7 +80,6 @@
 补充说明（1400 复用路径同步）：
 
 - `/VIID/Subscribes/{subscribe_id}`
-- `/VIID/SubscribeNotifications/{notification_id}`
 - `/VIID/System/Time`
 
 ### 3.2 字段命名与包装
@@ -106,16 +105,16 @@
 
 | 条款 | URL | 当前仓库状态 |
 | --- | --- | --- |
-| A.5 | `/VIID/ArchiveLibraries` | 已实现（ArchiveLibrary 主链路） |
-| A.6 | `/VIAS/Tasks` | 已实现（ArchiveTask 主链路） |
+| A.5 | `/VIID/ArchiveLibraries` | 已实现（同一路径承载批量 GET/POST/PUT/DELETE；GET 支持 `ArchiveLibrary` 属性键值对查询，DELETE 使用 `IDList`） |
+| A.6 | `/VIAS/Tasks` | 未实现（当前交付范围不包含 VIAS 接口） |
 | A.7 | `/VIID/Subscribes` | 复用 1400 路由（含 2350 复用能力） |
 | A.8 | `/VIID/SubscribeNotifications` | 复用 1400 路由（含 2350 复用能力） |
 | A.9 | `/VIID/ArchivesQuerySync` | 已实现（Archive 查询主链路） |
 | A.10 | `/VIID/Archives` | 已实现（Archive 增改删主链路） |
-| A.11 | `/VIID/VehicleArchivesQuerySync` | 已实现（VehicleArchive 查询主链路） |
-| A.12 | `/VIID/VehicleArchives` | 已实现（VehicleArchive 增改删主链路） |
+| A.11 | `/VIID/VehicleArchivesQuerySync` | 已实现（`POST` + `<ArchiveQuery>` -> `<ArchiveQueryResult>` 的 VehicleArchive 查询主链路） |
+| A.12 | `/VIID/VehicleArchives` | 已实现（VehicleArchive 批量增改删主链路；DELETE 使用 `IDList`） |
 | A.13 | `/VIID/ArchiveSubjectQuerySync` | 已实现（ArchiveSubject 查询主链路） |
-| A.14 | `/VIID/ArchiveSubjects` | 已实现（ArchiveSubject 增改删主链路） |
+| A.14 | `/VIID/ArchiveSubjects` | 已实现（ArchiveSubject 增改删主链路；删除仅按 `ArchiveID`） |
 | A.15 | `/VIID/VehicleArchiveSubjectQuerySync` | 已实现（VehicleArchiveSubject 查询主链路） |
 | A.16 | `/VIID/VehicleArchiveSubjects` | 已实现（VehicleArchiveSubject 增改删主链路） |
 | A.17 | `/VIID/ArchiveConfidence` | 已实现（人员档案核验主链路） |
@@ -163,8 +162,9 @@
 
 ## 8. 当前代码待定项（TBD）
 
-当前条款均已具备接口主链路实现；后续增强点为：
+除 A.6 按当前交付范围省略外，其余条款已具备接口主链路实现；后续增强点为：
 
+- A.6 `/VIAS/Tasks` 当前明确不纳入本服务实现范围
 - A.7/A.8 已增加复用路由与关键字段约束测试（`tests/protocol/test_2350_routes.py`、`tests/protocol/test_2350_subscribe_contract.py`），仍可继续细化附录扩展字段语义
 - A.13/A.14 与 A.15/A.16 已切换为 SQLModel 持久化仓储实现，后续可补充更多跨域一致性与性能回归
 

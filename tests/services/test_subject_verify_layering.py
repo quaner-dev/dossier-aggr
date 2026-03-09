@@ -176,19 +176,9 @@ def test_subject_verify_tasks_delegate_to_repositories(monkeypatch):
             assert len(subjects) == 1
             return subjects
 
-        async def fake_delete_archive_subjects_repo(
-            archive_id: str | None,
-            face_id_list: list[str] | None,
-            person_id_list: list[str] | None,
-            motor_vehicle_id_list: list[str] | None,
-            non_motor_vehicle_id_list: list[str] | None,
-        ):
+        async def fake_delete_archive_subjects_repo(archive_id: str):
             called["archive_delete_repo"] = True
             assert archive_id == "AS-LAYER-001"
-            assert face_id_list == ["F-001"]
-            assert person_id_list == ["P-001"]
-            assert motor_vehicle_id_list is None
-            assert non_motor_vehicle_id_list is None
             return ["AS-LAYER-001"]
 
         async def fake_query_vehicle_archive_subjects_repo():
@@ -294,10 +284,6 @@ def test_subject_verify_tasks_delegate_to_repositories(monkeypatch):
         )
         archive_delete_res = await archive_subject_task_module.delete_archive_subjects_task.original_func(
             archive_id="AS-LAYER-001",
-            face_id_list=["F-001"],
-            person_id_list=["P-001"],
-            motor_vehicle_id_list=None,
-            non_motor_vehicle_id_list=None,
         )
 
         vehicle_query_res = await vehicle_subject_task_module.query_vehicle_archive_subjects_task()

@@ -3,14 +3,50 @@ from typing import Any, cast
 
 import exceptions
 from database import engine
-from models import VehicleArchive
+from models import ArchiveQuery, VehicleArchive
 from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 async def list_vehicle_archives_repo() -> Sequence[VehicleArchive]:
+    return await query_vehicle_archives_repo(query=None)
+
+
+async def query_vehicle_archives_repo(
+    query: ArchiveQuery | None,
+) -> Sequence[VehicleArchive]:
     async with AsyncSession(engine) as session:
-        archives = (await session.exec(select(VehicleArchive))).all()
+        statement = select(VehicleArchive)
+        fields = query.Fields if query else None
+        if fields:
+            if fields.ArchiveLibraryID:
+                statement = statement.where(
+                    VehicleArchive.ArchiveLibraryID == fields.ArchiveLibraryID
+                )
+            if fields.ArchiveIDList:
+                statement = statement.where(
+                    cast(Any, VehicleArchive.ArchiveID).in_(fields.ArchiveIDList)
+                )
+            if fields.PlateNos:
+                statement = statement.where(
+                    cast(Any, VehicleArchive.PlateNo).in_(
+                        [plate.strip() for plate in fields.PlateNos.split(",") if plate.strip()]
+                    )
+                )
+            if fields.PlateColor is not None:
+                statement = statement.where(VehicleArchive.PlateColor == fields.PlateColor)
+            if fields.VehicleClass:
+                statement = statement.where(VehicleArchive.VehicleClass == fields.VehicleClass)
+            if fields.VehicleBrand is not None:
+                statement = statement.where(VehicleArchive.VehicleBrand == fields.VehicleBrand)
+            if fields.VehicleModel:
+                statement = statement.where(VehicleArchive.VehicleModel == fields.VehicleModel)
+            if fields.VehicleColor is not None:
+                statement = statement.where(VehicleArchive.VehicleColor == fields.VehicleColor)
+            if fields.VehicleStyles:
+                statement = statement.where(VehicleArchive.VehicleStyles == fields.VehicleStyles)
+
+        archives = (await session.exec(statement)).all()
         if not archives:
             raise exceptions.DataNotFoundError(detail="No VehicleArchive data exist")
         return archives

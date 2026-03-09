@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field
 
 from .archive import ArchiveList
+from .vehicle_archive import VehicleArchiveList
 
 
 class ArchiveQueryResult(SQLModel):
@@ -11,7 +12,12 @@ class ArchiveQueryResult(SQLModel):
     PageRecordNum: int = Field(description="本页返回记录数")
     TotalNum: int = Field(description="符合条件记录总数")
 
-    ArchiveListObject: ArchiveList = Field(description="人员结果档案对象列表")
+    ArchiveListObject: ArchiveList | None = Field(
+        default=None, description="人员结果档案对象列表"
+    )
+    VehicleArchiveListObject: VehicleArchiveList | None = Field(
+        default=None, description="车辆结果档案对象列表"
+    )
 
 
 # 档案查询结果对象结构

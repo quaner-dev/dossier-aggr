@@ -1,17 +1,19 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, Request
+from pydantic import BeforeValidator
 
 from models import (
     ResponseStatusListSchema,
-    SubscribeNotification,
+    SubscribeNotificationList,
     SubscribeNotificationListSchema,
     ResponseStatus,
     ResponseStatusList,
 )
 import constants
 from services import SubscribeNotificationService
+from utils import parse_id_list
 
 router = APIRouter()
 
@@ -49,15 +51,51 @@ async def subscribe_notifications_create(
 
 
 @router.get(
-    path=f"{constants.SUBSCRIBE_NOTIFICATIONS_URL}/{{notification_id}}",
-    response_model=SubscribeNotification,
-    description="GA/T 1400.4-2017 7.2.21.2 单条通知记录查询",
+    path=constants.SUBSCRIBE_NOTIFICATIONS_URL,
+    response_model=SubscribeNotificationListSchema,
+    description="GA/T 1400.4-2017 7.2.21.2 通知记录查询",
 )
-async def subscribe_notification_get(
-    notification_id: str,
+async def subscribe_notifications_query(
+    request: Request,
     service: Annotated[
         SubscribeNotificationService, Depends(SubscribeNotificationService)
     ],
-) -> SubscribeNotification:
-    """单条通知记录查询接口"""
-    return await service.get_subscribe_notification(notification_id=notification_id)
+) -> SubscribeNotificationListSchema:
+    """批量通知记录查询接口"""
+    filters = dict(request.query_params)
+    notifications = await service.list_subscribe_notifications(filters=filters)
+    return SubscribeNotificationListSchema(
+        SubscribeNotificationListObject=SubscribeNotificationList(
+            SubscribeNotificationObject=notifications
+        )
+    )
+
+
+@router.delete(
+    path=constants.SUBSCRIBE_NOTIFICATIONS_URL,
+    response_model=ResponseStatusListSchema,
+    description="GA/T 1400.4-2017 7.2.21.2 通知记录删除",
+)
+async def subscribe_notifications_delete(
+    service: Annotated[
+        SubscribeNotificationService, Depends(SubscribeNotificationService)
+    ],
+    id_list: Annotated[list[str], BeforeValidator(parse_id_list), Query(alias="IDList")],
+) -> ResponseStatusListSchema:
+    notification_ids = await service.delete_subscribe_notifications(
+        notification_ids=id_list
+    )
+    return ResponseStatusListSchema(
+        ResponseStatusListObject=ResponseStatusList(
+            ResponseStatusObject=[
+                ResponseStatus(
+                    RequestURL=constants.SUBSCRIBE_NOTIFICATIONS_URL,
+                    StatusCode="0",
+                    StatusString="删除成功",
+                    Id=notification_id,
+                    LocalTime=datetime.now(),
+                )
+                for notification_id in notification_ids
+            ]
+        )
+    )

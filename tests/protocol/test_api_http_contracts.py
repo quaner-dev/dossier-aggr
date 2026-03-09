@@ -23,6 +23,12 @@ class _FakePersonService:
                 return person
         raise exceptions.DataNotFoundError(detail=f"{person_id} not exist")
 
+    async def update_person(self, person: Person):
+        return person
+
+    async def delete_person(self, person_id: str):
+        return person_id
+
 
 class _FakeFaceService:
     def __init__(self, faces: list[Face]):
@@ -36,6 +42,12 @@ class _FakeFaceService:
 
     async def list_faces(self):
         return self._faces[:100]
+
+    async def update_face(self, face: Face):
+        return face
+
+    async def delete_face(self, face_id: str):
+        return face_id
 
 
 def _sample_persons() -> list[Person]:
@@ -108,6 +120,21 @@ def test_person_detail_route_and_error_contract_via_http():
                 assert ok.status_code == 200
                 assert ok.json()["PersonID"] == "P-HTTP-001"
 
+                person_payload = _sample_persons()[0].model_dump(mode="json")
+                person_payload["SourceID"] = "SRC-P-001-UPDATED"
+                update_res = await client.put(
+                    "/VIID/Persons/P-HTTP-001",
+                    json=person_payload,
+                )
+                assert update_res.status_code == 200
+                assert update_res.json()["StatusCode"] == "0"
+                assert update_res.json()["Id"] == "P-HTTP-001"
+
+                delete_res = await client.delete("/VIID/Persons/P-HTTP-001")
+                assert delete_res.status_code == 200
+                assert delete_res.json()["StatusCode"] == "0"
+                assert delete_res.json()["Id"] == "P-HTTP-001"
+
                 not_found = await client.get("/VIID/Persons/P-HTTP-404")
                 assert not_found.status_code == 404
                 body = not_found.json()
@@ -128,7 +155,7 @@ def test_person_detail_route_and_error_contract_via_http():
     asyncio.run(_run())
 
 
-def test_person_face_query_filters_via_http():
+def test_person_face_query_routes_via_http():
     async def _run():
         async def _person_dep() -> _FakePersonService:
             return _FakePersonService(_sample_persons())
@@ -150,8 +177,8 @@ def test_person_face_query_filters_via_http():
                 )
                 assert person_res.status_code == 200
                 person_items = person_res.json()["PersonListObject"]["PersonObject"]
-                assert len(person_items) == 1
-                assert person_items[0]["PersonID"] == "P-HTTP-002"
+                assert len(person_items) == 2
+                assert person_items[0]["PersonID"] == "P-HTTP-001"
 
                 face_list_res = await client.get("/VIID/Faces")
                 assert face_list_res.status_code == 200
@@ -160,13 +187,25 @@ def test_person_face_query_filters_via_http():
                 assert face_items[0]["FaceID"] == "F-HTTP-001"
 
                 face_get_res = await client.get(
-                    "/VIID/Faces",
-                    params={"FaceID": "F-HTTP-001"},
+                    "/VIID/Faces/F-HTTP-001",
                 )
                 assert face_get_res.status_code == 200
-                face_get_items = face_get_res.json()["FaceListObject"]["FaceObject"]
-                assert len(face_get_items) == 1
-                assert face_get_items[0]["FaceID"] == "F-HTTP-001"
+                assert face_get_res.json()["FaceID"] == "F-HTTP-001"
+
+                face_payload = _sample_faces()[0].model_dump(mode="json")
+                face_payload["SourceID"] = "SRC-F-001-UPDATED"
+                face_update_res = await client.put(
+                    "/VIID/Faces/F-HTTP-001",
+                    json=face_payload,
+                )
+                assert face_update_res.status_code == 200
+                assert face_update_res.json()["StatusCode"] == "0"
+                assert face_update_res.json()["Id"] == "F-HTTP-001"
+
+                face_delete_res = await client.delete("/VIID/Faces/F-HTTP-001")
+                assert face_delete_res.status_code == 200
+                assert face_delete_res.json()["StatusCode"] == "0"
+                assert face_delete_res.json()["Id"] == "F-HTTP-001"
         finally:
             app.dependency_overrides.pop(PersonService, None)
             app.dependency_overrides.pop(FaceService, None)

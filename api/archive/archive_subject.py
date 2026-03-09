@@ -14,7 +14,6 @@ from models import (
     ResponseStatus,
 )
 from services import ArchiveSubjectService
-from utils import parse_id_list
 
 router = APIRouter()
 
@@ -23,7 +22,7 @@ router = APIRouter()
     path=constants.ARCHIVE_SUBJECT_QUERY_SYNC_URL,
     description="GA/T 2350.5-2025 A.13 人员档案明细查询接口",
 )
-async def archive_subject_query_sync_read(
+async def archive_subject_query_sync(
     service: Annotated[ArchiveSubjectService, Depends(ArchiveSubjectService)],
 ) -> ArchiveSubjectQueryResultSchema:
     subjects = await service.query_archive_subjects()
@@ -99,29 +98,10 @@ async def archive_subjects_update(
     description="GA/T 2350.5-2025 A.14 人员档案明细删除接口",
 )
 async def archive_subjects_delete(
-    archive_id: str | None = None,
-    face_id_list: str | list[str] | None = None,
-    person_id_list: str | list[str] | None = None,
-    motor_vehicle_id_list: str | list[str] | None = None,
-    non_motor_vehicle_id_list: str | list[str] | None = None,
+    archive_id: str,
     service: ArchiveSubjectService = Depends(ArchiveSubjectService),
 ) -> ResponseStatusListSchema:
-    parsed_face_ids = parse_id_list(face_id_list) if face_id_list else None
-    parsed_person_ids = parse_id_list(person_id_list) if person_id_list else None
-    parsed_motor_vehicle_ids = (
-        parse_id_list(motor_vehicle_id_list) if motor_vehicle_id_list else None
-    )
-    parsed_non_motor_vehicle_ids = (
-        parse_id_list(non_motor_vehicle_id_list) if non_motor_vehicle_id_list else None
-    )
-
-    deleted_ids = await service.delete_archive_subjects(
-        archive_id=archive_id,
-        face_id_list=parsed_face_ids,
-        person_id_list=parsed_person_ids,
-        motor_vehicle_id_list=parsed_motor_vehicle_ids,
-        non_motor_vehicle_id_list=parsed_non_motor_vehicle_ids,
-    )
+    deleted_ids = await service.delete_archive_subjects(archive_id=archive_id)
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(

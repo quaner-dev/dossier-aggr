@@ -39,7 +39,7 @@ Client
 - `services/` 承担校验与业务编排；同步读优先调用 `repositories`，异步写通过 `tasks` 投递。
 - `repositories/` 承担数据访问逻辑（`AsyncSession(engine)`、`select/delete`、持久化异常语义）。
 - `tasks/` 作为异步入口层，任务函数委托 `repositories` 执行实际数据访问。
-- `face` 查询链路中，`api/face/face.py` 仅判断是否传入 `FaceID`；`FaceService` 负责单查/列表读取编排；`repositories/face/face.py` 负责按 `FaceID` 单查与默认 `TOP100` 列表读取。
+- `face` / `person` 查询链路中，API 层仅负责单资源与列表资源路由分发；`FaceService` / `PersonService` 负责单查/列表读取编排；`repositories/face/face.py` / `repositories/person/person.py` 负责按主键单查与默认 `TOP100` 列表读取。
 
 ## 4. 启动与生命周期
 
@@ -66,7 +66,9 @@ Client
 
 - `GET /VIID/System/Time` -> `SystemTimeService.get_system_time()`
 - `GET /VIID/Subscribes/{subscribe_id}` -> `SubscribeService.get_subscribe()` -> `get_subscribe_repo()`
-- `GET /VIID/SubscribeNotifications/{notification_id}` -> `SubscribeNotificationService.get_subscribe_notification()` -> `get_subscribe_notification_repo()`
+- `GET /VIID/SubscribeNotifications` -> `SubscribeNotificationService.list_subscribe_notifications()` -> `list_subscribe_notifications_repo()`
+- `GET /VIID/ArchiveLibraries` -> `ArchiveLibraryService.list_archive_libraries(filters)` -> `list_archive_libraries_repo(filters)`
+- `POST /VIID/VehicleArchivesQuerySync` -> `VehicleArchiveService.query_vehicle_archives(query)` -> `query_vehicle_archives_repo(query)`
 
 ### 5.2 异步写入链路
 
@@ -106,15 +108,15 @@ Client
 | 系统注册/保活/注销/系统时间 | `api/system/*.py` | `APSService` + `SystemTimeService` | `update_aps_task` | 已实现 |
 | 采集系统 APS | `api/collection/aps.py` | `APSService` | `repositories/collection/aps.py` + `tasks/collection/aps.py` | 已实现（读走 repository，写走 task） |
 | 采集设备 APE | `api/collection/ape.py` | `APEService` | `repositories/collection/ape.py` + `tasks/collection/ape.py` | 已实现（读走 repository，写走 task） |
-| 人脸 Face | `api/face/face.py` | `FaceService` | `repositories/face/face.py` + `tasks/face/face.py` | 已实现（读走 repository，写走 task；`GET /VIID/Faces` 支持 `FaceID` 单查与默认 `TOP100` 列表） |
-| 人员 Person | `api/person/person.py` | `PersonService` | `repositories/person/person.py` + `tasks/person/person.py` | 已实现（读走 repository，写走 task） |
+| 人脸 Face | `api/face/face.py` | `FaceService` | `repositories/face/face.py` + `tasks/face/face.py` | 已实现（读走 repository，写走 task；批量接口 `/VIID/Faces` 与单条接口 `/VIID/Faces/{face_id}` 分离，单条支持 GET/PUT/DELETE） |
+| 人员 Person | `api/person/person.py` | `PersonService` | `repositories/person/person.py` + `tasks/person/person.py` | 已实现（读走 repository，写走 task；批量接口 `/VIID/Persons` 返回默认 `TOP100` 列表，与单条接口 `/VIID/Persons/{person_id}` 分离，单条支持 GET/PUT/DELETE） |
 | 订阅 Subscribe | `api/subscribe/subscrbe.py` | `SubscribeService` | `repositories/subscribe/subscribe.py` + `tasks/subscribe/subscribe.py` | 已实现（读走 repository，写走 task） |
-| 订阅通知 | `api/subscribe/subscribe_notification.py` | `SubscribeNotificationService` | `repositories/subscribe/subscribe_notification.py` + `tasks/subscribe/subscribe_notification.py` | 已实现（读走 repository，写走 task） |
-| 档案库 ArchiveLibrary | `api/library/archive_library.py` | `ArchiveLibraryService` | `repositories/library/archive_library.py` + `tasks/library/archive_library.py` | 已实现（A.5 主链路；读走 repository，写走 task） |
-| 聚档任务 ArchiveTask | `api/task/archive_task.py` | `ArchiveTaskService` | `repositories/task/archive_task.py` + `tasks/task/archive_task.py` | 已实现（A.6 主链路；读走 repository，写走 task） |
+| 订阅通知 | `api/subscribe/subscribe_notification.py` | `SubscribeNotificationService` | `repositories/subscribe/subscribe_notification.py` + `tasks/subscribe/subscribe_notification.py` | 已实现（批量查询走 repository，批量新增/删除走 task） |
+| 档案库 ArchiveLibrary | `api/library/archive_library.py` | `ArchiveLibraryService` | `repositories/library/archive_library.py` + `tasks/library/archive_library.py` | 已实现（A.5 主链路；`GET /VIID/ArchiveLibraries` 读走 repository，POST/PUT/DELETE 走 task） |
+| 聚档任务 ArchiveTask | - | - | - | 未实现（A.6 `/VIAS/Tasks` 按当前交付范围省略） |
 | 档案 Archive | `api/archive/archives.py` | `ArchiveService` | `repositories/archive/archives.py` + `tasks/archive/archives.py` | 已实现（A.9/A.10 主链路；读走 repository，写走 task） |
-| 车辆档案 VehicleArchive | `api/vehicle/vehicle_archive.py` | `VehicleArchiveService` | `repositories/vehicle/vehicle_archive.py` + `tasks/vehicle/vehicle_archive.py` | 已实现（A.11/A.12 主链路；读走 repository，写走 task） |
-| 档案明细 ArchiveSubject | `api/archive/archive_subject.py` | `ArchiveSubjectService` | `repositories/archive/archive_subject.py` + `tasks/archive/archive_subject.py` | 已实现（A.13/A.14 主链路；读走 repository，写走 task） |
+| 车辆档案 VehicleArchive | `api/vehicle/vehicle_archive.py` | `VehicleArchiveService` | `repositories/vehicle/vehicle_archive.py` + `tasks/vehicle/vehicle_archive.py` | 已实现（A.11/A.12 主链路；`POST /VIID/VehicleArchivesQuerySync` 读走 repository，POST/PUT/DELETE `/VIID/VehicleArchives` 走 task） |
+| 档案明细 ArchiveSubject | `api/archive/archive_subject.py` | `ArchiveSubjectService` | `repositories/archive/archive_subject.py` + `tasks/archive/archive_subject.py` | 已实现（A.13/A.14 主链路；读走 repository，写走 task；删除仅按 `ArchiveID`） |
 | 车辆档案明细 VehicleArchiveSubject | `api/vehicle/vehicle_archive_subject.py` | `VehicleArchiveSubjectService` | `repositories/vehicle/vehicle_archive_subject.py` + `tasks/vehicle/vehicle_archive_subject.py` | 已实现（A.15/A.16 主链路；读走 repository，写走 task） |
 | 档案核验 Confidence | `api/verify/*.py` | `ArchiveConfidenceService` / `VehicleArchiveConfidenceService` | `repositories/verify/*.py` + `tasks/verify/*.py` | 已实现（A.17/A.18 主链路；service 同步核验走 repository） |
 
@@ -187,7 +189,6 @@ Client
   - `tests/test_api_subscribe_notification.py`
   - `tests/test_api_system.py`
   - `tests/test_api_archive_library.py`
-  - `tests/test_api_archive_task.py`
   - `tests/test_api_archives.py`
   - `tests/test_api_vehicle_archive.py`
   - `tests/test_api_archive_subject.py`

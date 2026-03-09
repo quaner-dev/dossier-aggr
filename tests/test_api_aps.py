@@ -1,6 +1,6 @@
 import asyncio
 
-from api.collection.aps import list_aps
+from api.collection.aps import apss_query
 from models import APS
 from models.common import enums
 from tests.type_helpers import as_service
@@ -35,12 +35,12 @@ def _sample_apss() -> list[APS]:
     ]
 
 
-def test_list_aps_returns_list():
+def test_apss_query_returns_list():
     async def _run():
         apss = _sample_apss()
         fake = _FakeAPSService(apss)
 
-        res = await list_aps(service=as_service(fake))
+        res = await apss_query(service=as_service(fake))
 
         assert len(res.APSListObject.APSObject) == 2
         assert res.APSListObject.APSObject[0].ApsID == "APS-001"

@@ -1,12 +1,18 @@
 import asyncio
 
 from api.vehicle.vehicle_archive import (
-    vehicle_archives_query_sync_read,
+    vehicle_archives_query_sync,
     vehicle_archives_create,
     vehicle_archives_update,
     vehicle_archives_delete,
 )
-from models import VehicleArchive, VehicleArchiveList, VehicleArchiveListSchema
+from models import (
+    ArchiveQuery,
+    ArchiveQuerySchema,
+    VehicleArchive,
+    VehicleArchiveList,
+    VehicleArchiveListSchema,
+)
 from tests.type_helpers import as_service, as_status_list, dt
 
 
@@ -16,8 +22,10 @@ class _FakeVehicleArchiveService:
         self.created_with: list[VehicleArchive] | None = None
         self.updated_with: list[VehicleArchive] | None = None
         self.deleted_with: list[str] | None = None
+        self.queried_with: ArchiveQuery | None = None
 
-    async def list_vehicle_archives(self):
+    async def query_vehicle_archives(self, query: ArchiveQuery):
+        self.queried_with = query
         return self._archives
 
     async def create_vehicle_archives(self, archives: list[VehicleArchive]):
@@ -56,14 +64,30 @@ def _sample_vehicle_archives() -> list[VehicleArchive]:
     ]
 
 
-def test_vehicle_archive_query_returns_list_schema():
+def test_vehicle_archive_query_returns_query_result_schema():
     async def _run():
         archives = _sample_vehicle_archives()
         fake = _FakeVehicleArchiveService(archives)
+        payload = ArchiveQuerySchema(
+            ArchiveQueryObject=ArchiveQuery(
+                QueryID="Q-VA-001",
+                RecordStartNo=0,
+                PageRecordNum=10,
+            )
+        )
 
-        res = await vehicle_archives_query_sync_read(service=as_service(fake))
-        assert res.VehicleArchiveListObject.VehicleArchiveObject[0].ArchiveID == "VA-001"
-        assert len(res.VehicleArchiveListObject.VehicleArchiveObject) == 2
+        res = await vehicle_archives_query_sync(data=payload, service=as_service(fake))
+        assert res.ArchiveQueryResultObject.QueryID == "Q-VA-001"
+        assert (
+            res.ArchiveQueryResultObject.VehicleArchiveListObject.VehicleArchiveObject[0].ArchiveID
+            == "VA-001"
+        )
+        assert (
+            len(res.ArchiveQueryResultObject.VehicleArchiveListObject.VehicleArchiveObject)
+            == 2
+        )
+        assert fake.queried_with is not None
+        assert fake.queried_with.QueryID == "Q-VA-001"
 
     asyncio.run(_run())
 
@@ -79,7 +103,8 @@ def test_vehicle_archive_create_update_delete_return_status_list():
         create_res = await vehicle_archives_create(data=payload, service=as_service(fake))
         update_res = await vehicle_archives_update(data=payload, service=as_service(fake))
         delete_res = await vehicle_archives_delete(
-            archive_ids=["VA-001", "VA-002"], service=as_service(fake)
+            id_list=["VA-001", "VA-002"],
+            service=as_service(fake),
         )
 
         create_status = as_status_list(

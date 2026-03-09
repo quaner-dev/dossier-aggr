@@ -24,7 +24,7 @@ router = APIRouter()
     path=constants.ARCHIVES_QUERY_SYNC_URL,
     description="GA/T 2350.5-2025 A.9 人员档案查询接口",
 )
-async def archives_query_sync_read(
+async def archives_query_sync(
     service: Annotated[ArchiveService, Depends(ArchiveService)],
 ) -> ArchiveQueryResultSchema:
     archives = await service.list_archives()
@@ -34,7 +34,9 @@ async def archives_query_sync_read(
             RecordStartNo=0,
             PageRecordNum=len(archives),
             TotalNum=len(archives),
-            ArchiveListObject=ArchiveList(ArchiveObject=[archive for archive in archives]),
+            ArchiveListObject=ArchiveList(
+                ArchiveObject=[archive for archive in archives]
+            ),
         )
     )
 

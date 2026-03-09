@@ -1,7 +1,7 @@
 import asyncio
 
 from api.archive.archive_subject import (
-    archive_subject_query_sync_read,
+    archive_subject_query_sync,
     archive_subjects_create,
     archive_subjects_update,
     archive_subjects_delete,
@@ -15,7 +15,7 @@ class _FakeArchiveSubjectService:
         self._subjects = subjects
         self.created_with: list[ArchiveSubject] | None = None
         self.updated_with: list[ArchiveSubject] | None = None
-        self.deleted_with: dict[str, list[str] | None] | None = None
+        self.deleted_with: str | None = None
 
     async def query_archive_subjects(self):
         return self._subjects
@@ -28,22 +28,9 @@ class _FakeArchiveSubjectService:
         self.updated_with = subjects
         return subjects
 
-    async def delete_archive_subjects(
-        self,
-        archive_id: str | None,
-        face_id_list: list[str] | None,
-        person_id_list: list[str] | None,
-        motor_vehicle_id_list: list[str] | None,
-        non_motor_vehicle_id_list: list[str] | None,
-    ):
-        self.deleted_with = {
-            "archive_id": [archive_id] if archive_id else None,
-            "face_id_list": face_id_list,
-            "person_id_list": person_id_list,
-            "motor_vehicle_id_list": motor_vehicle_id_list,
-            "non_motor_vehicle_id_list": non_motor_vehicle_id_list,
-        }
-        return ["AS-001", "AS-002"]
+    async def delete_archive_subjects(self, archive_id: str):
+        self.deleted_with = archive_id
+        return [archive_id]
 
 
 def _sample_subjects() -> list[ArchiveSubject]:
@@ -67,12 +54,12 @@ def _sample_subjects() -> list[ArchiveSubject]:
     ]
 
 
-def test_archive_subject_query_sync_read_returns_query_result_schema():
+def test_archive_subject_query_sync_returns_query_result_schema():
     async def _run():
         subjects = _sample_subjects()
         fake = _FakeArchiveSubjectService(subjects)
 
-        res = await archive_subject_query_sync_read(service=as_service(fake))
+        res = await archive_subject_query_sync(service=as_service(fake))
 
         assert res.ArchiveSubjectQueryResultObject.TotalNum == 2
         assert (
@@ -97,10 +84,6 @@ def test_archive_subject_create_update_delete_return_status_list():
         update_res = await archive_subjects_update(data=payload, service=as_service(fake))
         delete_res = await archive_subjects_delete(
             archive_id="AS-001",
-            face_id_list=["F-001", "F-002"],
-            person_id_list=["P-001", "P-002"],
-            motor_vehicle_id_list=None,
-            non_motor_vehicle_id_list=None,
             service=as_service(fake),
         )
 
@@ -118,14 +101,13 @@ def test_archive_subject_create_update_delete_return_status_list():
         assert create_status[0].Id == "AS-001"
         assert len(update_status) == 2
         assert update_status[1].Id == "AS-002"
-        assert len(delete_status) == 2
+        assert len(delete_status) == 1
         assert delete_status[0].Id == "AS-001"
 
         assert fake.created_with is not None
         assert len(fake.created_with) == 2
         assert fake.updated_with is not None
         assert len(fake.updated_with) == 2
-        assert fake.deleted_with is not None
-        assert fake.deleted_with["archive_id"] == ["AS-001"]
+        assert fake.deleted_with == "AS-001"
 
     asyncio.run(_run())

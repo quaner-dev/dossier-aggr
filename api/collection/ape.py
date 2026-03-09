@@ -21,7 +21,7 @@ router = APIRouter()
     response_model=APEListSchema,
     description="GA/T 1400.4-2017 7.2.5 采集设备的查询消息",
 )
-async def list_apes(
+async def apes_query(
     service: Annotated[APEService, Depends(APEService)],
 ) -> APEListSchema:
     """查询所有APE信息"""
@@ -34,7 +34,7 @@ async def list_apes(
     response_model=ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.5 采集设备的修改消息",
 )
-async def update_apes(
+async def apes_update(
     data: APEListSchema,
     service: Annotated[APEService, Depends(APEService)],
 ) -> ResponseStatusListSchema:

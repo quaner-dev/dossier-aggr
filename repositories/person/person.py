@@ -6,6 +6,8 @@ from models import Person
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+_DEFAULT_PERSON_LIST_LIMIT = 100
+
 
 async def get_person_repo(person_id: str) -> Person:
     async with AsyncSession(engine) as session:
@@ -18,9 +20,10 @@ async def get_person_repo(person_id: str) -> Person:
 
 async def list_persons_repo() -> Sequence[Person]:
     async with AsyncSession(engine) as session:
-        persons = (await session.exec(select(Person))).all()
-        if not persons:
-            raise exceptions.DataNotFoundError(detail="No Person data exist")
+        statement = select(Person).order_by(Person.PersonID).limit(
+            _DEFAULT_PERSON_LIST_LIMIT
+        )
+        persons = (await session.exec(statement)).all()
         return persons
 
 

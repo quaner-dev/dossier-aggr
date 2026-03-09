@@ -54,5 +54,5 @@ Expected: PASS
 
 **Step 7: Verify syntax**
 
-Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/subscribe/subscribe_notification.py services/subscribe/subscribe_notification.py tasks/subscribe/subscribe_notification.py repositories/subscribe/subscribe_notification.py tests/test_api_subscribe_notification.py tests/services/test_subscribe_layering.py tests/protocol/test_1400_routes.py tests/protocol/test_2350_routes.py`
+Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/subscribe/subscribe_notification.py services/subscribe/subscribe_notification.py tasks/subscribe/subscribe_notification.py repo/subscribe/subscribe_notification.py tests/test_api_subscribe_notification.py tests/services/test_subscribe_layering.py tests/protocol/test_1400_routes.py tests/protocol/test_2350_routes.py`
 Expected: PASS

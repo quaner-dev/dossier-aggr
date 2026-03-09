@@ -1,5 +1,5 @@
 from models import Person
-from repositories.person.person import get_person_repo, list_persons_repo
+from repo.person.person import get_person_repo, list_persons_repo
 from tasks import (
     create_person_task,
     create_persons_task,

@@ -1,5 +1,5 @@
 from models import ArchiveLibrary
-from repositories.library.archive_library import list_archive_libraries_repo
+from repo.library.archive_library import list_archive_libraries_repo
 from tasks.library.archive_library import (
     create_archive_libraries_task,
     update_archive_libraries_task,

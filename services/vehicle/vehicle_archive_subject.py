@@ -1,5 +1,5 @@
 from models import VehicleArchiveSubject
-from repositories.vehicle.vehicle_archive_subject import (
+from repo.vehicle.vehicle_archive_subject import (
     query_vehicle_archive_subjects_repo,
 )
 from tasks.vehicle.vehicle_archive_subject import (

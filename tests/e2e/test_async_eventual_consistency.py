@@ -6,7 +6,7 @@ from taskiq import InMemoryBroker
 import brokers
 import settings
 from models import ArchiveSubject
-from repositories.archive.archive_subject import delete_archive_subjects_repo
+from repo.archive.archive_subject import delete_archive_subjects_repo
 from services.archive.archive_subject import ArchiveSubjectService
 
 

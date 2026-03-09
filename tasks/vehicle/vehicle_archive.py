@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 import brokers
 from models import VehicleArchive
-from repositories.vehicle.vehicle_archive import (
+from repo.vehicle.vehicle_archive import (
     create_vehicle_archives_repo,
     delete_vehicle_archives_repo,
     list_vehicle_archives_repo,

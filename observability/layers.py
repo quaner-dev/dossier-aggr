@@ -19,7 +19,7 @@ def _component_from_module(module_name: str) -> str:
 
 
 def _replace_references(old_obj: Any, new_obj: Any) -> None:
-    target_prefixes = ("services.", "tasks.", "repositories.")
+    target_prefixes = ("services.", "tasks.", "repo.")
     for module_name, module in list(sys.modules.items()):
         if not module_name.startswith(target_prefixes):
             continue
@@ -105,7 +105,7 @@ def _instrument_service_layer() -> None:
 
 def _instrument_repository_layer() -> None:
     for module_name, module in list(sys.modules.items()):
-        if not module_name.startswith("repositories."):
+        if not module_name.startswith("repo."):
             continue
         if not isinstance(module, ModuleType):
             continue

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends, APIRouter
 
-from models import enums, UnRegisterSchema, ResponseStatus, ResponseStatusList
+from models import UnRegisterSchema, ResponseStatus
 import constants
 from services import APSService
 

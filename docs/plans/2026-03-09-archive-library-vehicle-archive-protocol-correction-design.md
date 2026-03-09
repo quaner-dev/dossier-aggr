@@ -6,7 +6,7 @@
 - Modify `constants.py`.
 - Modify `api/library/archive_library.py` and `api/vehicle/vehicle_archive.py`.
 - Modify `services/library/archive_library.py` and `services/vehicle/vehicle_archive.py`.
-- Modify `repositories/library/archive_library.py` and `repositories/vehicle/vehicle_archive.py`.
+- Modify `repo/library/archive_library.py` and `repo/vehicle/vehicle_archive.py`.
 - Modify `models/archive/archive_query_result.py` and `models/__init__.py`.
 - Update tests in `tests/test_api_archive_library.py`, `tests/test_api_vehicle_archive.py`, `tests/services/test_collection_archive_layering.py`, and `tests/protocol/test_2350_routes.py`.
 - Update `.docs/PROTOCOL_2350.md`, `.docs/ARCHITECTURE.md`, and `.docs/TESTING.md`.

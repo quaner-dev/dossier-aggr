@@ -46,5 +46,5 @@ Expected: PASS
 
 **Step 7: Verify syntax**
 
-Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/archive/archive_subject.py services/archive/archive_subject.py tasks/archive/archive_subject.py repositories/archive/archive_subject.py tests/test_api_archive_subject.py tests/services/test_subject_verify_layering.py tests/e2e/test_async_eventual_consistency.py`
+Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/archive/archive_subject.py services/archive/archive_subject.py tasks/archive/archive_subject.py repo/archive/archive_subject.py tests/test_api_archive_subject.py tests/services/test_subject_verify_layering.py tests/e2e/test_async_eventual_consistency.py`
 Expected: PASS

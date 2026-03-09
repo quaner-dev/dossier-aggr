@@ -1,8 +1,8 @@
 import asyncio
 
 from models import Face, Person
-from repositories.face import face as face_repo
-from repositories.person import person as person_repo
+from repo.face import face as face_repo
+from repo.person import person as person_repo
 
 
 def _sample_person(person_id: str) -> Person:

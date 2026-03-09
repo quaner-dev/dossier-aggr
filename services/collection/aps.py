@@ -1,6 +1,6 @@
 from models import APS
 from collections.abc import Sequence
-from repositories.collection.aps import list_apss_repo
+from repo.collection.aps import list_apss_repo
 from tasks import update_aps_task
 from services.task_dispatch import dispatch_and_wait
 

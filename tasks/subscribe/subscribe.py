@@ -2,7 +2,7 @@ import brokers
 from collections.abc import Sequence
 
 from models import Subscribe
-from repositories.subscribe.subscribe import (
+from repo.subscribe.subscribe import (
     create_subscribes_repo,
     delete_subscribes_repo,
     get_subscribe_repo,

@@ -1,4 +1,4 @@
-from repositories.verify.vehicle_archive_confidence import (
+from repo.verify.vehicle_archive_confidence import (
     verify_vehicle_archive_confidence_repo,
 )
 

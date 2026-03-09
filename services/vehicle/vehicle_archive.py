@@ -1,5 +1,5 @@
 from models import ArchiveQuery, VehicleArchive
-from repositories.vehicle.vehicle_archive import (
+from repo.vehicle.vehicle_archive import (
     list_vehicle_archives_repo,
     query_vehicle_archives_repo,
 )

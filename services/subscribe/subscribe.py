@@ -1,5 +1,5 @@
 from models import Subscribe
-from repositories.subscribe.subscribe import get_subscribe_repo, list_subscribes_repo
+from repo.subscribe.subscribe import get_subscribe_repo, list_subscribes_repo
 from tasks import (
     create_subscribes_task,
     update_subscribe_by_id_task,

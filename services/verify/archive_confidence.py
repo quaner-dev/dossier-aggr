@@ -1,4 +1,4 @@
-from repositories.verify.archive_confidence import verify_archive_confidence_repo
+from repo.verify.archive_confidence import verify_archive_confidence_repo
 
 
 class ArchiveConfidenceService:

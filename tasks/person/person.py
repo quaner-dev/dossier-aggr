@@ -2,7 +2,7 @@ import brokers
 from collections.abc import Sequence
 
 from models import Person
-from repositories.person.person import (
+from repo.person.person import (
     create_person_repo,
     create_persons_repo,
     delete_person_repo,

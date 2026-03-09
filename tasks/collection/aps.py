@@ -1,7 +1,7 @@
 import brokers
 from models import APS
 from collections.abc import Sequence
-from repositories.collection.aps import list_apss_repo, update_aps_repo
+from repo.collection.aps import list_apss_repo, update_aps_repo
 
 
 async def list_apss_task() -> Sequence[APS]:

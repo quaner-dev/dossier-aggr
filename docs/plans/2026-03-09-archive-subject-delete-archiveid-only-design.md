@@ -3,7 +3,7 @@
 **Goal:** Restrict the `ArchiveSubject` delete path to delete only by `ArchiveID`, removing support for the other legacy filter parameters across the full chain.
 
 **Scope**
-- Modify `api/archive/archive_subject.py`, `services/archive/archive_subject.py`, `tasks/archive/archive_subject.py`, and `repositories/archive/archive_subject.py`.
+- Modify `api/archive/archive_subject.py`, `services/archive/archive_subject.py`, `tasks/archive/archive_subject.py`, and `repo/archive/archive_subject.py`.
 - Update affected tests in `tests/test_api_archive_subject.py`, `tests/services/test_subject_verify_layering.py`, and `tests/e2e/test_async_eventual_consistency.py`.
 - Update `.docs/PROTOCOL_2350.md`, `.docs/ARCHITECTURE.md`, and `.docs/TESTING.md`.
 

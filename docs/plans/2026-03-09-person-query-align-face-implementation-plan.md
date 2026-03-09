@@ -50,7 +50,7 @@ git commit -m "refactor: align person query api with face"
 ### Task 2: Align repository list behavior with face
 
 **Files:**
-- Modify: `repositories/person/person.py`
+- Modify: `repo/person/person.py`
 - Test: `tests/services/test_person_face_layering.py`
 
 **Step 1: Write the failing test**
@@ -64,7 +64,7 @@ Expected: FAIL if the new expectation is asserted against the current repository
 
 **Step 3: Write minimal implementation**
 
-Update `repositories/person/person.py` to:
+Update `repo/person/person.py` to:
 
 - define `_DEFAULT_PERSON_LIST_LIMIT = 100`
 - use `select(Person).order_by(Person.PersonID.asc()).limit(_DEFAULT_PERSON_LIST_LIMIT)`
@@ -78,7 +78,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add repositories/person/person.py tests/services/test_person_face_layering.py
+git add repo/person/person.py tests/services/test_person_face_layering.py
 git commit -m "refactor: limit person list query results"
 ```
 
@@ -105,7 +105,7 @@ Update docs so `GET /VIID/Persons` is described as returning the default top lis
 
 Run: `source /root/dossier-aggr-venv/bin/activate && pytest tests/test_api_person.py tests/protocol/test_api_http_contracts.py -q`
 
-Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/person/person.py repositories/person/person.py tests/protocol/test_api_http_contracts.py`
+Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/person/person.py repo/person/person.py tests/protocol/test_api_http_contracts.py`
 
 Expected: PASS
 

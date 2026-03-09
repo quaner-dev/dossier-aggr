@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 from models import Face
-from repositories.face.face import get_face_repo, list_faces_repo
+from repo.face.face import get_face_repo, list_faces_repo
 from services.task_dispatch import dispatch_and_wait
 from tasks import (
     create_face_task,

@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 import brokers
 from models import Archive
-from repositories.archive.archives import (
+from repo.archive.archives import (
     create_archives_repo,
     delete_archives_repo,
     list_archives_repo,

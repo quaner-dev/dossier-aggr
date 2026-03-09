@@ -1,4 +1,4 @@
-from repositories.verify.archive_confidence import verify_archive_confidence_repo
+from repo.verify.archive_confidence import verify_archive_confidence_repo
 
 
 async def verify_archive_confidence_task(archive_ids: list[str]) -> list[str]:

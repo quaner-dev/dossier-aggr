@@ -14,8 +14,8 @@
 
 **Files:**
 - Modify: `tests/repositories/test_person_face_delete_repositories.py`
-- Modify: `repositories/face/face.py`
-- Modify: `repositories/person/person.py`
+- Modify: `repo/face/face.py`
+- Modify: `repo/person/person.py`
 
 **Step 1: Write the failing test**
 
@@ -43,6 +43,6 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add tests/repositories/test_person_face_delete_repositories.py repositories/face/face.py repositories/person/person.py docs/plans/2026-03-09-remove-explicit-asc-design.md docs/plans/2026-03-09-remove-explicit-asc-implementation-plan.md
+git add tests/repositories/test_person_face_delete_repositories.py repo/face/face.py repo/person/person.py docs/plans/2026-03-09-remove-explicit-asc-design.md docs/plans/2026-03-09-remove-explicit-asc-implementation-plan.md
 git commit -m "refactor: remove explicit asc from person and face lists"
 ```

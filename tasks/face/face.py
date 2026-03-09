@@ -1,6 +1,6 @@
 import brokers
 from models import Face
-from repositories.face.face import (
+from repo.face.face import (
     create_face_repo,
     create_faces_repo,
     delete_face_repo,

@@ -1,7 +1,7 @@
 import brokers
 from models import APE
 from collections.abc import Sequence
-from repositories.collection.ape import list_apes_repo, update_apes_repo
+from repo.collection.ape import list_apes_repo, update_apes_repo
 
 
 async def list_apes_task() -> Sequence[APE]:

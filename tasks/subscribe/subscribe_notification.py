@@ -1,6 +1,6 @@
 import brokers
 from models import SubscribeNotification
-from repositories.subscribe.subscribe_notification import (
+from repo.subscribe.subscribe_notification import (
     create_subscribe_notifications_repo,
     delete_subscribe_notifications_repo,
     list_subscribe_notifications_repo,

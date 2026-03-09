@@ -7,7 +7,7 @@
 **Decision:** Align `person` query behavior with `face` in two places:
 
 - [api/person/person.py](/root/dossier-aggr/api/person/person.py): remove `person_ids` / `source_id` / `device_id` query parameters and API-side filtering from `persons_query`
-- [repositories/person/person.py](/root/dossier-aggr/repositories/person/person.py): order by `PersonID` and return a fixed-size default list, matching the `face` repository pattern
+- [repo/person/person.py](/root/dossier-aggr/repo/person/person.py): order by `PersonID` and return a fixed-size default list, matching the `face` repository pattern
 
 **Recommended approach:** Use the same default page size as `face` (`100`) and let an empty query return an empty list rather than raising `DataNotFoundError`. This keeps `person` and `face` query semantics consistent and removes unnecessary divergence in the read path.
 

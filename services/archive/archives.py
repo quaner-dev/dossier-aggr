@@ -1,5 +1,5 @@
 from models import Archive
-from repositories.archive.archives import list_archives_repo
+from repo.archive.archives import list_archives_repo
 from tasks.archive.archives import (
     create_archives_task,
     update_archives_task,

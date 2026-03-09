@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from models import APE
-from repositories.collection.ape import list_apes_repo
+from repo.collection.ape import list_apes_repo
 from tasks import update_apes_task
 from services.task_dispatch import dispatch_and_wait
 

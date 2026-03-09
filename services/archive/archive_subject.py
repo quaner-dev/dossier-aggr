@@ -1,5 +1,5 @@
 from models import ArchiveSubject
-from repositories.archive.archive_subject import query_archive_subjects_repo
+from repo.archive.archive_subject import query_archive_subjects_repo
 from tasks.archive.archive_subject import (
     create_archive_subjects_task,
     update_archive_subjects_task,

@@ -1,5 +1,5 @@
 from models import SubscribeNotification
-from repositories.subscribe.subscribe_notification import (
+from repo.subscribe.subscribe_notification import (
     list_subscribe_notifications_repo,
 )
 from tasks import (

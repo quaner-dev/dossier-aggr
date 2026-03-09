@@ -6,8 +6,8 @@
 - Modify `api/subscribe/subscribe_notification.py`.
 - Modify `services/subscribe/subscribe_notification.py`.
 - Modify `tasks/subscribe/subscribe_notification.py`.
-- Modify `repositories/subscribe/subscribe_notification.py`.
-- Update package exports in `tasks/__init__.py` and `repositories/subscribe/__init__.py`.
+- Modify `repo/subscribe/subscribe_notification.py`.
+- Update package exports in `tasks/__init__.py` and `repo/subscribe/__init__.py`.
 - Update tests in `tests/test_api_subscribe_notification.py`, `tests/services/test_subscribe_layering.py`, `tests/protocol/test_1400_routes.py`, and `tests/protocol/test_2350_routes.py`.
 - Update `.docs/PROTOCOL_1400.md`, `.docs/PROTOCOL_2350.md`, `.docs/ARCHITECTURE.md`, and `.docs/TESTING.md`.
 

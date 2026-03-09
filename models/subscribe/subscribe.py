@@ -1,5 +1,4 @@
 from typing import Annotated
-from datetime import datetime
 
 from sqlmodel import SQLModel, Field
 from pydantic import BeforeValidator, PlainSerializer

@@ -18,7 +18,7 @@
 pip install -r requirements.txt
 alembic upgrade head
 uvicorn main:app --host 0.0.0.0 --port 8000
-taskiq worker brokers:broker
+taskiq worker core.brokers:broker
 ```
 
 说明：
@@ -53,7 +53,7 @@ taskiq worker brokers:broker
 
 ### 3.3 协议符合性测试
 
-- URL 与方法是否匹配 `constants.py`。
+- URL 与方法是否匹配 `core/constants.py`。
 - 顶层包装对象命名是否正确（如 `PersonListObject`、`ResponseStatusListObject`）。
 - 时间字段是否为 `YYYYMMDDHHMMSS`。
 - 枚举字段编码类型是否符合模型定义（`IntEnum`/`StrEnum`）。
@@ -66,7 +66,7 @@ taskiq worker brokers:broker
 
 ### 3.5 分层边界测试
 
-- 对 `services -> repositories -> tasks` 的职责边界增加约束测试。
+- 对 `services -> repo -> tasks` 的职责边界增加约束测试。
 - 典型规则：
   - `services` 同步读取路径不直接调用 `tasks`
   - `tasks` 作为异步入口层，不直接内联数据库访问
@@ -120,7 +120,7 @@ taskiq worker brokers:broker
 
 ### 5.1 URL 与资源命名
 
-- 路径必须使用 `constants.py` 中定义值，不允许自由拼写。
+- 路径必须使用 `core/constants.py` 中定义值，不允许自由拼写。
 - 资源命名保持复数（如 `APEs`、`Persons`、`Subscribes`）。
 
 ### 5.2 消息包装结构

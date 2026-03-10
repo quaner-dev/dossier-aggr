@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-import brokers
+from core import brokers
 from models import ArchiveSubject
 from repo.archive.archive_subject import (
     create_archive_subjects_repo,

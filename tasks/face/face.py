@@ -1,4 +1,4 @@
-import brokers
+from core import brokers
 from models import Face
 from repo.face.face import (
     create_face_repo,

@@ -11,9 +11,9 @@ from models import (
     ResponseStatus,
     ResponseStatusList,
 )
-import constants
+from core import constants
 from services import SubscribeNotificationService
-from utils import parse_id_list
+from core.utils import parse_id_list
 
 router = APIRouter()
 

@@ -12,9 +12,9 @@ from models import (
     SubscribeList,
     SubscribeListSchema,
 )
-import constants
+from core import constants
 from services import SubscribeService
-from utils import parse_id_list
+from core.utils import parse_id_list
 
 router = APIRouter()
 

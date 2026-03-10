@@ -59,7 +59,7 @@
 
 ### 3.1 URL 常量
 
-协议路径（`constants.py`）：
+协议路径（`core/constants.py`）：
 
 - `/VIID/System/Register`
 - `/VIID/System/UnRegister`

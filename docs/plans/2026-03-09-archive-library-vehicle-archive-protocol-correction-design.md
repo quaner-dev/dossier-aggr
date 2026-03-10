@@ -3,7 +3,7 @@
 **Goal:** Correct the `ArchiveLibrary` and `VehicleArchive` interfaces so they match GA/T 2350.5-2025 A.5, A.11, and A.12 exactly enough for this codebase.
 
 **Scope**
-- Modify `constants.py`.
+- Modify `core/constants.py`.
 - Modify `api/library/archive_library.py` and `api/vehicle/vehicle_archive.py`.
 - Modify `services/library/archive_library.py` and `services/vehicle/vehicle_archive.py`.
 - Modify `repo/library/archive_library.py` and `repo/vehicle/vehicle_archive.py`.

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-import constants
+from core import constants
 from models import (
     Face,
     FaceList,

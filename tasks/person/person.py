@@ -1,4 +1,4 @@
-import brokers
+from core import brokers
 from collections.abc import Sequence
 
 from models import Person

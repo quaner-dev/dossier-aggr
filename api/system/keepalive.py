@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi import Depends, APIRouter
 
-import constants
+from core import constants
 from models import ResponseStatus, KeepaliveSchema
 from services import APSService
 from typing import Annotated

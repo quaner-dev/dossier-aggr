@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-import brokers
+from core import brokers
 from models import VehicleArchive
 from repo.vehicle.vehicle_archive import (
     create_vehicle_archives_repo,

@@ -172,24 +172,24 @@ def test_services_sync_reads_use_repositories(monkeypatch):
 
 def test_aps_service_update_uses_kiq(monkeypatch):
     async def _run():
-        called = {"aps_update_kiq": False}
+        called = {"dispatch": False}
 
-        class _FakeUpdateAPSTask:
-            async def kiq(self, aps_id: str):
-                called["aps_update_kiq"] = True
-                assert aps_id == "APS-LAYER-001"
-                return {"task_id": "TASK-APS-001"}
+        async def fake_dispatch(task, **kwargs):
+            called["dispatch"] = True
+            assert task is aps_service_module.update_aps_task
+            assert kwargs == {"aps_id": "APS-LAYER-001"}
+            return None
 
         monkeypatch.setattr(
             aps_service_module,
-            "update_aps_task",
-            _FakeUpdateAPSTask(),
+            "dispatch_and_wait",
+            fake_dispatch,
             raising=False,
         )
 
         res = await APSService().update_aps("APS-LAYER-001")
 
-        assert called["aps_update_kiq"] is True
+        assert called["dispatch"] is True
         assert res == "APS-LAYER-001"
 
     asyncio.run(_run())

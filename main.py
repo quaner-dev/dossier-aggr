@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 import taskiq_fastapi
 
-import brokers
+from core import brokers
 import api
 from api.error_handlers import register_exception_handlers
 from observability import setup_observability

@@ -3,7 +3,7 @@
 **Goal:** Remove the unsupported `/VIAS/Tasks` interface chain so the service only exposes the protocol scope that is currently required.
 
 **Scope**
-- Remove `ARCHIVE_TASKS_URL` from `constants.py`.
+- Remove `ARCHIVE_TASKS_URL` from `core/constants.py`.
 - Remove the `/VIAS/Tasks` API router and its service/task/repository implementation chain.
 - Remove route registration and aggregate exports that currently pull `ArchiveTask` runtime code into the app.
 - Update tests that currently expect `/VIAS/Tasks` to exist.

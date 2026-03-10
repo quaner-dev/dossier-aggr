@@ -11,7 +11,7 @@ from models import (
     ResponseStatusList,
 )
 from services import APEService
-import constants
+from core import constants
 
 router = APIRouter()
 

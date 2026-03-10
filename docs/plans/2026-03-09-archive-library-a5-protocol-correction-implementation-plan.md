@@ -55,5 +55,5 @@ Expected: PASS
 
 **Step 7: Verify syntax**
 
-Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/library/archive_library.py services/library/archive_library.py tasks/library/archive_library.py repo/library/archive_library.py constants.py tests/test_api_archive_library.py tests/services/test_collection_archive_layering.py tests/protocol/test_2350_routes.py`
+Run: `source /root/dossier-aggr-venv/bin/activate && python -m compileall api/library/archive_library.py services/library/archive_library.py tasks/library/archive_library.py repo/library/archive_library.py core/constants.py tests/test_api_archive_library.py tests/services/test_collection_archive_layering.py tests/protocol/test_2350_routes.py`
 Expected: PASS

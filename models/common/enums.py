@@ -4,7 +4,7 @@ from enum import IntEnum, StrEnum
 
 from pydantic import BeforeValidator, PlainSerializer
 
-import utils
+from core import utils
 
 
 CompactDateTime = Annotated[

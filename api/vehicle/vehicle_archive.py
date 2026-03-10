@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from pydantic import BeforeValidator
 
-import constants
+from core import constants
 from models import (
     ArchiveQueryResult,
     ArchiveQueryResultSchema,
@@ -16,7 +16,7 @@ from models import (
     VehicleArchiveListSchema,
 )
 from services import VehicleArchiveService
-from utils import parse_id_list
+from core.utils import parse_id_list
 
 router = APIRouter()
 

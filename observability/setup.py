@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Response
 
-from database import engine
+from core.database import engine
 
 from .http import PrometheusHTTPMiddleware
 from .layers import instrument_layers

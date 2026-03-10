@@ -12,8 +12,8 @@ from models import (
     ResponseStatus,
     ResponseStatusList,
 )
-import constants
-from utils import parse_id_list
+from core import constants
+from core.utils import parse_id_list
 from services import PersonService
 
 router = APIRouter()

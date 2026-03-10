@@ -3,11 +3,11 @@ from typing import Annotated
 
 from fastapi import Depends, Request, APIRouter
 
-import auth
+from core import auth
 
 from models import ResponseStatusList, ResponseStatus, RegisterSchema
 from services import APSService
-import constants
+from core import constants
 
 router = APIRouter()
 security = auth.HTTPDigest1400()

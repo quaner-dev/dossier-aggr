@@ -7,7 +7,7 @@ from models import (
     APSListSchema,
 )
 from services import APSService
-import constants
+from core import constants
 
 router = APIRouter()
 

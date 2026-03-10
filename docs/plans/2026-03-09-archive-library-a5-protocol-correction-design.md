@@ -3,7 +3,7 @@
 **Goal:** Correct the `ArchiveLibrary` API so it matches GA/T 2350.5-2025 A.5 table A.4: batch create, query, update, and delete all use `/VIID/ArchiveLibraries`.
 
 **Scope**
-- Modify `api/library/archive_library.py`, `services/library/archive_library.py`, `tasks/library/archive_library.py`, `repo/library/archive_library.py`, and `constants.py`.
+- Modify `api/library/archive_library.py`, `services/library/archive_library.py`, `tasks/library/archive_library.py`, `repo/library/archive_library.py`, and `core/constants.py`.
 - Update tests in `tests/test_api_archive_library.py`, `tests/services/test_collection_archive_layering.py`, and `tests/protocol/test_2350_routes.py`.
 - Update `.docs/PROTOCOL_2350.md`, `.docs/ARCHITECTURE.md`, and `.docs/TESTING.md`.
 

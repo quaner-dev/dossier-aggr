@@ -15,10 +15,10 @@
 - API 框架：`FastAPI`
 - 数据层：`SQLModel` + `SQLAlchemy AsyncSession`
 - 任务队列：`Taskiq`
-- Broker 选择（`brokers.py`）：
+- Broker 选择（`core/brokers.py`）：
   - `ENV=dev` -> `InMemoryBroker`
   - 其他环境 -> `AioPikaBroker`（RabbitMQ）
-- 数据库配置（`settings.py`）：`DATABASE_URL`，默认 `sqlite+aiosqlite:///db.sqlite3`
+- 数据库配置（`core/settings.py`）：`DATABASE_URL`，默认 `sqlite+aiosqlite:///db.sqlite3`
 - 迁移：`Alembic`
 
 ## 3. 分层结构
@@ -28,17 +28,17 @@ Client
   -> main.py
       -> api/*                 # HTTP 路由、入参/出参组装
           -> services/*        # 业务编排
-              -> repo/*# 数据访问（SQLModel/SQL）
+              -> repo/*                # 数据访问（SQLModel/SQL）
               -> tasks/*       # 异步任务入口（Taskiq）
-                  -> repo/* -> models/* -> database.py
+                  -> repo/* -> models/* -> core/database.py
 ```
 
 分层边界现状：
 
 - `api/` 不直接操作数据库，主要依赖 `services`。
-- `services/` 承担校验与业务编排；同步读优先调用 `repositories`，异步写通过 `tasks` 投递。
+- `services/` 承担校验与业务编排；同步读优先调用 `repo`，异步写通过 `tasks` 投递。
 - `repo/` 承担数据访问逻辑（`AsyncSession(engine)`、`select/delete`、持久化异常语义）。
-- `tasks/` 作为异步入口层，任务函数委托 `repositories` 执行实际数据访问。
+- `tasks/` 作为异步入口层，任务函数委托 `repo` 执行实际数据访问。
 - `face` / `person` 查询链路中，API 层仅负责单资源与列表资源路由分发；`FaceService` / `PersonService` 负责单查/列表读取编排；`repo/face/face.py` / `repo/person/person.py` 负责按主键单查与默认 `TOP100` 列表读取。
 
 ## 4. 启动与生命周期
@@ -153,7 +153,7 @@ Client
 
 ## 9. 异常与响应约定
 
-- 自定义异常：`exceptions.py`
+- 自定义异常：`core/exceptions.py`
 - `DataNotFoundError`（HTTP 404）
 - `DataAlreadyExistsError`（HTTP 409）
 - `InvalidParameterError`（HTTP 400）
@@ -172,7 +172,7 @@ Client
   - 可选 `ServiceMonitor`（Prometheus Operator）
   - 可选 `PrometheusRule`（告警规则）
   - Grafana Dashboard ConfigMap（sidecar 自动发现）
-- Worker 资源（Helm）：可选 `taskiq worker brokers:broker` Deployment。
+- Worker 资源（Helm）：可选 `taskiq worker core.brokers:broker` Deployment。
 - 探针路径：
   - `startup`: `/startup`
   - `liveness`: `/live`

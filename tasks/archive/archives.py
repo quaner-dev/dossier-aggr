@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-import brokers
+from core import brokers
 from models import Archive
 from repo.archive.archives import (
     create_archives_repo,

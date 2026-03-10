@@ -22,7 +22,7 @@ alembic upgrade head
 
 uvicorn main:app --host 0.0.0.0 -p 8000
 
-taskiq worker broker:broker
+taskiq worker core.brokers:broker
 
 当前的架构中使用api来接收请求，使用service来处理业务逻辑，使用task来进行异步处理
 当前对于api中的检索操作，准确来说是对于service中的处理，检索其实是要使用service中进行处理，但是task需要使用的是异步处理，我的想法是在task中实现相关检索的逻辑，但是不处理异步任务，只处理同步任务，这样保证task中完全实现检索的逻辑，防止删除、更新和检索的路径不同

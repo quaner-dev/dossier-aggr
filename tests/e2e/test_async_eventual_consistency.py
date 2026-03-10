@@ -3,8 +3,8 @@ import asyncio
 import pytest
 from taskiq import InMemoryBroker
 
-import brokers
-import settings
+from core import brokers
+from core import settings
 from models import ArchiveSubject
 from repo.archive.archive_subject import delete_archive_subjects_repo
 from services.archive.archive_subject import ArchiveSubjectService

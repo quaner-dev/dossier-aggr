@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends, APIRouter
 
 from models import UnRegisterSchema, ResponseStatus
-import constants
+from core import constants
 from services import APSService
 
 router = APIRouter()

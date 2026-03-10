@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from pydantic import BeforeValidator
 
-import constants
+from core import constants
 from models import (
     ResponseStatus,
     ResponseStatusList,
@@ -13,7 +13,7 @@ from models import (
     VehicleArchiveSubjectSchema,
 )
 from services import VehicleArchiveSubjectService
-from utils import parse_id_list
+from core.utils import parse_id_list
 
 router = APIRouter()
 

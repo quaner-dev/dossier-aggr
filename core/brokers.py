@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from taskiq import AsyncBroker, InMemoryBroker
 from taskiq_aio_pika import AioPikaBroker
 
-import settings
+from core import settings
 
 
 broker: AsyncBroker

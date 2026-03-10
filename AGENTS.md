@@ -35,7 +35,7 @@
 
 - 安装依赖：`pip install -r requirements.txt`
 - 启动 API：`uvicorn main:app --host 0.0.0.0 --port 8000`
-- 启动 worker：`taskiq worker brokers:broker`
+- 启动 worker：`taskiq worker core.brokers:broker`
 - 运行测试：`pytest -q`
 - 生成迁移：`alembic revision --autogenerate -m "<message>"`
 - 执行迁移：`alembic upgrade head`

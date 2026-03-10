@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from datetime import datetime
 from typing import Annotated
 
-import constants
+from core import constants
 from models import (
     ArchiveSubjectSchema,
     ArchiveSubjectList,

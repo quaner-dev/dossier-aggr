@@ -93,7 +93,7 @@ git commit -m "fix: align person and face delete behavior with protocol ids"
 ### Task 3: Implement 2350 A.5 ArchiveLibrary endpoints end-to-end
 
 **Files:**
-- Modify: `constants.py`
+- Modify: `core/constants.py`
 - Modify: `api/library/archive_library.py`
 - Modify: `services/library/archive_library.py`
 - Create: `tasks/library/archive_library.py`
@@ -125,7 +125,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add constants.py api/library/archive_library.py services/library/archive_library.py tasks/library/archive_library.py tasks/__init__.py tests/api/test_archive_library_api.py
+git add core/constants.py api/library/archive_library.py services/library/archive_library.py tasks/library/archive_library.py tasks/__init__.py tests/api/test_archive_library_api.py
 git commit -m "feat: implement 2350 A.5 archive library interfaces"
 ```
 
@@ -214,7 +214,7 @@ git commit -m "feat: implement 2350 A.13 A.14 archive subject interfaces"
 ### Task 6: Add missing 2350 constants/routes for A.6/A.11/A.12/A.15/A.16/A.17/A.18
 
 **Files:**
-- Modify: `constants.py`
+- Modify: `core/constants.py`
 - Modify: `api/__init__.py`
 - Create: `api/task/archive_task.py`
 - Create: `api/vehicle/vehicle_archive.py`
@@ -258,7 +258,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add constants.py api/__init__.py api/task/archive_task.py api/vehicle/vehicle_archive.py api/vehicle/vehicle_archive_subject.py api/verify/archive_confidence.py api/verify/vehicle_archive_confidence.py tests/protocol/test_2350_routes.py
+git add core/constants.py api/__init__.py api/task/archive_task.py api/vehicle/vehicle_archive.py api/vehicle/vehicle_archive_subject.py api/verify/archive_confidence.py api/verify/vehicle_archive_confidence.py tests/protocol/test_2350_routes.py
 git commit -m "feat: add missing 2350 route and constant skeletons"
 ```
 

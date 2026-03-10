@@ -3,7 +3,7 @@ from datetime import datetime
 
 from starlette.requests import Request
 
-import constants
+from core import constants
 from api.system.keepalive import keepalive
 from api.system.register import register
 from api.system.time import system_time

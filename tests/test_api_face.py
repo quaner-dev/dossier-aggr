@@ -9,7 +9,7 @@ from api.face.face import (
     faces_query,
     faces_update,
 )
-import exceptions
+from core import exceptions
 from models import Face, FaceList, FaceListObjectSchema
 from models.common import enums
 from tests.type_helpers import as_service, as_status_list

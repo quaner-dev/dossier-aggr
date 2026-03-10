@@ -1,24 +1,24 @@
 import inspect
 from typing import Any, cast
 
+from taskiq import AsyncTaskiqDecoratedTask
 from taskiq.exceptions import TaskiqResultTimeoutError
 
-import exceptions
-import settings
+from core import exceptions
+from core import settings
+
 
 async def dispatch_and_wait(
-    task: Any,
+    task: AsyncTaskiqDecoratedTask[Any, Any],
     **kwargs: Any,
 ) -> Any:
-    submitted = await cast(Any, task).kiq(**kwargs)
+    if not isinstance(task, AsyncTaskiqDecoratedTask):
+        raise TypeError("dispatch_and_wait expects an AsyncTaskiqDecoratedTask")
 
-    wait_result = getattr(submitted, "wait_result", None)
-    if not callable(wait_result):
-        # Unit tests may inject lightweight fake tasks that only validate `kiq` args.
-        return submitted
+    submitted = await task.kiq(**kwargs)
 
     try:
-        waited = wait_result(timeout=settings.TASK_RESULT_TIMEOUT_SECONDS)
+        waited = submitted.wait_result(timeout=settings.TASK_RESULT_TIMEOUT_SECONDS)
         result = await waited if inspect.isawaitable(waited) else waited
     except TaskiqResultTimeoutError as exc:
         raise exceptions.TaskExecutionError(

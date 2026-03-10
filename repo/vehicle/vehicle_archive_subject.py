@@ -2,8 +2,8 @@ import asyncio
 from collections.abc import Sequence
 from typing import Any, cast
 
-import exceptions
-from database import engine
+from core import exceptions
+from core.database import engine
 from models import VehicleArchiveSubject
 from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession

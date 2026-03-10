@@ -2,7 +2,7 @@ import asyncio
 
 import httpx
 
-import exceptions
+from core import exceptions
 from main import app
 from models import Face, Person
 from models.common import enums

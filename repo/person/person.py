@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
-import exceptions
-from database import engine
+from core import exceptions
+from core.database import engine
 from models import Person
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession

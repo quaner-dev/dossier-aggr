@@ -1,16 +1,63 @@
-.vscode
-.github
-.continue
+# Local editor / AI tooling
+.vscode/
+.continue/
+.codex/
+.cursor/
+.idea/
 
+# Python bytecode and tool caches
 __pycache__/
-*.pyc
-.pytest_cache
-.mypy_cache
-.ruff_cache
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.pyre/
+.tox/
+.nox/
+.cache/
 
-build_dockerimage.sh
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
 
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Test and coverage output
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Runtime output and local databases
+*.log
+logs/
+*.pid
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+
+# Archives
 *.tar.gz
 *.tar
 
-db.sqlite3
+# OS files
+.DS_Store
+Thumbs.db

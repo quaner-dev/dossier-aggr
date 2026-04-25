@@ -5,6 +5,7 @@
 | 协议对象 | 模型位置 |
 | --- | --- |
 | `ArchiveLibrary` | `models/library/archive_library.py` |
+| `ArchiveTask` | `models/task/archive_task.py` |
 | `Archive` | `models/archive/archive.py` |
 | `VehicleArchive` | `models/archive/vehicle_archive.py` |
 | `ArchiveSubject` | `models/archive/archive_subject.py` |

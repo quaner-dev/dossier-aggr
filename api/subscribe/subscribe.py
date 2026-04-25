@@ -24,7 +24,7 @@ router = APIRouter()
     response_model=ResponseStatusListSchema,
     description="GA/T 1400.4-2017 7.2.20.1 批量订阅消息",
 )
-async def create_subscrbe(
+async def subscribes_create(
     data: SubscribeListSchema,
     service: Annotated[SubscribeService, Depends(SubscribeService)],
 ) -> ResponseStatusListSchema:

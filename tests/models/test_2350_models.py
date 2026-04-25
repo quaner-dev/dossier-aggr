@@ -13,6 +13,7 @@ from models.common.common import FieldsType
 def _sub_image_payload(image_id: str, image_type: enums.ImageTypeEnum) -> dict:
     return SubImageInfo(
         ImageID=image_id,
+        ImageSource="1",
         Type=image_type,
         FileFormat=enums.ImageFormatEnum.JPEG,
         Width=128,
@@ -96,6 +97,7 @@ def test_archive_query_model_validate_supports_picture_query_condition():
                 {
                     "SubImage": SubImageInfo(
                         ImageID="IMG-001",
+                        ImageSource="1",
                         Type=enums.ImageTypeEnum.PersonImage,
                         FileFormat=enums.ImageFormatEnum.JPEG,
                         Width=128,

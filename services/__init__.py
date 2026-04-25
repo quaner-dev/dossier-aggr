@@ -8,6 +8,7 @@ from .subscribe.subscribe_notification import SubscribeNotificationService
 from .system.time import SystemTimeService
 
 from .library.archive_library import ArchiveLibraryService
+from .task.archive_task import ArchiveTaskService
 from .archive.archives import ArchiveService
 from .archive.archive_subject import ArchiveSubjectService
 from .vehicle.vehicle_archive import VehicleArchiveService
@@ -25,6 +26,7 @@ __all__ = [
     "SystemTimeService",
     "ArchiveService",
     "ArchiveLibraryService",
+    "ArchiveTaskService",
     "ArchiveSubjectService",
     "VehicleArchiveService",
     "VehicleArchiveSubjectService",

@@ -5,8 +5,8 @@
 | 条款 | 路由 | Service | Repository | Task |
 | --- | --- | --- | --- | --- |
 | A.5 | `api/library/archive_library.py` | `ArchiveLibraryService` | `repo/library/archive_library.py` | `tasks/library/archive_library.py` |
-| A.6 | - | - | - | - |
-| A.7 | `api/subscribe/subscrbe.py` | `SubscribeService` | `repo/subscribe/subscribe.py` | `tasks/subscribe/subscribe.py` |
+| A.6 | `api/task/archive_task.py` | `ArchiveTaskService` | `repo/task/archive_task.py` | `tasks/task/archive_task.py` |
+| A.7 | `api/subscribe/subscribe.py` | `SubscribeService` | `repo/subscribe/subscribe.py` | `tasks/subscribe/subscribe.py` |
 | A.8 | `api/subscribe/subscribe_notification.py` | `SubscribeNotificationService` | `repo/subscribe/subscribe_notification.py` | `tasks/subscribe/subscribe_notification.py` |
 | A.9/A.10 | `api/archive/archives.py` | `ArchiveService` | `repo/archive/archives.py` | `tasks/archive/archives.py` |
 | A.11/A.12 | `api/vehicle/vehicle_archive.py` | `VehicleArchiveService` | `repo/vehicle/vehicle_archive.py` | `tasks/vehicle/vehicle_archive.py` |

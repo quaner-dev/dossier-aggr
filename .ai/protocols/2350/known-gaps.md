@@ -4,7 +4,7 @@
 
 当前已确认差异：
 
-- A.6 `/VIAS/Tasks` 当前明确不纳入本服务实现范围。
+- A.6 `/VIAS/Tasks` 已实现主链路；`Task` / `TaskList` 完整字段仍需结合 GA/T 1399-2017 全量定义继续核对。
 - A.9/A.11/A.13/A.15 当前查询行为仍未覆盖正式版全部检索语义。
 - 当前查询主要支持部分 `Fields` 和 `PictureQueryCondition.SubjectID` 路径。
 - `ArchiveSubject` / `VehicleArchiveSubject` 的机动车、非机动车对象列表仍使用宽松 JSON 容器。

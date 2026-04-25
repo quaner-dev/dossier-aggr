@@ -2,8 +2,8 @@ import asyncio
 
 import httpx
 
-from api.subscribe.subscrbe import (
-    create_subscrbe,
+from api.subscribe.subscribe import (
+    subscribes_create,
     subscribe_cancel,
     subscribes_query,
     subscribes_update,
@@ -115,7 +115,7 @@ def test_subscribes_create_update_delete_return_status_list():
             SubscribeListObject=SubscribeList(SubscribeObject=subscribes)
         )
 
-        create_res = await create_subscrbe(data=payload, service=as_service(fake))
+        create_res = await subscribes_create(data=payload, service=as_service(fake))
         update_res = await subscribes_update(data=payload, service=as_service(fake))
         delete_res = await subscribes_delete(
             service=as_service(fake), subscribe_ids=["S-001", "S-002"]

@@ -24,6 +24,7 @@
 
 - 响应封装：`ResponseStatus`, `ResponseStatusList`, `ResponseStatusListSchema`
 - 系统消息：`RegisterSchema`, `UnRegisterSchema`, `KeepaliveSchema`
+- 聚档任务：`ArchiveTask`, `ArchiveTaskList`, `ArchiveTaskListSchema`
 - 档案查询：`ArchiveQuery*`, `ArchiveSubjectQuery*`
 - 档案查询与核验包装：`ArchiveQueryResult*`, `ArchiveConfidence*`
 

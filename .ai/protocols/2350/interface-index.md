@@ -5,7 +5,7 @@
 | 条款 | URL | 当前状态 |
 | --- | --- | --- |
 | A.5 | `/VIID/ArchiveLibraries` | 已基本对齐 |
-| A.6 | `/VIAS/Tasks` | 未实现，当前交付范围不包含 VIAS 接口 |
+| A.6 | `/VIAS/Tasks` | 已实现 GET/POST/PUT/DELETE 主链路，Task 字段仍需结合 GA/T 1399-2017 继续核对 |
 | A.7 | `/VIID/Subscribes` | 复用 1400 路由，2350 扩展语义仍需核对 |
 | A.8 | `/VIID/SubscribeNotifications` | 复用 1400 路由，已补齐部分 2350 扩展列表 |
 | A.9 | `/VIID/ArchivesQuerySync` | 使用 `POST /VIID/ArchivesQuerySync` + `ArchiveQuery` |

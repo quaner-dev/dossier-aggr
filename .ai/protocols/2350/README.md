@@ -6,7 +6,7 @@
 
 ## 覆盖范围
 
-当前仓库覆盖 A.5-A.18 中的主链路，其中 A.6 `/VIAS/Tasks` 不在当前交付范围。
+当前仓库覆盖 A.5-A.18 中的主链路，A.6 `/VIAS/Tasks` 已纳入 `api -> services -> tasks -> repo -> models` 实现链路。
 
 ## 阅读入口
 

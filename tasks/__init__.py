@@ -39,6 +39,12 @@ from .library.archive_library import (
     update_archive_libraries_task,
     delete_archive_libraries_task,
 )
+from .task.archive_task import (
+    list_archive_tasks_task,
+    create_archive_tasks_task,
+    update_archive_tasks_task,
+    delete_archive_tasks_task,
+)
 from .archive.archives import (
     list_archives_task,
     create_archives_task,
@@ -106,6 +112,11 @@ __all__ = [
     "create_archive_libraries_task",
     "update_archive_libraries_task",
     "delete_archive_libraries_task",
+    # Archive Task
+    "list_archive_tasks_task",
+    "create_archive_tasks_task",
+    "update_archive_tasks_task",
+    "delete_archive_tasks_task",
     # Archives
     "list_archives_task",
     "create_archives_task",

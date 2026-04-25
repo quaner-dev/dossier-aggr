@@ -10,9 +10,10 @@ from .collection.aps import router as aps_router
 from .collection.ape import router as ape_router
 from .face.face import router as face_router
 from .person.person import router as person_router
-from .subscribe.subscrbe import router as subscrbe_router
+from .subscribe.subscribe import router as subscribe_router
 from .subscribe.subscribe_notification import router as subscribe_notification_router
 from .library.archive_library import router as archive_library_router
+from .task.archive_task import router as archive_task_router
 from .archive.archives import router as archives_router
 from .archive.archive_subject import router as archive_subject_router
 from .vehicle.vehicle_archive import router as vehicle_archive_router
@@ -33,9 +34,10 @@ router.include_router(aps_router)
 router.include_router(ape_router)
 router.include_router(face_router)
 router.include_router(person_router)
-router.include_router(subscrbe_router)
+router.include_router(subscribe_router)
 router.include_router(subscribe_notification_router)
 router.include_router(archive_library_router)
+router.include_router(archive_task_router)
 router.include_router(archives_router)
 router.include_router(archive_subject_router)
 router.include_router(vehicle_archive_router)

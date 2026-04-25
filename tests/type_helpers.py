@@ -46,6 +46,7 @@ def sample_sub_image_info(
 ) -> SubImageInfo:
     return SubImageInfo(
         ImageID=image_id,
+        ImageSource="1",
         Type=image_type,
         FileFormat=enums.ImageFormatEnum.JPEG,
         Width=128,

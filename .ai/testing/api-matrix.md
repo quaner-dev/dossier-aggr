@@ -13,7 +13,7 @@
 | Subscribe | GET/POST/PUT/DELETE | `/VIID/Subscribes`、`/VIID/Subscribes/{subscribe_id}` | 时间格式、唯一约束、状态回包 | 已实现 |
 | SubscribeNotification | GET/POST/DELETE | `/VIID/SubscribeNotifications` | 通知对象批量写入、查询、删除 | 已实现 |
 | ArchiveLibrary | GET/POST/PUT/DELETE | `/VIID/ArchiveLibraries` | A.5 主链路 | 已实现 |
-| ArchiveTask | - | `/VIAS/Tasks` | 当前交付范围省略 | 未实现 |
+| ArchiveTask | GET/POST/PUT/DELETE | `/VIAS/Tasks` | A.6 主链路、`TaskID` 删除、状态回包 | 已实现 |
 | Archive | POST/PUT/DELETE | `/VIID/ArchivesQuerySync`、`/VIID/Archives` | A.9/A.10 主链路与查询语义 | 部分实现 |
 | VehicleArchive | POST/PUT/DELETE | `/VIID/VehicleArchivesQuerySync`、`/VIID/VehicleArchives` | A.11/A.12 主链路与查询语义 | 部分实现 |
 | ArchiveSubject | POST/PUT/DELETE | `/VIID/ArchiveSubjectQuerySync`、`/VIID/ArchiveSubjects` | A.13/A.14 主链路与删除键 | 部分实现 |

@@ -13,6 +13,7 @@ FACES_URL = "/VIID/Faces"
 PERSONS_URL = "/VIID/Persons"
 
 ARCHIVE_LIBRARIES_URL = "/VIID/ArchiveLibraries"
+ARCHIVE_TASKS_URL = "/VIAS/Tasks"
 ARCHIVES_QUERY_SYNC_URL = "/VIID/ArchivesQuerySync"
 ARCHIVES_URL = "/VIID/Archives"
 ARCHIVE_SUBJECT_QUERY_SYNC_URL = "/VIID/ArchiveSubjectQuerySync"

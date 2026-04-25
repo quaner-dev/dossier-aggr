@@ -10,6 +10,7 @@
 - `tests/models/test_2350_models.py`
 - `tests/repositories/test_2350_query_repositories.py`
 - `tests/test_api_archive_library.py`
+- `tests/test_api_archive_task.py`
 - `tests/test_api_archives.py`
 - `tests/test_api_vehicle_archive.py`
 - `tests/test_api_archive_subject.py`
@@ -17,4 +18,5 @@
 - `tests/test_api_archive_confidence.py`
 - `tests/test_api_vehicle_archive_confidence.py`
 - `tests/services/test_subject_verify_layering.py`
+- `tests/services/test_archive_task_layering.py`
 - `tests/migrations/test_upgrade_head.py`

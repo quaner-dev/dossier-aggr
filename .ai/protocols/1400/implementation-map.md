@@ -9,5 +9,5 @@
 | APE | `api/collection/ape.py` | `APEService` | `repo/collection/ape.py` | `tasks/collection/ape.py` |
 | Person | `api/person/person.py` | `PersonService` | `repo/person/person.py` | `tasks/person/person.py` |
 | Face | `api/face/face.py` | `FaceService` | `repo/face/face.py` | `tasks/face/face.py` |
-| Subscribe | `api/subscribe/subscrbe.py` | `SubscribeService` | `repo/subscribe/subscribe.py` | `tasks/subscribe/subscribe.py` |
+| Subscribe | `api/subscribe/subscribe.py` | `SubscribeService` | `repo/subscribe/subscribe.py` | `tasks/subscribe/subscribe.py` |
 | SubscribeNotification | `api/subscribe/subscribe_notification.py` | `SubscribeNotificationService` | `repo/subscribe/subscribe_notification.py` | `tasks/subscribe/subscribe_notification.py` |

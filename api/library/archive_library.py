@@ -27,7 +27,9 @@ async def archive_libraries_query(
 ) -> ArchiveLibraryListSchema:
     libraries = await service.list_archive_libraries(filters=dict(request.query_params))
     return ArchiveLibraryListSchema(
-        ArchiveLibraryListObject=ArchiveLibraryList(ArchiveLibraryObject=libraries)
+        ArchiveLibraryListObject=ArchiveLibraryList(
+            ArchiveLibraryObject=list(libraries)
+        )
     )
 
 
@@ -91,10 +93,12 @@ async def archive_library_update(
     description="GA/T 2350.5-2025 A.5 目标档案库删除接口",
 )
 async def archive_library_delete(
-    id_list: Annotated[list[str], BeforeValidator(parse_id_list), Query(alias="IDList")],
+    library_ids: Annotated[
+        list[str], BeforeValidator(parse_id_list), Query(alias="IDList")
+    ],
     service: ArchiveLibraryService = Depends(ArchiveLibraryService),
 ) -> ResponseStatusListSchema:
-    _ = await service.delete_archive_libraries(library_ids=id_list)
+    _ = await service.delete_archive_libraries(library_ids=library_ids)
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
             ResponseStatusObject=[
@@ -105,7 +109,7 @@ async def archive_library_delete(
                     Id=library_id,
                     LocalTime=datetime.now(),
                 )
-                for library_id in id_list
+                for library_id in library_ids
             ]
         )
     )

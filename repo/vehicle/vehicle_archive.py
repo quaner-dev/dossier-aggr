@@ -15,6 +15,18 @@ async def list_vehicle_archives_repo() -> Sequence[VehicleArchive]:
 async def query_vehicle_archives_repo(
     query: ArchiveQuery | None,
 ) -> Sequence[VehicleArchive]:
+    def _picture_subject_ids() -> list[str]:
+        if query is None or query.PictureQueryCondition is None:
+            return []
+        return [
+            condition.SubjectID
+            for condition in query.PictureQueryCondition.PictureQueryConditionObject
+            if condition.SubjectID
+        ]
+
+    def _has_overlap(source: list[str] | None, target: list[str]) -> bool:
+        return bool(source and target and set(source) & set(target))
+
     async with AsyncSession(engine) as session:
         statement = select(VehicleArchive)
         fields = query.Fields if query else None
@@ -47,6 +59,13 @@ async def query_vehicle_archives_repo(
                 statement = statement.where(VehicleArchive.VehicleStyles == fields.VehicleStyles)
 
         archives = (await session.exec(statement)).all()
+        picture_subject_ids = _picture_subject_ids()
+        if picture_subject_ids:
+            archives = [
+                archive
+                for archive in archives
+                if _has_overlap(archive.SourceIDList, picture_subject_ids)
+            ]
         if not archives:
             raise exceptions.DataNotFoundError(detail="No VehicleArchive data exist")
         return archives

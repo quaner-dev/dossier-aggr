@@ -13,7 +13,8 @@ from models import (
     VehicleArchiveList,
     VehicleArchiveListSchema,
 )
-from tests.type_helpers import as_service, as_status_list, dt
+from models.common import enums
+from tests.type_helpers import as_service, as_status_list, dt, sample_sub_image_list
 
 
 class _FakeVehicleArchiveService:
@@ -47,19 +48,27 @@ def _sample_vehicle_archives() -> list[VehicleArchive]:
             ArchiveID="VA-001",
             ArchiveLibraryID="LIB-001",
             PlateNo="A12345",
+            PlateColor=enums.ColorTypeEnum.Blue,
             VehicleClass="K11",
             CreateTime=dt("20260101120000"),
             UpdateTime=dt("20260101120000"),
-            ImageID="IMG-VA-001",
+            SourceIDList=["MV-001"],
+            SubImageList=sample_sub_image_list(
+                "IMG-VA-001", enums.ImageTypeEnum.VehicleLargeImage, "va-001"
+            ),
         ),
         VehicleArchive(
             ArchiveID="VA-002",
             ArchiveLibraryID="LIB-001",
             PlateNo="B12345",
+            PlateColor=enums.ColorTypeEnum.White,
             VehicleClass="K11",
             CreateTime=dt("20260102120000"),
             UpdateTime=dt("20260102120000"),
-            ImageID="IMG-VA-002",
+            SourceIDList=["MV-002"],
+            SubImageList=sample_sub_image_list(
+                "IMG-VA-002", enums.ImageTypeEnum.VehicleLargeImage, "va-002"
+            ),
         ),
     ]
 
@@ -83,6 +92,12 @@ def test_vehicle_archive_query_returns_query_result_schema():
             == "VA-001"
         )
         assert (
+            res.ArchiveQueryResultObject.VehicleArchiveListObject.VehicleArchiveObject[0]
+            .SubImageList.SubImageInfoObject[0]
+            .ImageID
+            == "IMG-VA-001"
+        )
+        assert (
             len(res.ArchiveQueryResultObject.VehicleArchiveListObject.VehicleArchiveObject)
             == 2
         )
@@ -103,7 +118,7 @@ def test_vehicle_archive_create_update_delete_return_status_list():
         create_res = await vehicle_archives_create(data=payload, service=as_service(fake))
         update_res = await vehicle_archives_update(data=payload, service=as_service(fake))
         delete_res = await vehicle_archives_delete(
-            id_list=["VA-001", "VA-002"],
+            archive_ids=["VA-001", "VA-002"],
             service=as_service(fake),
         )
 

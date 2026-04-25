@@ -1,6 +1,15 @@
 import asyncio
 
-from models import Subscribe, SubscribeNotification
+from models import (
+    Archive,
+    ArchiveList,
+    ArchiveSubject,
+    ArchiveSubjectList,
+    Subscribe,
+    SubscribeNotification,
+    VehicleArchive,
+    VehicleArchiveList,
+)
 from models.common import enums
 from services.subscribe.subscribe import SubscribeService
 from services.subscribe.subscribe_notification import SubscribeNotificationService
@@ -8,6 +17,7 @@ import services.subscribe.subscribe as subscribe_service_module
 import services.subscribe.subscribe_notification as notification_service_module
 import tasks.subscribe.subscribe as subscribe_task_module
 import tasks.subscribe.subscribe_notification as notification_task_module
+from tests.type_helpers import dt, sample_feature_info_list, sample_sub_image_list
 
 
 def _sample_subscribe() -> Subscribe:
@@ -37,6 +47,50 @@ def _sample_subscribe() -> Subscribe:
 
 
 def _sample_notification() -> SubscribeNotification:
+    archive = Archive(
+        ArchiveID="A-N-LAYER-001",
+        ArchiveLibraryID="LIB-LAYER-001",
+        CreateTime=dt("20260101120000"),
+        UpdateTime=dt("20260101120000"),
+        SourceIDList=["PERSON-N-LAYER-001"],
+        CenterFeatureList=sample_feature_info_list("sub-layer-a"),
+        Similaritydegree=0.91,
+        Confidence=0.82,
+        SubImageList=sample_sub_image_list(
+            "IMG-N-LAYER-001",
+            enums.ImageTypeEnum.PersonImage,
+            "sub-layer-a",
+        ),
+    )
+    vehicle_archive = VehicleArchive(
+        ArchiveID="VA-N-LAYER-001",
+        ArchiveLibraryID="LIB-LAYER-001",
+        PlateNo="A12345",
+        PlateColor=enums.ColorTypeEnum.Blue,
+        VehicleClass="K11",
+        CreateTime=dt("20260101120000"),
+        UpdateTime=dt("20260101120000"),
+        SourceIDList=["MV-N-LAYER-001"],
+        SubImageList=sample_sub_image_list(
+            "IMG-VA-N-LAYER-001",
+            enums.ImageTypeEnum.VehicleLargeImage,
+            "sub-layer-va",
+        ),
+    )
+    archive_subject = ArchiveSubject(
+        ArchiveID="AS-N-LAYER-001",
+        PersonIDList=["P-N-LAYER-001"],
+        FaceIDList=["F-N-LAYER-001"],
+        GaitIDList=["G-N-LAYER-001"],
+        MotorVehicleIDList=["MV-N-LAYER-001"],
+        NonMotorVehicleIDList=["NMV-N-LAYER-001"],
+        PersonObjectList=None,
+        FaceObjectList=None,
+        GaitObjectList=None,
+        MotorVehicleObjectList=None,
+        NonMotorVehicleObjectList=None,
+    )
+
     return SubscribeNotification(
         NotificationID="N-LAYER-001",
         SubscribeID="S-LAYER-001",
@@ -46,6 +100,11 @@ def _sample_notification() -> SubscribeNotification:
         DeviceList=None,
         DataClassTabObjectList=None,
         ExecuteOperation=None,
+        ArchiveObjectList=ArchiveList(ArchiveObject=[archive]),
+        VehicleArchiveObjectList=VehicleArchiveList(
+            VehicleArchiveObject=[vehicle_archive]
+        ),
+        ArchiveSubjectList=ArchiveSubjectList(ArchiveSubjectObject=[archive_subject]),
         FaceObjectList=None,
         PersonObjectList=None,
     )
@@ -143,6 +202,8 @@ def test_subscribe_notification_service_sync_read_uses_repository(monkeypatch):
 
         assert called["list"] is True
         assert res[0].NotificationID == "N-LAYER-001"
+        assert res[0].ArchiveObjectList is not None
+        assert res[0].ArchiveObjectList.ArchiveObject[0].ArchiveID == "A-N-LAYER-001"
 
     asyncio.run(_run())
 

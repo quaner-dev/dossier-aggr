@@ -31,9 +31,10 @@ def test_2350_a8_subscribe_notification_reuse_fields_present():
         "InfoIDs",
         "DeviceList",
         "DataClassTabObjectList",
+        "ArchiveObjectList",
+        "VehicleArchiveObjectList",
+        "ArchiveSubjectList",
         "ExecuteOperation",
-        "FaceObjectList",
-        "PersonObjectList",
     }
 
     for field in expected:

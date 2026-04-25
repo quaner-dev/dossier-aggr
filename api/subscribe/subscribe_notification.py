@@ -80,10 +80,12 @@ async def subscribe_notifications_delete(
     service: Annotated[
         SubscribeNotificationService, Depends(SubscribeNotificationService)
     ],
-    id_list: Annotated[list[str], BeforeValidator(parse_id_list), Query(alias="IDList")],
+    notification_ids: Annotated[
+        list[str], BeforeValidator(parse_id_list), Query(alias="IDList")
+    ],
 ) -> ResponseStatusListSchema:
-    notification_ids = await service.delete_subscribe_notifications(
-        notification_ids=id_list
+    deleted_notification_ids = await service.delete_subscribe_notifications(
+        notification_ids=notification_ids
     )
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
@@ -95,7 +97,7 @@ async def subscribe_notifications_delete(
                     Id=notification_id,
                     LocalTime=datetime.now(),
                 )
-                for notification_id in notification_ids
+                for notification_id in deleted_notification_ids
             ]
         )
     )

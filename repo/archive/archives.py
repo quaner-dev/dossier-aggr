@@ -3,14 +3,49 @@ from typing import Any, cast
 
 from core import exceptions
 from core.database import engine
-from models import Archive
+from models import Archive, ArchiveQuery
 from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 async def list_archives_repo() -> Sequence[Archive]:
+    return await query_archives_repo(query=None)
+
+
+async def query_archives_repo(
+    query: ArchiveQuery | None,
+) -> Sequence[Archive]:
+    def _picture_subject_ids() -> list[str]:
+        if query is None or query.PictureQueryCondition is None:
+            return []
+        return [
+            condition.SubjectID
+            for condition in query.PictureQueryCondition.PictureQueryConditionObject
+            if condition.SubjectID
+        ]
+
+    def _has_overlap(source: list[str] | None, target: list[str]) -> bool:
+        return bool(source and target and set(source) & set(target))
+
     async with AsyncSession(engine) as session:
-        archives = (await session.exec(select(Archive))).all()
+        statement = select(Archive)
+        fields = query.Fields if query else None
+        if fields:
+            if fields.ArchiveLibraryID:
+                statement = statement.where(Archive.ArchiveLibraryID == fields.ArchiveLibraryID)
+            if fields.ArchiveIDList:
+                statement = statement.where(
+                    cast(Any, Archive.ArchiveID).in_(fields.ArchiveIDList)
+                )
+
+        archives = (await session.exec(statement)).all()
+        picture_subject_ids = _picture_subject_ids()
+        if picture_subject_ids:
+            archives = [
+                archive
+                for archive in archives
+                if _has_overlap(archive.SourceIDList, picture_subject_ids)
+            ]
         if not archives:
             raise exceptions.DataNotFoundError(detail="No Archive data exist")
         return archives

@@ -1,6 +1,9 @@
 from sqlalchemy import Column, JSON
 from sqlmodel import SQLModel, Field
 
+from ..archive.archive import ArchiveList
+from ..archive.archive_subject import ArchiveSubjectList as ArchiveSubjectPayloadList
+from ..archive.vehicle_archive import VehicleArchiveList
 from ..common import enums
 from ..face.face import FaceList
 from ..person.person import PersonList
@@ -22,6 +25,15 @@ class SubscribeNotification(SQLModel, table=True):
         default=None, description="更新项目"
     )
 
+    ArchiveObjectList: ArchiveList | None = Field(
+        default=None, description="人员基础档案信息", sa_column=Column(JSON)
+    )
+    VehicleArchiveObjectList: VehicleArchiveList | None = Field(
+        default=None, description="车辆基础档案信息", sa_column=Column(JSON)
+    )
+    ArchiveSubjectList: ArchiveSubjectPayloadList | None = Field(
+        default=None, description="档案明细信息", sa_column=Column(JSON)
+    )
     FaceObjectList: FaceList | None = Field(
         default=None, description="人脸信息", sa_column=Column(JSON)
     )

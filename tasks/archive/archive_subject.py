@@ -29,5 +29,17 @@ async def update_archive_subjects_task(
 
 
 @brokers.broker.task
-async def delete_archive_subjects_task(archive_id: str) -> list[str]:
-    return await delete_archive_subjects_repo(archive_id=archive_id)
+async def delete_archive_subjects_task(
+    archive_id: str | None = None,
+    face_id_list: list[str] | None = None,
+    person_id_list: list[str] | None = None,
+    motor_vehicle_id_list: list[str] | None = None,
+    non_motor_vehicle_id_list: list[str] | None = None,
+) -> list[str]:
+    return await delete_archive_subjects_repo(
+        archive_id=archive_id,
+        face_id_list=face_id_list,
+        person_id_list=person_id_list,
+        motor_vehicle_id_list=motor_vehicle_id_list,
+        non_motor_vehicle_id_list=non_motor_vehicle_id_list,
+    )

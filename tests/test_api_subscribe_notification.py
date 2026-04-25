@@ -7,12 +7,25 @@ from api.subscribe.subscribe_notification import (
     subscribe_notifications_query,
 )
 from models import (
+    Archive,
+    ArchiveList,
+    ArchiveSubject,
+    ArchiveSubjectList,
     SubscribeNotification,
     ResponseStatusListSchema,
     SubscribeNotificationList,
     SubscribeNotificationListSchema,
+    VehicleArchive,
+    VehicleArchiveList,
 )
-from tests.type_helpers import as_service, as_status_list
+from models.common import enums
+from tests.type_helpers import (
+    as_service,
+    as_status_list,
+    dt,
+    sample_feature_info_list,
+    sample_sub_image_list,
+)
 
 
 class _FakeSubscribeNotificationService:
@@ -45,6 +58,48 @@ class _FakeSubscribeNotificationService:
 
 
 def _sample_notifications() -> list[SubscribeNotification]:
+    archive = Archive(
+        ArchiveID="A-N-001",
+        ArchiveLibraryID="LIB-001",
+        CreateTime=dt("20260101120000"),
+        UpdateTime=dt("20260101120000"),
+        SourceIDList=["PERSON-N-001"],
+        CenterFeatureList=sample_feature_info_list("notif-a-001"),
+        Similaritydegree=0.91,
+        Confidence=0.82,
+        SubImageList=sample_sub_image_list(
+            "IMG-N-A-001", enums.ImageTypeEnum.PersonImage, "notif-a-001"
+        ),
+    )
+    vehicle_archive = VehicleArchive(
+        ArchiveID="VA-N-001",
+        ArchiveLibraryID="LIB-001",
+        PlateNo="A12345",
+        PlateColor=enums.ColorTypeEnum.Blue,
+        VehicleClass="K11",
+        CreateTime=dt("20260101120000"),
+        UpdateTime=dt("20260101120000"),
+        SourceIDList=["MV-N-001"],
+        SubImageList=sample_sub_image_list(
+            "IMG-N-VA-001",
+            enums.ImageTypeEnum.VehicleLargeImage,
+            "notif-va-001",
+        ),
+    )
+    archive_subject = ArchiveSubject(
+        ArchiveID="AS-N-001",
+        PersonIDList=["P-N-001"],
+        FaceIDList=["F-N-001"],
+        GaitIDList=["G-N-001"],
+        MotorVehicleIDList=["MV-N-001"],
+        NonMotorVehicleIDList=["NMV-N-001"],
+        PersonObjectList=None,
+        FaceObjectList=None,
+        GaitObjectList=None,
+        MotorVehicleObjectList=None,
+        NonMotorVehicleObjectList=None,
+    )
+
     return [
         SubscribeNotification(
             NotificationID="N-001",
@@ -55,6 +110,11 @@ def _sample_notifications() -> list[SubscribeNotification]:
             DeviceList=None,
             DataClassTabObjectList=None,
             ExecuteOperation=None,
+            ArchiveObjectList=ArchiveList(ArchiveObject=[archive]),
+            VehicleArchiveObjectList=VehicleArchiveList(
+                VehicleArchiveObject=[vehicle_archive]
+            ),
+            ArchiveSubjectList=ArchiveSubjectList(ArchiveSubjectObject=[archive_subject]),
             FaceObjectList=None,
             PersonObjectList=None,
         ),
@@ -67,6 +127,11 @@ def _sample_notifications() -> list[SubscribeNotification]:
             DeviceList=None,
             DataClassTabObjectList=None,
             ExecuteOperation=None,
+            ArchiveObjectList=ArchiveList(ArchiveObject=[archive]),
+            VehicleArchiveObjectList=VehicleArchiveList(
+                VehicleArchiveObject=[vehicle_archive]
+            ),
+            ArchiveSubjectList=ArchiveSubjectList(ArchiveSubjectObject=[archive_subject]),
             FaceObjectList=None,
             PersonObjectList=None,
         ),
@@ -110,6 +175,12 @@ def test_subscribe_notifications_query_returns_notification_list():
             res.SubscribeNotificationListObject.SubscribeNotificationObject[0].NotificationID
             == "N-001"
         )
+        assert (
+            res.SubscribeNotificationListObject.SubscribeNotificationObject[0]
+            .ArchiveObjectList.ArchiveObject[0]
+            .ArchiveID
+            == "A-N-001"
+        )
         assert fake.query_filters == {"NotificationID": "N-001"}
 
     asyncio.run(_run())
@@ -121,7 +192,7 @@ def test_subscribe_notifications_delete_returns_status_list():
 
         res = await subscribe_notifications_delete(
             service=as_service(fake),
-            id_list=["N-001", "N-002"],
+            notification_ids=["N-001", "N-002"],
         )
 
         assert isinstance(res, ResponseStatusListSchema)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from datetime import datetime
 from typing import Annotated
 from pydantic import BeforeValidator
@@ -7,6 +7,7 @@ from core import constants
 from models import (
     ArchiveList,
     ArchiveListSchema,
+    ArchiveQuerySchema,
     ArchiveQueryResult,
     ArchiveQueryResultSchema,
     ResponseStatusList,
@@ -20,22 +21,27 @@ from core.utils import parse_id_list
 router = APIRouter()
 
 
-@router.get(
+@router.post(
     path=constants.ARCHIVES_QUERY_SYNC_URL,
     description="GA/T 2350.5-2025 A.9 人员档案查询接口",
 )
 async def archives_query_sync(
+    data: ArchiveQuerySchema,
     service: Annotated[ArchiveService, Depends(ArchiveService)],
 ) -> ArchiveQueryResultSchema:
-    archives = await service.list_archives()
+    query = data.ArchiveQueryObject
+    archives = await service.query_archives(query=query)
+    record_start_no = query.RecordStartNo or 0
+    record_limit = query.PageRecordNum or query.MaxNumRecordReturn or len(archives)
+    page_archives = archives[record_start_no : record_start_no + record_limit]
     return ArchiveQueryResultSchema(
         ArchiveQueryResultObject=ArchiveQueryResult(
-            QueryID="LOCAL_QUERY",
-            RecordStartNo=0,
-            PageRecordNum=len(archives),
+            QueryID=query.QueryID,
+            RecordStartNo=record_start_no,
+            PageRecordNum=len(page_archives),
             TotalNum=len(archives),
             ArchiveListObject=ArchiveList(
-                ArchiveObject=[archive for archive in archives]
+                ArchiveObject=[archive for archive in page_archives]
             ),
         )
     )
@@ -101,7 +107,9 @@ async def archives_update(
     description="GA/T 2350.5-2025 A.10 人员档案删除接口",
 )
 async def archives_delete(
-    archive_ids: Annotated[list[str], BeforeValidator(parse_id_list)],
+    archive_ids: Annotated[
+        list[str], BeforeValidator(parse_id_list), Query(alias="IDList")
+    ],
     service: Annotated[ArchiveService, Depends(ArchiveService)],
 ) -> ResponseStatusListSchema:
     _ = await service.delete_archives(archive_ids=archive_ids)

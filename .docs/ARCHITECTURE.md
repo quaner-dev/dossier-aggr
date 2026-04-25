@@ -1,6 +1,6 @@
 # ARCHITECTURE
 
-更新时间：2026-03-05  
+更新时间：2026-03-11  
 范围：仅基于当前仓库代码（不引用 `llm/` 目录）
 
 ## 1. 系统定位
@@ -8,7 +8,7 @@
 `dossier-aggr` 是一个 VIID 协议服务，当前包含两类能力：
 
 - GA/T 1400 相关：系统注册/保活/注销、采集系统与设备、人员、人脸、订阅与通知。
-- GA/T 2350.5（聚档）相关：档案库、档案、档案明细、档案核验等主链路能力。
+- GA/T 2350.5（聚档）相关：已实现档案库、档案、档案明细、档案核验等主链路，但与正式版 GA/T 2350.5-2025 仍存在若干协议差异，详见 `.docs/PROTOCOL_2350.md`。
 
 ## 2. 技术栈与运行时
 
@@ -108,17 +108,17 @@ Client
 | 系统注册/保活/注销/系统时间 | `api/system/*.py` | `APSService` + `SystemTimeService` | `update_aps_task` | 已实现 |
 | 采集系统 APS | `api/collection/aps.py` | `APSService` | `repo/collection/aps.py` + `tasks/collection/aps.py` | 已实现（读走 repository，写走 task） |
 | 采集设备 APE | `api/collection/ape.py` | `APEService` | `repo/collection/ape.py` + `tasks/collection/ape.py` | 已实现（读走 repository，写走 task） |
-| 人脸 Face | `api/face/face.py` | `FaceService` | `repo/face/face.py` + `tasks/face/face.py` | 已实现（读走 repository，写走 task；批量接口 `/VIID/Faces` 与单条接口 `/VIID/Faces/{face_id}` 分离，单条支持 GET/PUT/DELETE） |
-| 人员 Person | `api/person/person.py` | `PersonService` | `repo/person/person.py` + `tasks/person/person.py` | 已实现（读走 repository，写走 task；批量接口 `/VIID/Persons` 返回默认 `TOP100` 列表，与单条接口 `/VIID/Persons/{person_id}` 分离，单条支持 GET/PUT/DELETE） |
-| 订阅 Subscribe | `api/subscribe/subscrbe.py` | `SubscribeService` | `repo/subscribe/subscribe.py` + `tasks/subscribe/subscribe.py` | 已实现（读走 repository，写走 task） |
+| 人脸 Face | `api/face/face.py` | `FaceService` | `repo/face/face.py` + `tasks/face/face.py` | 已实现（读走 repository，写走 task；批量接口 `/VIID/Faces` 与单条接口 `/VIID/Faces/{face_id}` 分离，单条支持 GET/PUT/DELETE；批量删除对外使用 `IDList`，同时兼容历史参数名 `id_list`） |
+| 人员 Person | `api/person/person.py` | `PersonService` | `repo/person/person.py` + `tasks/person/person.py` | 已实现（读走 repository，写走 task；批量接口 `/VIID/Persons` 返回默认 `TOP100` 列表，与单条接口 `/VIID/Persons/{person_id}` 分离，单条支持 GET/PUT/DELETE；批量删除对外使用 `IDList`，同时兼容历史参数名 `person_ids`） |
+| 订阅 Subscribe | `api/subscribe/subscrbe.py` | `SubscribeService` | `repo/subscribe/subscribe.py` + `tasks/subscribe/subscribe.py` | 已实现（读走 repository，写走 task；批量删除对外使用 `IDList`，同时兼容历史参数名 `subscribe_ids`） |
 | 订阅通知 | `api/subscribe/subscribe_notification.py` | `SubscribeNotificationService` | `repo/subscribe/subscribe_notification.py` + `tasks/subscribe/subscribe_notification.py` | 已实现（批量查询走 repository，批量新增/删除走 task） |
 | 档案库 ArchiveLibrary | `api/library/archive_library.py` | `ArchiveLibraryService` | `repo/library/archive_library.py` + `tasks/library/archive_library.py` | 已实现（A.5 主链路；`GET /VIID/ArchiveLibraries` 读走 repository，POST/PUT/DELETE 走 task） |
 | 聚档任务 ArchiveTask | - | - | - | 未实现（A.6 `/VIAS/Tasks` 按当前交付范围省略） |
-| 档案 Archive | `api/archive/archives.py` | `ArchiveService` | `repo/archive/archives.py` + `tasks/archive/archives.py` | 已实现（A.9/A.10 主链路；读走 repository，写走 task） |
-| 车辆档案 VehicleArchive | `api/vehicle/vehicle_archive.py` | `VehicleArchiveService` | `repo/vehicle/vehicle_archive.py` + `tasks/vehicle/vehicle_archive.py` | 已实现（A.11/A.12 主链路；`POST /VIID/VehicleArchivesQuerySync` 读走 repository，POST/PUT/DELETE `/VIID/VehicleArchives` 走 task） |
-| 档案明细 ArchiveSubject | `api/archive/archive_subject.py` | `ArchiveSubjectService` | `repo/archive/archive_subject.py` + `tasks/archive/archive_subject.py` | 已实现（A.13/A.14 主链路；读走 repository，写走 task；删除仅按 `ArchiveID`） |
-| 车辆档案明细 VehicleArchiveSubject | `api/vehicle/vehicle_archive_subject.py` | `VehicleArchiveSubjectService` | `repo/vehicle/vehicle_archive_subject.py` + `tasks/vehicle/vehicle_archive_subject.py` | 已实现（A.15/A.16 主链路；读走 repository，写走 task） |
-| 档案核验 Confidence | `api/verify/*.py` | `ArchiveConfidenceService` / `VehicleArchiveConfidenceService` | `repo/verify/*.py` + `tasks/verify/*.py` | 已实现（A.17/A.18 主链路；service 同步核验走 repository） |
+| 档案 Archive | `api/archive/archives.py` | `ArchiveService` | `repo/archive/archives.py` + `tasks/archive/archives.py` | 部分实现（A.9/A.10 主链路可运行；A.9 已切换为 `POST` + `ArchiveQuery`，查询对象字段基线已对齐正式版；repository 当前已支持部分 `Fields` 与 `PictureQueryCondition.SubjectID -> SourceIDList` 筛查，但仍未实现完整图片/时间/区域/设备检索语义） |
+| 车辆档案 VehicleArchive | `api/vehicle/vehicle_archive.py` | `VehicleArchiveService` | `repo/vehicle/vehicle_archive.py` + `tasks/vehicle/vehicle_archive.py` | 部分实现（A.11/A.12 主链路可运行；A.11 当前 repository 已支持部分 `Fields` 与 `PictureQueryCondition.SubjectID -> SourceIDList` 筛查，但仍未实现完整图片/时间/区域/设备检索语义；A.12 写链路已实现） |
+| 档案明细 ArchiveSubject | `api/archive/archive_subject.py` | `ArchiveSubjectService` | `repo/archive/archive_subject.py` + `tasks/archive/archive_subject.py` | 部分实现（A.13/A.14 可运行；查询对象和 B.5 字段集合已对齐正式版，A.14 DELETE 已支持五类正式删除键；A.13 当前已支持 `ArchiveIDList` 与 `PictureQueryCondition.SubjectID`，但仍未覆盖时间/区域/设备等语义） |
+| 车辆档案明细 VehicleArchiveSubject | `api/vehicle/vehicle_archive_subject.py` | `VehicleArchiveSubjectService` | `repo/vehicle/vehicle_archive_subject.py` + `tasks/vehicle/vehicle_archive_subject.py` | 部分实现（A.15/A.16 可运行；车辆明细对象已补齐 person/face/gait/motor/non-motor 列表，A.16 DELETE 已支持五类正式删除键；A.15 当前已支持 `ArchiveIDList` 与 `PictureQueryCondition.SubjectID`，但仍未覆盖时间/区域/设备等语义） |
+| 档案核验 Confidence | `api/verify/*.py` | `ArchiveConfidenceService` / `VehicleArchiveConfidenceService` | `repo/verify/*.py` + `tasks/verify/*.py` | 已基本对齐（A.17/A.18 已使用正式版档案列表请求/响应，`Archive` / `VehicleArchive` 对象字段已切换到正式版） |
 
 ## 8. 数据模型与持久化
 
@@ -136,7 +136,8 @@ Client
 - `alembic/versions/a272a22d0455_init.py`
 - `alembic/versions/c2a4d9f73c51_add_archive_task_table.py`
 - `alembic/versions/ba1f5f1f8b9e_add_vehicle_archive_table.py`
-- `ArchiveSubject`、`VehicleArchiveSubject` 当前由 repository 启动阶段懒创建（`SQLModel.metadata.create_all`）
+- `alembic/versions/7f7fb248ab04_align_2350_official_models.py`
+- `ArchiveSubject`、`VehicleArchiveSubject` 仍保留 repository 启动阶段的 `create_all` 兼容兜底，但正式 schema 现已纳入 Alembic 迁移
 
 ### 8.2 协议/聚合模型（非表）
 
@@ -214,6 +215,6 @@ Client
 
 ## 12. 当前架构结论
 
-- 主链路（1400 + 2350 A.5-A.18）已具备 API -> service -> repository/task -> DB 的可运行实现。
+- 主链路（1400 + 2350 A.5-A.18）已具备 API -> service -> repository/task -> DB 的可运行实现，但 2350 与正式版协议的接口/对象对齐尚未完成。
 - 写入路径通过 `dispatch_and_wait` 统一封装任务派发与结果等待，失败将返回协议化错误响应。
-- 当前待增强点主要集中在 RabbitMQ 真实 worker 场景的端到端回归与附录扩展字段精细化约束。
+- 当前待增强点主要集中在 GA/T 2350.5-2025 正式版对齐、RabbitMQ 真实 worker 场景的端到端回归与附录扩展字段精细化约束。

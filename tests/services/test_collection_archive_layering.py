@@ -17,7 +17,7 @@ import tasks.collection.ape as ape_task_module
 import tasks.collection.aps as aps_task_module
 import tasks.library.archive_library as library_task_module
 import tasks.vehicle.vehicle_archive as vehicle_task_module
-from tests.type_helpers import dt
+from tests.type_helpers import dt, sample_feature_info_list, sample_sub_image_list
 
 
 def _sample_aps() -> APS:
@@ -69,13 +69,15 @@ def _sample_archive() -> Archive:
     return Archive(
         ArchiveID="A-LAYER-001",
         ArchiveLibraryID="LIB-LAYER-001",
-        IDType="111",
-        IDNumber="ID-LAYER-001",
-        Name="Layer User",
-        BirthTime=dt("19900101000000"),
         CreateTime=dt("20260101120000"),
         UpdateTime=dt("20260101120000"),
-        ImageID="IMG-LAYER-001",
+        SourceIDList=["PERSON-LAYER-001", "FACE-LAYER-001"],
+        CenterFeatureList=sample_feature_info_list("archive-layer"),
+        Similaritydegree=0.91,
+        Confidence=0.82,
+        SubImageList=sample_sub_image_list(
+            "IMG-LAYER-001", enums.ImageTypeEnum.PersonImage, "archive-layer"
+        ),
     )
 
 
@@ -84,10 +86,14 @@ def _sample_vehicle_archive() -> VehicleArchive:
         ArchiveID="VA-LAYER-001",
         ArchiveLibraryID="LIB-LAYER-001",
         PlateNo="A12345",
+        PlateColor=enums.ColorTypeEnum.Blue,
         VehicleClass="K11",
         CreateTime=dt("20260101120000"),
         UpdateTime=dt("20260101120000"),
-        ImageID="IMG-VA-LAYER-001",
+        SourceIDList=["MV-LAYER-001"],
+        SubImageList=sample_sub_image_list(
+            "IMG-VA-LAYER-001", enums.ImageTypeEnum.VehicleLargeImage, "vehicle-layer"
+        ),
     )
 
 

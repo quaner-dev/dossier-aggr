@@ -7,6 +7,7 @@ def test_2350_routes_registered_on_openapi():
 
     expected_paths = {
         "/VIID/ArchiveLibraries",
+        "/VIID/ArchivesQuerySync",
         "/VIID/Subscribes",
         "/VIID/Subscribes/{subscribe_id}",
         "/VIID/SubscribeNotifications",
@@ -36,6 +37,8 @@ def test_2350_routes_registered_on_openapi():
     assert "post" in paths["/VIID/SubscribeNotifications"]
     assert "get" in paths["/VIID/SubscribeNotifications"]
     assert "delete" in paths["/VIID/SubscribeNotifications"]
+    assert "post" in paths["/VIID/ArchivesQuerySync"]
+    assert "get" not in paths["/VIID/ArchivesQuerySync"]
     assert "post" in paths["/VIID/VehicleArchivesQuerySync"]
     assert "post" in paths["/VIID/VehicleArchives"]
     assert "put" in paths["/VIID/VehicleArchives"]

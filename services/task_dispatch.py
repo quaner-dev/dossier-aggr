@@ -1,11 +1,34 @@
-import inspect
-from typing import Any, cast
+from collections.abc import Coroutine
+from typing import Any, ParamSpec, TypeVar, overload
 
 from taskiq import AsyncTaskiqDecoratedTask
 from taskiq.exceptions import TaskiqResultTimeoutError
+from taskiq.result import TaskiqResult
+
 
 from core import exceptions
 from core import settings
+
+_FuncParams = ParamSpec("_FuncParams")
+_ReturnType = TypeVar("_ReturnType")
+_AwaitedReturnType = TypeVar("_AwaitedReturnType")
+
+
+@overload
+async def dispatch_and_wait(
+    task: AsyncTaskiqDecoratedTask[
+        _FuncParams,
+        Coroutine[Any, Any, _AwaitedReturnType],
+    ],
+    **kwargs: Any,
+) -> _AwaitedReturnType: ...
+
+
+@overload
+async def dispatch_and_wait(
+    task: AsyncTaskiqDecoratedTask[_FuncParams, _ReturnType],
+    **kwargs: Any,
+) -> _ReturnType: ...
 
 
 async def dispatch_and_wait(
@@ -18,8 +41,9 @@ async def dispatch_and_wait(
     submitted = await task.kiq(**kwargs)
 
     try:
-        waited = submitted.wait_result(timeout=settings.TASK_RESULT_TIMEOUT_SECONDS)
-        result = await waited if inspect.isawaitable(waited) else waited
+        task_result: TaskiqResult[Any] = await submitted.wait_result(
+            timeout=settings.TASK_RESULT_TIMEOUT_SECONDS
+        )
     except TaskiqResultTimeoutError as exc:
         raise exceptions.TaskExecutionError(
             detail=(
@@ -28,6 +52,5 @@ async def dispatch_and_wait(
             )
         ) from exc
 
-    result_obj = cast(Any, result)
-    result_obj.raise_for_error()
-    return result_obj.return_value
+    task_result.raise_for_error()
+    return task_result.return_value

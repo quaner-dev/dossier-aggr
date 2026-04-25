@@ -12,3 +12,9 @@ class FeatureInfo(SQLModel):
     Vendor: str = Field(description="厂商", max_length=100)
     AlgorithmVersion: str = Field(description="算法版本", max_length=100)
     FeatureData: str = Field(description="特征值数据")
+
+
+class FeatureInfoList(SQLModel):
+    """GA/T 2350.5-2025 B.15 特征向量对象列表"""
+
+    FeatureInfoObject: list[FeatureInfo]

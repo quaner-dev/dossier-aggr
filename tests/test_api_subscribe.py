@@ -1,5 +1,7 @@
 import asyncio
 
+import httpx
+
 from api.subscribe.subscrbe import (
     create_subscrbe,
     subscribe_cancel,
@@ -7,8 +9,10 @@ from api.subscribe.subscrbe import (
     subscribes_update,
     subscribes_delete,
 )
+from main import app
 from models import Subscribe, SubscribeList, SubscribeListSchema
 from models.common import enums
+from services.subscribe.subscribe import SubscribeService
 from tests.type_helpers import as_service, as_status_list
 
 
@@ -159,5 +163,45 @@ def test_subscribe_cancel_by_id_returns_status():
         assert res.StatusCode == "0"
         assert res.Id == "S-001"
         assert res.RequestURL.endswith("/VIID/Subscribes/S-001")
+
+    asyncio.run(_run())
+
+
+def test_subscribes_delete_accepts_idlist_and_legacy_subscribe_ids_via_http():
+    async def _run():
+        fake = _FakeSubscribeService(_sample_subscribes())
+
+        async def _subscribe_dep() -> _FakeSubscribeService:
+            return fake
+
+        app.dependency_overrides[SubscribeService] = _subscribe_dep
+        try:
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport,
+                base_url="http://test",
+            ) as client:
+                idlist_res = await client.delete(
+                    "/VIID/Subscribes",
+                    params={"IDList": "S-001,S-002"},
+                )
+                assert idlist_res.status_code == 200
+                idlist_status = idlist_res.json()["ResponseStatusListObject"][
+                    "ResponseStatusObject"
+                ]
+                assert [item["Id"] for item in idlist_status] == ["S-001", "S-002"]
+
+                legacy_res = await client.delete(
+                    "/VIID/Subscribes",
+                    params={"subscribe_ids": "S-001,S-002"},
+                )
+                assert legacy_res.status_code == 200
+                legacy_status = legacy_res.json()["ResponseStatusListObject"][
+                    "ResponseStatusObject"
+                ]
+                assert [item["Id"] for item in legacy_status] == ["S-001", "S-002"]
+                assert fake.deleted_with == ["S-001", "S-002"]
+        finally:
+            app.dependency_overrides.pop(SubscribeService, None)
 
     asyncio.run(_run())

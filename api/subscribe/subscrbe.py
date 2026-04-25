@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, APIRouter
-from pydantic import BeforeValidator
+from fastapi import Depends, APIRouter, Query
 
+from core import exceptions
 from models import (
     ResponseStatus,
     ResponseStatusListSchema,
@@ -98,10 +98,24 @@ async def subscribes_update(
 )
 async def subscribes_delete(
     service: Annotated[SubscribeService, Depends(SubscribeService)],
-    subscribe_ids: Annotated[list[str], BeforeValidator(parse_id_list)],
+    subscribe_ids: Annotated[
+        str | list[str] | None,
+        Query(alias="IDList"),
+    ] = None,
+    legacy_subscribe_ids: Annotated[
+        str | list[str] | None,
+        Query(alias="subscribe_ids", include_in_schema=False),
+    ] = None,
 ):
     """批量订阅删除接口"""
-    _ = await service.delete_subscribe(subscribe_ids)
+    raw_subscribe_ids = (
+        subscribe_ids if subscribe_ids is not None else legacy_subscribe_ids
+    )
+    if raw_subscribe_ids is None:
+        raise exceptions.InvalidParameterError(detail="IDList is required")
+
+    parsed_subscribe_ids = parse_id_list(raw_subscribe_ids)
+    _ = await service.delete_subscribe(parsed_subscribe_ids)
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
@@ -113,7 +127,7 @@ async def subscribes_delete(
                     Id=subscribe_id,
                     LocalTime=datetime.now(),
                 )
-                for subscribe_id in subscribe_ids
+                for subscribe_id in parsed_subscribe_ids
             ]
         )
     )

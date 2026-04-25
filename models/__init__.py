@@ -10,8 +10,8 @@ from .subscribe.subscribe_notification import (
     SubscribeNotificationListSchema,
 )
 from .common.sub_image_info import SubImageInfo, SubImageInfoList
-from .common.feature_info import FeatureInfo
-from .common.gait import Gait
+from .common.feature_info import FeatureInfo, FeatureInfoList
+from .common.gait import Gait, GaitList
 from .common import enums
 from .library.archive_library import (
     ArchiveLibrary,
@@ -20,6 +20,7 @@ from .library.archive_library import (
 )
 from .archive.archive import Archive, ArchiveList, ArchiveListSchema
 from .archive.archive_query import ArchiveQuery, ArchiveQuerySchema
+from .archive.archive_subject_query import ArchiveSubjectQuery, ArchiveSubjectQuerySchema
 from .archive.vehicle_archive import (
     VehicleArchive,
     VehicleArchiveList,
@@ -68,7 +69,9 @@ __all__ = [
     "SubscribeNotificationListSchema",
     "SubImageInfo",
     "FeatureInfo",
+    "FeatureInfoList",
     "Gait",
+    "GaitList",
     "SubImageInfoList",
     "ArchiveLibrary",
     "ArchiveLibraryList",
@@ -78,6 +81,8 @@ __all__ = [
     "ArchiveListSchema",
     "ArchiveQuery",
     "ArchiveQuerySchema",
+    "ArchiveSubjectQuery",
+    "ArchiveSubjectQuerySchema",
     "VehicleArchive",
     "VehicleArchiveList",
     "VehicleArchiveListSchema",

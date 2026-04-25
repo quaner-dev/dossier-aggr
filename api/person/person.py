@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from pydantic import BeforeValidator
+from fastapi import APIRouter, Depends, Query
 
+from core import exceptions
 from models import (
     ResponseStatusListSchema,
     PersonListObjectSchema,
@@ -100,10 +100,22 @@ async def persons_update(
 )
 async def persons_delete(
     service: Annotated[PersonService, Depends(PersonService)],
-    person_ids: Annotated[list[str], BeforeValidator(parse_id_list)],
+    person_ids: Annotated[
+        str | list[str] | None,
+        Query(alias="IDList"),
+    ] = None,
+    legacy_person_ids: Annotated[
+        str | list[str] | None,
+        Query(alias="person_ids", include_in_schema=False),
+    ] = None,
 ) -> ResponseStatusListSchema:
     """批量人员删除接口"""
-    _ = await service.delete_persons(person_ids=person_ids)
+    raw_person_ids = person_ids if person_ids is not None else legacy_person_ids
+    if raw_person_ids is None:
+        raise exceptions.InvalidParameterError(detail="IDList is required")
+
+    parsed_person_ids = parse_id_list(raw_person_ids)
+    _ = await service.delete_persons(person_ids=parsed_person_ids)
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
@@ -115,7 +127,7 @@ async def persons_delete(
                     Id=person_id,
                     LocalTime=datetime.now(),
                 )
-                for person_id in person_ids
+                for person_id in parsed_person_ids
             ]
         )
     )

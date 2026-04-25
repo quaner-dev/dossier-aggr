@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, Request
 
 from core import constants
+from core import exceptions
+from core.utils import parse_id_list
 from models import (
     Face,
     FaceList,
@@ -99,12 +101,23 @@ async def faces_update(
     description="GA/T 1400.4-2017 7.2.12.1 批量人脸删除",
 )
 async def faces_delete(
-    id_list: str,
+    request: Request,
     service: Annotated[FaceService, Depends(FaceService)],
+    face_ids: Annotated[
+        str | list[str] | None,
+        Query(
+            alias="IDList",
+        ),
+    ] = None,
 ):
     """批量人脸删除接口"""
-    face_ids = [id.strip() for id in id_list.split(",")]
-    _ = await service.delete_faces(face_ids)
+    if face_ids is None:
+        legacy_face_ids = request.query_params.getlist("id_list")
+        if not legacy_face_ids:
+            raise exceptions.InvalidParameterError(detail="IDList is required")
+        face_ids = legacy_face_ids
+    parsed_face_ids = parse_id_list(face_ids)
+    _ = await service.delete_faces(parsed_face_ids)
 
     response_status_objects = [
         ResponseStatus(
@@ -114,7 +127,7 @@ async def faces_delete(
             Id=face_id,
             LocalTime=datetime.now(),
         )
-        for face_id in face_ids
+        for face_id in parsed_face_ids
     ]
 
     return ResponseStatusListSchema(

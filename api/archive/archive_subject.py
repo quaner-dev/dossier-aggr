@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from datetime import datetime
 from typing import Annotated
 
@@ -6,6 +6,7 @@ from core import constants
 from models import (
     ArchiveSubjectSchema,
     ArchiveSubjectList,
+    ArchiveSubjectQuerySchema,
     ArchiveSubjectQueryResult,
     ArchiveSubjectQueryResultSchema,
     ArchiveList,
@@ -14,6 +15,7 @@ from models import (
     ResponseStatus,
 )
 from services import ArchiveSubjectService
+from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -23,17 +25,22 @@ router = APIRouter()
     description="GA/T 2350.5-2025 A.13 人员档案明细查询接口",
 )
 async def archive_subject_query_sync(
+    data: ArchiveSubjectQuerySchema,
     service: Annotated[ArchiveSubjectService, Depends(ArchiveSubjectService)],
 ) -> ArchiveSubjectQueryResultSchema:
-    subjects = await service.query_archive_subjects()
+    query = data.ArchiveSubjectQueryObject
+    subjects = await service.query_archive_subjects(query=query)
+    record_start_no = query.RecordStartNo or 0
+    record_limit = query.PageRecordNum or query.MaxNumRecordReturn or len(subjects)
+    page_subjects = subjects[record_start_no : record_start_no + record_limit]
     return ArchiveSubjectQueryResultSchema(
         ArchiveSubjectQueryResultObject=ArchiveSubjectQueryResult(
-            QueryID="LOCAL_QUERY",
-            RecordStartNo=0,
-            PageRecordNum=len(subjects),
+            QueryID=query.QueryID,
+            RecordStartNo=record_start_no,
+            PageRecordNum=len(page_subjects),
             TotalNum=len(subjects),
             ArchiveListObject=ArchiveList(ArchiveObject=[]),
-            ArchiveSubjectInfoList=ArchiveSubjectList(ArchiveSubjectObject=subjects),
+            ArchiveSubjectInfoList=ArchiveSubjectList(ArchiveSubjectObject=page_subjects),
         )
     )
 
@@ -98,10 +105,28 @@ async def archive_subjects_update(
     description="GA/T 2350.5-2025 A.14 人员档案明细删除接口",
 )
 async def archive_subjects_delete(
-    archive_id: str,
+    archive_id: Annotated[str | None, Query(alias="ArchiveID")] = None,
+    face_id_list: Annotated[str | None, Query(alias="FaceIDList")] = None,
+    person_id_list: Annotated[str | None, Query(alias="PersonIDList")] = None,
+    motor_vehicle_id_list: Annotated[str | None, Query(alias="MotorVehicleIDList")] = None,
+    non_motor_vehicle_id_list: Annotated[
+        str | None, Query(alias="NonMotorVehicleIDList")
+    ] = None,
     service: ArchiveSubjectService = Depends(ArchiveSubjectService),
 ) -> ResponseStatusListSchema:
-    deleted_ids = await service.delete_archive_subjects(archive_id=archive_id)
+    deleted_ids = await service.delete_archive_subjects(
+        archive_id=archive_id,
+        face_id_list=parse_id_list(face_id_list) if face_id_list else None,
+        person_id_list=parse_id_list(person_id_list) if person_id_list else None,
+        motor_vehicle_id_list=(
+            parse_id_list(motor_vehicle_id_list) if motor_vehicle_id_list else None
+        ),
+        non_motor_vehicle_id_list=(
+            parse_id_list(non_motor_vehicle_id_list)
+            if non_motor_vehicle_id_list
+            else None
+        ),
+    )
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(

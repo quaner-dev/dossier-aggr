@@ -1,4 +1,7 @@
 import asyncio
+from types import SimpleNamespace
+
+import httpx
 
 from api.face.face import (
     face_delete,
@@ -10,8 +13,10 @@ from api.face.face import (
     faces_update,
 )
 from core import exceptions
+from main import app
 from models import Face, FaceList, FaceListObjectSchema
 from models.common import enums
+from services.face.face import FaceService
 from tests.type_helpers import as_service, as_status_list
 
 
@@ -130,7 +135,11 @@ def test_faces_create_update_delete_return_status_list():
         create_res = await faces_create(data=payload, service=as_service(fake))
         update_res = await faces_update(data=payload, service=as_service(fake))
         delete_res = await faces_delete(
-            id_list="F-001, F-002", service=as_service(fake)
+            request=SimpleNamespace(
+                query_params=SimpleNamespace(getlist=lambda _key: [])
+            ),
+            face_ids=["F-001", "F-002"],
+            service=as_service(fake),
         )
 
         create_status = as_status_list(
@@ -159,6 +168,49 @@ def test_faces_create_update_delete_return_status_list():
         assert fake.update_face_calls == []
         assert fake.delete_faces_calls == [["F-001", "F-002"]]
         assert fake.delete_face_calls == []
+
+    asyncio.run(_run())
+
+
+def test_faces_delete_accepts_idlist_and_legacy_id_list_via_http():
+    async def _run():
+        fake = _FakeFaceService(_sample_faces())
+
+        async def _face_dep() -> _FakeFaceService:
+            return fake
+
+        app.dependency_overrides[FaceService] = _face_dep
+        try:
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport,
+                base_url="http://test",
+            ) as client:
+                idlist_res = await client.delete(
+                    "/VIID/Faces",
+                    params={"IDList": "F-001,F-002"},
+                )
+                assert idlist_res.status_code == 200
+                idlist_status = idlist_res.json()["ResponseStatusListObject"][
+                    "ResponseStatusObject"
+                ]
+                assert [item["Id"] for item in idlist_status] == ["F-001", "F-002"]
+
+                legacy_res = await client.delete(
+                    "/VIID/Faces",
+                    params={"id_list": "F-001,F-002"},
+                )
+                assert legacy_res.status_code == 200
+                legacy_status = legacy_res.json()["ResponseStatusListObject"][
+                    "ResponseStatusObject"
+                ]
+                assert [item["Id"] for item in legacy_status] == ["F-001", "F-002"]
+                assert fake.delete_faces_calls == [
+                    ["F-001", "F-002"],
+                    ["F-001", "F-002"],
+                ]
+        finally:
+            app.dependency_overrides.pop(FaceService, None)
 
     asyncio.run(_run())
 

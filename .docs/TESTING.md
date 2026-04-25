@@ -1,6 +1,6 @@
 # TESTING
 
-更新时间：2026-03-05  
+更新时间：2026-03-11  
 范围：当前仓库代码（`api/`、`services/`、`tasks/`、`models/`）
 
 ## 1. 目标
@@ -8,7 +8,7 @@
 本文用于统一两类测试：
 
 - 接口测试：验证各 API 的可用性、输入输出、错误语义。
-- 协议符合性测试：验证请求/响应结构、字段格式、枚举与 URL 是否符合 GA/T 1400 与 GA/T 2350.5 的当前实现约定。
+- 协议符合性测试：验证请求/响应结构、字段格式、枚举与 URL 是否符合 GA/T 1400 与 GA/T 2350.5 的正式协议要求，并记录当前实现的已知偏差。
 
 ## 2. 测试环境准备
 
@@ -96,25 +96,25 @@ taskiq worker core.brokers:broker
 | Face 查询（单条） | GET | `/VIID/Faces/{face_id}` | 路径参数单查，返回 `Face` 对象 | 已实现 |
 | Face 修改（单条） | PUT | `/VIID/Faces/{face_id}` | 路径参数单条修改，返回 `ResponseStatus` | 已实现 |
 | Face 删除（单条） | DELETE | `/VIID/Faces/{face_id}` | 路径参数单条删除，返回 `ResponseStatus` | 已实现 |
-| Face 增删改 | POST/PUT/DELETE | `/VIID/Faces` | 写后可查、响应 `ResponseStatusListSchema` | 已实现 |
+| Face 增删改 | POST/PUT/DELETE | `/VIID/Faces` | 写后可查、响应 `ResponseStatusListSchema`；批量删除应验证协议参数 `IDList`，并保留对历史参数名 `id_list` 的兼容 | 已实现 |
 | Person 查询 | GET | `/VIID/Persons` | 返回默认 `TOP100` 列表 | 已实现 |
 | Person 单查 | GET | `/VIID/Persons/{person_id}` | 单对象返回 | 已实现 |
 | Person 修改（单条） | PUT | `/VIID/Persons/{person_id}` | 路径参数单条修改，返回 `ResponseStatus` | 已实现 |
 | Person 删除（单条） | DELETE | `/VIID/Persons/{person_id}` | 路径参数单条删除，返回 `ResponseStatus` | 已实现 |
-| Person 增删改 | POST/PUT/DELETE | `/VIID/Persons` | 批量状态回包、删除参数解析 | 已实现 |
-| Subscribe 增删改查 | GET/POST/PUT/DELETE | `/VIID/Subscribes` | 时间格式、唯一约束、状态回包 | 已实现 |
+| Person 增删改 | POST/PUT/DELETE | `/VIID/Persons` | 批量状态回包、删除参数解析；批量删除应验证协议参数 `IDList`，并保留对历史参数名 `person_ids` 的兼容 | 已实现 |
+| Subscribe 增删改查 | GET/POST/PUT/DELETE | `/VIID/Subscribes` | 时间格式、唯一约束、状态回包；批量删除应验证协议参数 `IDList`，并保留对历史参数名 `subscribe_ids` 的兼容 | 已实现 |
 | Subscribe 单条取消 | PUT | `/VIID/Subscribes/{subscribe_id}` | 路径参数与 `Subscribe` 负载一致性、`ResponseStatus` 回包 | 已实现 |
 | SubscribeNotification 新增 | POST | `/VIID/SubscribeNotifications` | 通知对象批量写入与状态回包 | 已实现 |
 | SubscribeNotification 查询 | GET | `/VIID/SubscribeNotifications` | 通知对象批量查询与列表包装 | 已实现 |
 | SubscribeNotification 删除 | DELETE | `/VIID/SubscribeNotifications` | `IDList` 批量删除与状态回包 | 已实现 |
 | ArchiveLibrary | GET/POST/PUT/DELETE | `/VIID/ArchiveLibraries` | 批量查询/增改删与状态回包；GET 支持 `ArchiveLibrary` 属性键值对查询，DELETE 使用 `IDList` | 已实现（A.5 主链路） |
 | ArchiveTask | - | `/VIAS/Tasks` | 按当前交付范围省略，不在 OpenAPI 中暴露，也不纳入回归测试 | 未实现 |
-| Archive | GET/POST/PUT/DELETE | `/VIID/ArchivesQuerySync`、`/VIID/Archives` | 查询结果包装、批量增改删状态回包 | 已实现（A.9/A.10 主链路） |
-| VehicleArchive | POST/POST/PUT/DELETE | `/VIID/VehicleArchivesQuerySync`、`/VIID/VehicleArchives` | `POST /VIID/VehicleArchivesQuerySync` 使用 `ArchiveQuery` 查询并返回 `ArchiveQueryResult`；`DELETE /VIID/VehicleArchives` 使用 `IDList` | 已实现（A.11/A.12 主链路） |
-| ArchiveSubject | POST/PUT/DELETE | `/VIID/ArchiveSubjectQuerySync`、`/VIID/ArchiveSubjects` | 明细查询与批量增改删状态回包；删除仅按 `ArchiveID` | 已实现（A.13/A.14 主链路） |
-| VehicleArchiveSubject | POST/PUT/DELETE | `/VIID/VehicleArchiveSubjectQuerySync`、`/VIID/VehicleArchiveSubjects` | 车辆明细查询与批量增改删状态回包 | 已实现（A.15/A.16 主链路） |
-| ArchiveConfidence | POST | `/VIID/ArchiveConfidence` | 人员档案核验状态回包 | 已实现（A.17 主链路） |
-| VehicleArchiveConfidence | POST | `/VIID/VehicleArchiveConfidence` | 车辆档案核验状态回包 | 已实现（A.18 主链路） |
+| Archive | POST/POST/PUT/DELETE | `/VIID/ArchivesQuerySync`、`/VIID/Archives` | 当前实现可运行；A.9 已切换为 `POST + ArchiveQuery` 且查询对象字段基线已对齐正式版，A.10 DELETE 已切换为 `IDList`，`Archive` 对象也已切换到正式版 B.3；当前查询行为已支持部分 `Fields` 与 `PictureQueryCondition.SubjectID -> SourceIDList`，但仍未覆盖全部检索语义 | 部分实现 |
+| VehicleArchive | POST/POST/PUT/DELETE | `/VIID/VehicleArchivesQuerySync`、`/VIID/VehicleArchives` | `POST /VIID/VehicleArchivesQuerySync` 使用 `ArchiveQuery` 查询并返回 `ArchiveQueryResult`；`DELETE /VIID/VehicleArchives` 使用 `IDList`，`VehicleArchive` 对象已切换到正式版 B.4；当前查询行为已支持部分 `Fields` 与 `PictureQueryCondition.SubjectID -> SourceIDList`，但仍未覆盖全部检索语义 | 部分实现 |
+| ArchiveSubject | POST/PUT/DELETE | `/VIID/ArchiveSubjectQuerySync`、`/VIID/ArchiveSubjects` | 当前实现可运行；A.13 已切换为 `POST + ArchiveSubjectQuery` 且查询对象字段基线已对齐正式版，A.14 DELETE 已支持正式版五类删除键；当前查询行为已支持 `ArchiveIDList` 与 `PictureQueryCondition.SubjectID`，但仍未覆盖全部检索语义 | 部分实现 |
+| VehicleArchiveSubject | POST/PUT/DELETE | `/VIID/VehicleArchiveSubjectQuerySync`、`/VIID/VehicleArchiveSubjects` | 当前实现可运行；A.15 已切换为 `POST + ArchiveSubjectQuery` + 查询结果包装，车辆明细对象已补齐五类 ID/Object 列表，A.16 DELETE 已支持正式版五类删除键；当前查询行为已支持 `ArchiveIDList` 与 `PictureQueryCondition.SubjectID`，但仍未覆盖全部检索语义 | 部分实现 |
+| ArchiveConfidence | POST | `/VIID/ArchiveConfidence` | 当前实现已使用 `ArchiveList` 请求/响应，`Archive` 对象字段已切换到正式版 B.3 | 已基本对齐 |
+| VehicleArchiveConfidence | POST | `/VIID/VehicleArchiveConfidence` | 当前实现已使用 `VehicleArchiveList` 请求/响应，`VehicleArchive` 对象字段已切换到正式版 B.4 | 已基本对齐 |
 
 ## 5. 协议符合性检查清单
 
@@ -126,7 +126,7 @@ taskiq worker core.brokers:broker
 ### 5.2 消息包装结构
 
 - 批量对象必须使用 `<Domain>ListObject` 包装。
-- 状态返回优先使用 `ResponseStatusListSchema`。
+- 状态返回优先使用 `ResponseStatusListSchema`，但需注意 A.17/A.18 正式版成功响应为档案列表对象，不是状态列表。
 - 字段名保持协议风格（驼峰命名，大小写敏感）。
 
 ### 5.3 日期时间格式
@@ -204,7 +204,8 @@ curl -s http://127.0.0.1:8000/VIID/APEs
 - 协议测试建议使用 `model_validate` 对响应进行结构校验，避免只做字符串断言。
 - 分层重构时增加边界回归测试（参考 `tests/services/test_subscribe_layering.py`、`tests/services/test_person_face_layering.py`、`tests/services/test_collection_archive_layering.py`、`tests/services/test_subject_verify_layering.py`）。
 - 监控指标建议增加端点回归测试（参考 `tests/test_api_metrics.py`）。
-- 2350 A.7/A.8 建议维持复用路由与字段约束测试（参考 `tests/protocol/test_2350_routes.py`、`tests/protocol/test_2350_subscribe_contract.py`）。
+- 2350 协议守卫测试除校验路由外，还应校验 `.docs/PROTOCOL_2350.md` 已切换到正式版 PDF 基线，并准确记录当前已知差异。
+- 2350 查询回归建议覆盖 `PictureQueryCondition.SubjectID`，并分别验证其在 `Archive.SourceIDList`、`VehicleArchive.SourceIDList` 以及档案明细五类 ID 列表上的命中行为。
 
 ## 8. 测试报告模板
 
@@ -218,6 +219,6 @@ curl -s http://127.0.0.1:8000/VIID/APEs
 
 ## 9. 当前限制与注意事项
 
-- 2350 接口主链路已覆盖 A.5-A.18；A.13/A.14 与 A.15/A.16 明细链路已切换为持久化仓储实现。
+- 2350 主链路均已有运行代码，但当前并不等于已与正式版 A.5-A.18 全量对齐；文档与协议测试应优先反映这一事实。
 - 写操作依赖任务执行；真实 broker 场景未启动 worker 通常会在 `dispatch_and_wait` 超时后返回 `TaskExecutionError`（HTTP 503）。
 - 错误语义采用“HTTP 状态码 + 协议状态对象”组合，联调时需同时判断两者。

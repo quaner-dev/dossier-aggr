@@ -92,7 +92,7 @@ def test_archive_library_create_update_delete_return_status_list():
         create_res = await archive_library_create(data=payload, service=as_service(fake))
         update_res = await archive_library_update(data=payload, service=as_service(fake))
         delete_res = await archive_library_delete(
-            id_list=["LIB-001", "LIB-002"],
+            library_ids=["LIB-001", "LIB-002"],
             service=as_service(fake),
         )
 

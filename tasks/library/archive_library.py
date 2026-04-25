@@ -16,14 +16,14 @@ async def list_archive_libraries_task() -> Sequence[ArchiveLibrary]:
 
 @brokers.broker.task
 async def create_archive_libraries_task(
-    libraries: list[ArchiveLibrary],
+    libraries: Sequence[ArchiveLibrary],
 ) -> Sequence[ArchiveLibrary]:
     return await create_archive_libraries_repo(libraries=libraries)
 
 
 @brokers.broker.task
 async def update_archive_libraries_task(
-    libraries: list[ArchiveLibrary],
+    libraries: Sequence[ArchiveLibrary],
 ) -> Sequence[ArchiveLibrary]:
     return await update_archive_libraries_repo(libraries=libraries)
 

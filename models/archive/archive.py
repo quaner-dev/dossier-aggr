@@ -1,6 +1,9 @@
+from sqlalchemy import Column, JSON
 from sqlmodel import SQLModel, Field
 
 from ..common import enums
+from ..common.feature_info import FeatureInfoList
+from ..common.sub_image_info import SubImageInfoList
 
 
 class Archive(SQLModel, table=True):
@@ -9,15 +12,27 @@ class Archive(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True, exclude=True)
 
     ArchiveID: str = Field(max_length=48, description="档案标识", unique=True)
-    ArchiveLibraryID: str | None = Field(max_length=48, description="所属目标档案库")
-    IDType: str | None = Field(max_length=3, description="证件类型")
-    IDNumber: str | None = Field(max_length=30, description="证件编号")
-    Name: str | None = Field(max_length=50, description="姓名")
-    BirthTime: enums.VIIDDateTime | None = Field(description="出生日期")
+    ArchiveLibraryID: str | None = Field(
+        default=None, max_length=48, description="所属目标档案库"
+    )
     CreateTime: enums.VIIDDateTime = Field(description="档案创建时间")
     UpdateTime: enums.VIIDDateTime = Field(description="档案更新时间")
-
-    ImageID: str | None = Field(description="图像标识", max_length=41)
+    SourceIDList: list[str] | None = Field(
+        default=None,
+        description="档案数据来源列表",
+        sa_column=Column(JSON),
+    )
+    CenterFeatureList: FeatureInfoList | None = Field(
+        default=None,
+        description="档案中心特征列表",
+        sa_column=Column(JSON),
+    )
+    Similaritydegree: float | None = Field(default=None, description="相似度")
+    Confidence: float | None = Field(default=None, description="可信度")
+    SubImageList: SubImageInfoList = Field(
+        description="图片信息列表",
+        sa_column=Column(JSON),
+    )
 
 
 # 人员档案基础信息对象列表

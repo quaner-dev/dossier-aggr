@@ -14,6 +14,10 @@ def serialize_datetime(v: str | datetime) -> str:
 
 
 def parse_id_list(v: str | list[str]) -> list[str]:
-    if isinstance(v, list):
-        return v
-    return [x.strip() for x in str(v).split(",") if x.strip()]
+    raw_values = v if isinstance(v, list) else [str(v)]
+    parsed_values: list[str] = []
+    for raw_value in raw_values:
+        parsed_values.extend(
+            item.strip() for item in str(raw_value).split(",") if item.strip()
+        )
+    return parsed_values

@@ -1,4 +1,4 @@
-from models import ArchiveSubject
+from models import ArchiveSubject, ArchiveSubjectQuery
 from repo.archive.archive_subject import query_archive_subjects_repo
 from tasks.archive.archive_subject import (
     create_archive_subjects_task,
@@ -9,8 +9,10 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class ArchiveSubjectService:
-    async def query_archive_subjects(self) -> list[ArchiveSubject]:
-        return list(await query_archive_subjects_repo())
+    async def query_archive_subjects(
+        self, query: ArchiveSubjectQuery | None = None
+    ) -> list[ArchiveSubject]:
+        return list(await query_archive_subjects_repo(query=query))
 
     async def create_archive_subjects(
         self, subjects: list[ArchiveSubject]
@@ -23,6 +25,18 @@ class ArchiveSubjectService:
         return await dispatch_and_wait(update_archive_subjects_task, subjects=subjects)
 
     async def delete_archive_subjects(
-        self, archive_id: str
+        self,
+        archive_id: str | None = None,
+        face_id_list: list[str] | None = None,
+        person_id_list: list[str] | None = None,
+        motor_vehicle_id_list: list[str] | None = None,
+        non_motor_vehicle_id_list: list[str] | None = None,
     ) -> list[str]:
-        return await dispatch_and_wait(delete_archive_subjects_task, archive_id=archive_id)
+        return await dispatch_and_wait(
+            delete_archive_subjects_task,
+            archive_id=archive_id,
+            face_id_list=face_id_list,
+            person_id_list=person_id_list,
+            motor_vehicle_id_list=motor_vehicle_id_list,
+            non_motor_vehicle_id_list=non_motor_vehicle_id_list,
+        )

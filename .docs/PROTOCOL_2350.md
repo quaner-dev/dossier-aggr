@@ -1,19 +1,20 @@
 # PROTOCOL 2350
 
-更新时间：2026-03-05  
+更新时间：2026-03-11  
 适用范围：`dossier-aggr` 仓库内 GA/T 2350.5-2025 协议契约
 
 ## 1. 文档目的
 
-本文仅描述 2350 协议契约，不包含实现差距修复方案。  
+本文描述 2350 正式版协议要求，并标注当前仓库实现现状与已确认差异。  
 协议基线优先级遵循仓库约束：`.protocol/2350/*` > `.docs/*` > 当前代码行为。
 
-说明：2026-03-05 本次调整为分层重构与明细持久化（`services/repo/tasks`），2350 协议契约不变。
+说明：2026-03-11 协议基线已切换到正式版标准；当前仓库仍存在若干接口与对象偏差，本文件用于明确正式版要求与当前实现的差距。
 补充：`/metrics` 为运维监控端点，不属于 2350 协议接口集合。
 
 协议原始依据：
 
-- `.protocol/2350/附件4-《公安视频图像分析技术要求 第5部分：目标聚档服务》（报批稿）0606 - 修订.docx`
+- `.protocol/2350/GA-T 2350.5-2025.pdf`
+  - 封面信息：`2025-10-13` 发布，`2026-02-01` 实施
 
 ## 2. 协议范围
 
@@ -25,16 +26,16 @@
 - A.6 聚档任务增加、查询、更新、删除接口
 - A.7 档案和轨迹订阅接口
 - A.8 档案和轨迹通知接口
-- A.9 人员档案查询接口
-- A.10 人员档案增加、更新、删除接口
-- A.11 车辆档案查询接口
-- A.12 车辆档案增加、更新、删除接口
-- A.13 人员档案明细查询接口
-- A.14 人员档案明细增加、更新、删除接口
-- A.15 车辆档案明细查询接口
-- A.16 车辆档案明细增加、更新、删除接口
-- A.17 人员档案核验接口
-- A.18 车辆档案核验接口
+- A.9 人员基础信息查询接口
+- A.10 人员基础信息增加、更新、删除接口
+- A.11 车辆基础信息查询接口
+- A.12 车辆基础信息增加、更新、删除接口
+- A.13 人员明细信息查询接口
+- A.14 人员明细信息增加、更新、删除接口
+- A.15 车辆明细信息查询接口
+- A.16 车辆明细信息增加、更新、删除接口
+- A.17 人员核验接口
+- A.18 车辆核验接口
 
 ### 2.2 GA/T 2350.5-2025（对象）
 
@@ -85,9 +86,10 @@
 ### 3.2 字段命名与包装
 
 - 字段命名保持协议风格（驼峰，大小写敏感）。
-- 查询请求包装优先使用 `ArchiveQueryObject` / `ArchiveSubjectQueryObject`。
-- 查询结果包装优先使用 `ArchiveQueryResultObject` / `ArchiveSubjectQueryResultObject`。
-- 写操作状态返回使用 `ResponseStatusListSchema`。
+- 查询请求包装使用 `ArchiveQueryObject` / `ArchiveSubjectQueryObject`。
+- 查询结果包装使用 `ArchiveQueryResultObject` / `ArchiveSubjectQueryResultObject`。
+- 批量写操作默认返回 `ResponseStatusListSchema`。
+- A.17/A.18 为正式版例外：返回体应为 `ArchiveList` / `VehicleArchiveList`，而不是状态列表。
 
 ### 3.3 时间格式
 
@@ -101,72 +103,65 @@
 
 ## 4. 接口契约（附录 A 映射）
 
-说明：方法与消息体细节以附件对应表 A.4-A.17 为准；下表用于仓库实现映射。
+说明：下表左侧为正式版协议要求，右侧记录当前仓库状态与已确认差异。
 
 | 条款 | URL | 当前仓库状态 |
 | --- | --- | --- |
-| A.5 | `/VIID/ArchiveLibraries` | 已实现（同一路径承载批量 GET/POST/PUT/DELETE；GET 支持 `ArchiveLibrary` 属性键值对查询，DELETE 使用 `IDList`） |
+| A.5 | `/VIID/ArchiveLibraries` | 已基本对齐（同一路径承载批量 GET/POST/PUT/DELETE；GET 支持 `ArchiveLibrary` 属性键值对查询，DELETE 使用 `IDList`） |
 | A.6 | `/VIAS/Tasks` | 未实现（当前交付范围不包含 VIAS 接口） |
-| A.7 | `/VIID/Subscribes` | 复用 1400 路由（含 2350 复用能力） |
-| A.8 | `/VIID/SubscribeNotifications` | 复用 1400 路由（含 2350 复用能力） |
-| A.9 | `/VIID/ArchivesQuerySync` | 已实现（Archive 查询主链路） |
-| A.10 | `/VIID/Archives` | 已实现（Archive 增改删主链路） |
-| A.11 | `/VIID/VehicleArchivesQuerySync` | 已实现（`POST` + `<ArchiveQuery>` -> `<ArchiveQueryResult>` 的 VehicleArchive 查询主链路） |
-| A.12 | `/VIID/VehicleArchives` | 已实现（VehicleArchive 批量增改删主链路；DELETE 使用 `IDList`） |
-| A.13 | `/VIID/ArchiveSubjectQuerySync` | 已实现（ArchiveSubject 查询主链路） |
-| A.14 | `/VIID/ArchiveSubjects` | 已实现（ArchiveSubject 增改删主链路；删除仅按 `ArchiveID`） |
-| A.15 | `/VIID/VehicleArchiveSubjectQuerySync` | 已实现（VehicleArchiveSubject 查询主链路） |
-| A.16 | `/VIID/VehicleArchiveSubjects` | 已实现（VehicleArchiveSubject 增改删主链路） |
-| A.17 | `/VIID/ArchiveConfidence` | 已实现（人员档案核验主链路） |
-| A.18 | `/VIID/VehicleArchiveConfidence` | 已实现（车辆档案核验主链路） |
+| A.7 | `/VIID/Subscribes` | 复用 1400 路由，接口路径已暴露；2350 扩展语义仍需结合正式版对象继续核对 |
+| A.8 | `/VIID/SubscribeNotifications` | 已基本对齐：当前仍复用 1400 路由，但通知对象已补齐 `ArchiveObjectList`、`VehicleArchiveObjectList`、`ArchiveSubjectList` 三类 2350 扩展列表；同时保留 1400 的 face/person 列表以兼容共享接口 |
+| A.9 | `/VIID/ArchivesQuerySync` | 已基本对齐：当前已使用 `POST /VIID/ArchivesQuerySync` + `<ArchiveQuery>`，且 `ArchiveQuery` 字段集合已补齐正式版 B.6；当前已支持部分 `Fields` 以及 `PictureQueryCondition.SubjectID -> Archive.SourceIDList` 的筛查，但尚未实现图片相似度、时间、区域、设备等正式版检索语义 |
+| A.10 | `/VIID/Archives` | 已基本对齐：批量增改删已实现；DELETE 已使用 `IDList`，`Archive` 对象字段已切换到正式版 B.3 形态 |
+| A.11 | `/VIID/VehicleArchivesQuerySync` | 已基本对齐：当前已使用 `POST` + `<ArchiveQuery>` -> `<ArchiveQueryResult>`；当前已支持部分 `Fields` 以及 `PictureQueryCondition.SubjectID -> VehicleArchive.SourceIDList` 的筛查，但尚未实现图片相似度、时间、区域、设备等正式版检索语义 |
+| A.12 | `/VIID/VehicleArchives` | 已基本对齐（VehicleArchive 批量增改删主链路；DELETE 使用 `IDList`，对象字段已切换到正式版 B.4 形态） |
+| A.13 | `/VIID/ArchiveSubjectQuerySync` | 已基本对齐：当前已接收 `POST` + `<ArchiveSubjectQuery>` 并返回查询结果包装；当前已支持 `ArchiveIDList` 与 `PictureQueryCondition.SubjectID`，其中 `SubjectID` 会匹配 person/face/gait/motor/non-motor 五类 ID 列表，但仍未覆盖时间、区域、设备等正式版查询语义 |
+| A.14 | `/VIID/ArchiveSubjects` | 已基本对齐：批量增改删已实现；DELETE 已支持正式版五类删除键（`ArchiveID`、`FaceIDList`、`PersonIDList`、`MotorVehicleIDList`、`NonMotorVehicleIDList`） |
+| A.15 | `/VIID/VehicleArchiveSubjectQuerySync` | 已基本对齐：当前已接收 `POST` + `<ArchiveSubjectQuery>` 并返回查询结果包装；车辆明细对象已补齐 person/face/gait/motor/non-motor 五类 ID/Object 列表，当前已支持 `ArchiveIDList` 与 `PictureQueryCondition.SubjectID`，但仍未覆盖时间、区域、设备等正式版查询语义 |
+| A.16 | `/VIID/VehicleArchiveSubjects` | 已基本对齐：批量增改删已实现；DELETE 已支持正式版五类删除键（`ArchiveID`、`FaceIDList`、`PersonIDList`、`MotorVehicleIDList`、`NonMotorVehicleIDList`） |
+| A.17 | `/VIID/ArchiveConfidence` | 已基本对齐：当前已使用 `POST <ArchiveList>` 并返回 `<ArchiveList>`；`Archive` 对象字段已贴合正式版 B.3 |
+| A.18 | `/VIID/VehicleArchiveConfidence` | 已基本对齐：当前已使用 `POST <VehicleArchiveList>` 并返回 `<VehicleArchiveList>`；`VehicleArchive` 对象字段已贴合正式版 B.4 |
 
 ## 5. 对象契约（附录 B 摘要）
 
-### 5.1 档案库/档案对象
+### 5.1 已基本对齐对象
 
-- `ArchiveLibrary`：档案库标识、名称、创建时间、备注。
-- `Archive`：档案标识、档案库标识、身份信息、时间信息、图像标识。
-- `VehicleArchive`：车辆档案基础信息对象（字段以附录 B.4 为准）。
+- `ArchiveLibrary`：当前字段集合与 B.2 基本一致（`ArchiveLibraryID`、`Name`、`CreateTime`、`Memo`）。
+- `Archive`、`VehicleArchive`：当前字段集合已覆盖正式版 B.3/B.4，`SourceIDList`、`CenterFeatureList`、`Similaritydegree`、`Confidence`、`SubImageList` 等字段已纳入协议模型。
+- `ArchiveSubject`：当前字段集合已覆盖正式版 B.5 的五类 ID/Object 列表；`VehicleArchiveSubject` 也已同步补齐对应 person/face/gait/motor/non-motor 列表字段。
+- `ArchiveQuery`、`ArchiveSubjectQuery`：当前字段集合已覆盖正式版 B.6/B.9，`PictureQueryCondition` 与 `Fields` 均已纳入模型。
+- `Fields`：当前字段集合与正式版 B.14 一致（`ArchiveLibraryID`、`ArchiveIDList`、`PlaceCode`、车辆相关筛查字段）。
+- `SubscribeNotification`：当前共享通知模型已补齐正式版 B.11 的 `ArchiveObjectList`、`VehicleArchiveObjectList`、`ArchiveSubjectList` 扩展列表。
+- `FeatureInfo`：字段集合与 B.15 基本一致（`Vendor`、`AlgorithmVersion`、`FeatureData`）。
+- `Gait`：当前字段集合已覆盖正式版 B.16（`GaitID`、`SourceID`、出现/消失时间、角度、人数、身高、`SubImageList`）。
+- `GeoRectangle`、`DeviceSelector`：字段名与正式版保持一致。
 
-### 5.2 档案明细与查询对象
+### 5.2 已确认对象差异
 
-- `ArchiveSubject`：档案明细对象（人员、人脸及关联标识）。
-- `ArchiveQuery` / `ArchiveSubjectQuery`：查询条件对象。
-- `ArchiveQueryResult` / `ArchiveSubjectQueryResult`：查询结果对象。
-
-### 5.3 通用对象
-
-- `PictureQueryCondition`、`GeoRectangle`、`DeviceSelector`、`Fields`。
-- `FeatureInfo`、`Gait`。
-- `SubscribeNotification`（含 2350 扩展对象列表时按附件约束处理）。
+- `ArchiveSubject` / `VehicleArchiveSubject`：机动车、非机动车对象列表当前使用宽松 JSON 容器承载，仓库内尚未引入 1400 的正式机动车/非机动车对象模型。
+- `SubscribeNotification`：当前通知对象为了兼容 1400 仍保留 `FaceObjectList` / `PersonObjectList`，属于“1400 + 2350 扩展并存”的共享模型，而非纯 2350 专用对象。
 
 ## 6. 错误响应契约
 
-- 写操作接口返回 `ResponseStatusListSchema` 风格状态对象。
+- 批量写操作接口返回 `ResponseStatusListSchema` 风格状态对象。
 - `ResponseStatusListObject.ResponseStatusObject` 统一为数组结构。
 - 错误语义应包含 `StatusCode`、`StatusString`，并保持协议包装结构一致。
-- 典型错误状态：
-  - HTTP `404`（资源不存在）
-  - HTTP `409`（资源冲突/已存在）
-  - HTTP `400`（参数校验失败）
-  - HTTP `503`（任务执行超时或不可用）
+- A.17/A.18 不应使用状态列表作为成功响应体；正式版成功返回应分别为 `ArchiveList` 与 `VehicleArchiveList`。
 
 ## 7. 协议一致性检查清单
 
 1. 路径与条款 A.5-A.18 一一对应。  
-2. 请求/响应可被对应模型校验（未落地项标注 TBD）。  
-3. 时间字段格式为 `YYYYMMDDHHMMSS`。  
-4. 枚举字段取值符合模型定义。  
-5. 批量写操作返回状态对象数量与输入条目语义一致。  
+2. HTTP 方法、请求体和返回体与附录 A 保持一致。  
+3. 对象字段与附录 B 保持一致，禁止仅以当前代码行为代替协议原意。  
+4. 时间字段格式为 `YYYYMMDDHHMMSS`。  
+5. 枚举字段取值符合模型定义。  
 6. 包装对象命名与大小写保持一致。  
 
-## 8. 当前代码待定项（TBD）
+## 8. 当前已确认差异列表
 
-除 A.6 按当前交付范围省略外，其余条款已具备接口主链路实现；后续增强点为：
-
-- A.6 `/VIAS/Tasks` 当前明确不纳入本服务实现范围
-- A.7/A.8 已增加复用路由与关键字段约束测试（`tests/protocol/test_2350_routes.py`、`tests/protocol/test_2350_subscribe_contract.py`），仍可继续细化附录扩展字段语义
-- A.13/A.14 与 A.15/A.16 已切换为 SQLModel 持久化仓储实现，后续可补充更多跨域一致性与性能回归
+- A.6 `/VIAS/Tasks` 当前明确不纳入本服务实现范围。
+- A.9/A.11/A.13/A.15 当前查询行为仍未覆盖正式版全部检索语义；目前仅实现部分 `Fields` 和 `PictureQueryCondition.SubjectID` 路径。
+- `ArchiveSubject` / `VehicleArchiveSubject` 的机动车、非机动车对象列表仍使用宽松 JSON 容器。
 
 ## 9. 关联文档
 

@@ -5,6 +5,7 @@ from ..common.common import (
     GeoRectangleType,
     DeviceSelector,
     FieldsType,
+    PictureQueryConditionList,
 )
 
 
@@ -15,6 +16,9 @@ class ArchiveQuery(SQLModel):
     MaxNumRecordReturn: int | None = Field(default=None, description="最多返回记录数")
     PageRecordNum: int | None = Field(default=None, description="每页记录数")
     RecordStartNo: int | None = Field(default=None, description="起始记录号")
+    PictureQueryCondition: PictureQueryConditionList | None = Field(
+        default=None, description="以图像搜图查询条件"
+    )
     BeginTime: enums.VIIDDateTime | None = Field(default=None, description="开始时间")
     EndTime: enums.VIIDDateTime | None = Field(default=None, description="结束时间")
     GeoRectangle: GeoRectangleType | None = Field(

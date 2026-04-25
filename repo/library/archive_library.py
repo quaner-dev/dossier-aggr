@@ -43,7 +43,7 @@ async def list_archive_libraries_repo(
 
 
 async def create_archive_libraries_repo(
-    libraries: list[ArchiveLibrary],
+    libraries: Sequence[ArchiveLibrary],
 ) -> Sequence[ArchiveLibrary]:
     async with AsyncSession(engine) as session:
         for library in libraries:
@@ -63,7 +63,7 @@ async def create_archive_libraries_repo(
 
 
 async def update_archive_libraries_repo(
-    libraries: list[ArchiveLibrary],
+    libraries: Sequence[ArchiveLibrary],
 ) -> Sequence[ArchiveLibrary]:
     async with AsyncSession(engine) as session:
         for library in libraries:

@@ -1,5 +1,7 @@
 import asyncio
 
+import httpx
+
 from api.person.person import (
     persons_query,
     persons_create,
@@ -9,8 +11,10 @@ from api.person.person import (
     person_update,
     person_delete,
 )
+from main import app
 from models import Person, PersonList, PersonListObjectSchema
 from models.common import enums
+from services.person.person import PersonService
 from tests.type_helpers import as_service, as_status_list
 
 
@@ -155,5 +159,45 @@ def test_person_update_delete_return_status():
         assert len(fake.updated_with) == 1
         assert fake.updated_with[0].PersonID == "P-001"
         assert fake.deleted_with == ["P-001"]
+
+    asyncio.run(_run())
+
+
+def test_persons_delete_accepts_idlist_and_legacy_person_ids_via_http():
+    async def _run():
+        fake = _FakePersonService(_sample_persons())
+
+        async def _person_dep() -> _FakePersonService:
+            return fake
+
+        app.dependency_overrides[PersonService] = _person_dep
+        try:
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport,
+                base_url="http://test",
+            ) as client:
+                idlist_res = await client.delete(
+                    "/VIID/Persons",
+                    params={"IDList": "P-001,P-002"},
+                )
+                assert idlist_res.status_code == 200
+                idlist_status = idlist_res.json()["ResponseStatusListObject"][
+                    "ResponseStatusObject"
+                ]
+                assert [item["Id"] for item in idlist_status] == ["P-001", "P-002"]
+
+                legacy_res = await client.delete(
+                    "/VIID/Persons",
+                    params={"person_ids": "P-001,P-002"},
+                )
+                assert legacy_res.status_code == 200
+                legacy_status = legacy_res.json()["ResponseStatusListObject"][
+                    "ResponseStatusObject"
+                ]
+                assert [item["Id"] for item in legacy_status] == ["P-001", "P-002"]
+                assert fake.deleted_with == ["P-001", "P-002"]
+        finally:
+            app.dependency_overrides.pop(PersonService, None)
 
     asyncio.run(_run())

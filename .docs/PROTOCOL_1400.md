@@ -120,7 +120,7 @@
 | GET | `/VIID/Persons` | 无 | `PersonListObjectSchema` | 批量人员查询（默认 `TOP100` 列表） |
 | POST | `/VIID/Persons` | `PersonListObjectSchema` | `ResponseStatusListSchema` | 批量人员增加 |
 | PUT | `/VIID/Persons` | `PersonListObjectSchema` | `ResponseStatusListSchema` | 批量人员修改 |
-| DELETE | `/VIID/Persons` | `person_ids`（逗号分隔或列表） | `ResponseStatusListSchema` | 批量人员删除 |
+| DELETE | `/VIID/Persons` | `IDList`（逗号分隔）；当前实现兼容历史参数名 `person_ids` | `ResponseStatusListSchema` | 批量人员删除 |
 | GET | `/VIID/Persons/{person_id}` | 路径参数 `person_id` | `Person` | 单个人员查询 |
 | PUT | `/VIID/Persons/{person_id}` | 路径参数 `person_id` + `Person` | `ResponseStatus` | 单个人员修改 |
 | DELETE | `/VIID/Persons/{person_id}` | 路径参数 `person_id` | `ResponseStatus` | 单个人员删除 |
@@ -135,7 +135,7 @@
 | DELETE | `/VIID/Faces/{face_id}` | 路径参数 `face_id` | `ResponseStatus` | 单个人脸删除 |
 | POST | `/VIID/Faces` | `FaceListObjectSchema` | `ResponseStatusListSchema` | 批量人脸增加 |
 | PUT | `/VIID/Faces` | `FaceListObjectSchema` | `ResponseStatusListSchema` | 批量人脸修改 |
-| DELETE | `/VIID/Faces` | `id_list`（逗号分隔） | `ResponseStatusListSchema` | 批量人脸删除 |
+| DELETE | `/VIID/Faces` | `IDList`（逗号分隔）；当前实现兼容历史参数名 `id_list` | `ResponseStatusListSchema` | 批量人脸删除 |
 
 ## 4.5 Subscribe
 
@@ -144,7 +144,7 @@
 | POST | `/VIID/Subscribes` | `SubscribeListSchema` | `ResponseStatusListSchema` | 批量订阅创建 |
 | GET | `/VIID/Subscribes` | 无 | `SubscribeListSchema` | 订阅查询 |
 | PUT | `/VIID/Subscribes` | `SubscribeListSchema` | `ResponseStatusListSchema` | 批量订阅更新 |
-| DELETE | `/VIID/Subscribes` | `subscribe_ids`（逗号分隔或列表） | `ResponseStatusListSchema` | 批量订阅删除 |
+| DELETE | `/VIID/Subscribes` | `IDList`（逗号分隔）；当前实现兼容历史参数名 `subscribe_ids` | `ResponseStatusListSchema` | 批量订阅删除 |
 | PUT | `/VIID/Subscribes/{subscribe_id}` | `Subscribe` | `ResponseStatus` | 取消订阅 |
 
 ## 4.6 SubscribeNotification

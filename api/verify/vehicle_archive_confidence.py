@@ -1,41 +1,27 @@
-from datetime import datetime
-
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from pydantic import BeforeValidator
 
 from core import constants
-from models import ResponseStatus, ResponseStatusList, ResponseStatusListSchema
+from models import VehicleArchiveList, VehicleArchiveListSchema
 from services import VehicleArchiveConfidenceService
-from core.utils import parse_id_list
 
 router = APIRouter()
 
 
 @router.post(
     path=constants.VEHICLE_ARCHIVE_CONFIDENCE_URL,
-    response_model=ResponseStatusListSchema,
+    response_model=VehicleArchiveListSchema,
     description="GA/T 2350.5-2025 A.18 车辆档案核验接口",
 )
 async def vehicle_archive_confidence_verify(
-    archive_ids: Annotated[list[str], BeforeValidator(parse_id_list)],
+    data: VehicleArchiveListSchema,
     service: Annotated[
         VehicleArchiveConfidenceService, Depends(VehicleArchiveConfidenceService)
     ],
-) -> ResponseStatusListSchema:
-    verified_ids = await service.verify_vehicle_archive_confidence(archive_ids=archive_ids)
-    return ResponseStatusListSchema(
-        ResponseStatusListObject=ResponseStatusList(
-            ResponseStatusObject=[
-                ResponseStatus(
-                    RequestURL=constants.VEHICLE_ARCHIVE_CONFIDENCE_URL,
-                    StatusCode="0",
-                    StatusString="核验完成",
-                    Id=archive_id,
-                    LocalTime=datetime.now(),
-                )
-                for archive_id in verified_ids
-            ]
-        )
+) -> VehicleArchiveListSchema:
+    archives = data.VehicleArchiveListObject.VehicleArchiveObject
+    verified_archives = await service.verify_vehicle_archive_confidence(archives=archives)
+    return VehicleArchiveListSchema(
+        VehicleArchiveListObject=VehicleArchiveList(VehicleArchiveObject=verified_archives)
     )

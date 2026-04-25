@@ -1,3 +1,8 @@
-async def verify_vehicle_archive_confidence_repo(archive_ids: list[str]) -> list[str]:
-    # Placeholder verification behavior: echo input IDs.
-    return archive_ids
+from models import VehicleArchive
+
+
+async def verify_vehicle_archive_confidence_repo(
+    archives: list[VehicleArchive],
+) -> list[VehicleArchive]:
+    # Placeholder verification behavior: echo input archives.
+    return archives

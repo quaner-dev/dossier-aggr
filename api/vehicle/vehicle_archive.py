@@ -107,12 +107,12 @@ async def vehicle_archives_update(
     description="GA/T 2350.5-2025 A.12 车辆档案删除接口",
 )
 async def vehicle_archives_delete(
-    id_list: Annotated[
+    archive_ids: Annotated[
         list[str], BeforeValidator(parse_id_list), Query(alias="IDList")
     ],
     service: Annotated[VehicleArchiveService, Depends(VehicleArchiveService)],
 ):
-    _ = await service.delete_vehicle_archives(archive_ids=id_list)
+    _ = await service.delete_vehicle_archives(archive_ids=archive_ids)
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
             ResponseStatusObject=[
@@ -123,7 +123,7 @@ async def vehicle_archives_delete(
                     Id=archive_id,
                     LocalTime=datetime.now(),
                 )
-                for archive_id in id_list
+                for archive_id in archive_ids
             ]
         )
     )

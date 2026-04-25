@@ -1,8 +1,19 @@
+from typing import Any
+
 from sqlalchemy import Column, JSON
 from sqlmodel import SQLModel, Field
 
+from ..common.gait import GaitList
 from ..person.person import PersonList
 from ..face.face import FaceList
+
+
+class MotorVehicleList(SQLModel):
+    MotorVehicleObject: list[dict[str, Any]]
+
+
+class NonMotorVehicleList(SQLModel):
+    NonMotorVehicleObject: list[dict[str, Any]]
 
 
 class ArchiveSubject(SQLModel, table=True):
@@ -21,6 +32,21 @@ class ArchiveSubject(SQLModel, table=True):
         description="人脸信息标识列表",
         sa_column=Column(JSON),
     )
+    GaitIDList: list[str] | None = Field(
+        default=None,
+        description="步态信息标识列表",
+        sa_column=Column(JSON),
+    )
+    MotorVehicleIDList: list[str] | None = Field(
+        default=None,
+        description="机动车信息标识列表",
+        sa_column=Column(JSON),
+    )
+    NonMotorVehicleIDList: list[str] | None = Field(
+        default=None,
+        description="非机动车信息标识列表",
+        sa_column=Column(JSON),
+    )
     PersonObjectList: PersonList | None = Field(
         default=None,
         description="人员完整信息列表",
@@ -31,8 +57,21 @@ class ArchiveSubject(SQLModel, table=True):
         description="人脸完整信息列表",
         sa_column=Column(JSON),
     )
-
-    ImageID: str | None = Field(default=None, description="图像标识", max_length=41)
+    GaitObjectList: GaitList | None = Field(
+        default=None,
+        description="步态完整信息列表",
+        sa_column=Column(JSON),
+    )
+    MotorVehicleObjectList: MotorVehicleList | None = Field(
+        default=None,
+        description="机动车完整信息列表",
+        sa_column=Column(JSON),
+    )
+    NonMotorVehicleObjectList: NonMotorVehicleList | None = Field(
+        default=None,
+        description="非机动车完整信息列表",
+        sa_column=Column(JSON),
+    )
 
 
 # 档案明细列表

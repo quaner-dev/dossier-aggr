@@ -1,0 +1,35 @@
+# Runtime
+
+入口：`main.py`
+
+## FastAPI 与 Taskiq
+
+- `taskiq_fastapi.init(brokers.broker, "main:app")` 绑定 FastAPI 与 Taskiq。
+- `app = FastAPI(lifespan=brokers.lifespan)` 在 lifespan 中管理 broker startup/shutdown。
+- `app.include_router(api.router)` 聚合全量路由。
+
+## Broker
+
+Broker 选择位于 `core/brokers.py`：
+
+- `ENV=dev` 使用 `InMemoryBroker`。
+- 其他环境使用 `AioPikaBroker`，依赖 RabbitMQ 配置。
+
+## 数据库
+
+数据库配置位于 `core/settings.py`：
+
+- `DATABASE_URL` 默认值为 `sqlite+aiosqlite:///db.sqlite3`。
+- 迁移使用 `Alembic`。
+
+## 异常处理
+
+异常处理注册在 `api/error_handlers.py`：
+
+- `DataNotFoundError` -> HTTP 404
+- `DataAlreadyExistsError` -> HTTP 409
+- `InvalidParameterError` -> HTTP 400
+- `TaskExecutionError` -> HTTP 503
+- `RequestValidationError`、`HTTPException`、`Exception`
+
+错误响应统一包装为 VIID 风格状态对象。

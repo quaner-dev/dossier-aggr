@@ -1,8 +1,16 @@
 from pathlib import Path
 
 
+def _protocol_2350_docs() -> str:
+    docs_dir = Path(".ai/protocols/2350")
+    return "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(docs_dir.glob("*.md"))
+    )
+
+
 def test_protocol_2350_doc_covers_all_interface_clauses():
-    content = Path(".docs/PROTOCOL_2350.md").read_text(encoding="utf-8")
+    content = _protocol_2350_docs()
 
     for clause in (
         "A.5",
@@ -24,7 +32,7 @@ def test_protocol_2350_doc_covers_all_interface_clauses():
 
 
 def test_protocol_2350_doc_covers_all_attachment_urls():
-    content = Path(".docs/PROTOCOL_2350.md").read_text(encoding="utf-8")
+    content = _protocol_2350_docs()
 
     for url in (
         "/VIID/ArchiveLibraries",
@@ -46,7 +54,7 @@ def test_protocol_2350_doc_covers_all_attachment_urls():
 
 
 def test_protocol_2350_doc_references_official_pdf_baseline():
-    content = Path(".docs/PROTOCOL_2350.md").read_text(encoding="utf-8")
+    content = _protocol_2350_docs()
 
     assert "GA-T 2350.5-2025.pdf" in content
     assert "2025-10-13" in content
@@ -54,7 +62,7 @@ def test_protocol_2350_doc_references_official_pdf_baseline():
 
 
 def test_protocol_2350_doc_records_known_interface_gaps():
-    content = Path(".docs/PROTOCOL_2350.md").read_text(encoding="utf-8")
+    content = _protocol_2350_docs()
 
     assert "A.9" in content and "POST /VIID/ArchivesQuerySync" in content
     assert "A.13" in content and "ArchiveSubjectQuery" in content

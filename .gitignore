@@ -31,6 +31,9 @@ ENV/
 !.env.sample
 !.env.template
 
+# Local protocol source materials
+.protocol/
+
 # Test and coverage output
 .coverage
 .coverage.*

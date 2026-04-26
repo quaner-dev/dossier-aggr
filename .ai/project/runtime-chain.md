@@ -1,6 +1,6 @@
 # Runtime Chain
 
-本文件说明一个协议接口从 HTTP 入口到数据库的运行链路。分层职责以 `.ai/project/layers.md` 为准。
+本文件说明协议接口从 HTTP 入口到数据库的运行链路和典型接口示例。总体组件关系以 `.ai/project/architecture.md` 为准；分层职责以 `.ai/project/layers.md` 为准。
 
 ## 标准链路
 
@@ -27,6 +27,14 @@ flowchart LR
 
 读取接口通常不需要 Taskiq。`services/` 可以直接调用 `repo/`，由 `repo/` 负责过滤、排序、分页和空结果语义。
 
+典型接口：
+
+- `GET /VIID/System/Time`
+- `GET /VIID/Subscribes/{subscribe_id}`
+- `GET /VIID/SubscribeNotifications`
+- `GET /VIID/ArchiveLibraries`
+- `POST /VIID/VehicleArchivesQuerySync`
+
 ## 写入路径
 
 ```mermaid
@@ -40,6 +48,15 @@ flowchart LR
 ```
 
 写入接口通过 `dispatch_and_wait` 进入 Taskiq 任务。`tasks/` 只作为异步任务入口，不直接承载数据库细节。
+
+`services/task_dispatch.py` 统一执行 `.kiq(...)` 并等待任务结果。写请求返回成功表示任务执行成功，不只是完成入队。
+
+典型接口：
+
+- `PUT /VIID/APEs`
+- `POST /VIID/Faces`
+- `POST /VIID/Persons`
+- `POST /VIID/Subscribes`
 
 ## A.6 `/VIAS/Tasks` 链路示例
 

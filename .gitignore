@@ -34,6 +34,10 @@ ENV/
 # Local protocol source materials
 .protocol/
 
+# Local branch execution plans
+.ai/plans/*-plan.md
+.ai/plans/**/*-plan.md
+
 # Test and coverage output
 .coverage
 .coverage.*

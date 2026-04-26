@@ -31,6 +31,7 @@ class ArchiveQuery(SQLModel):
     Fields: FieldsType | None = Field(default=None, description="其他结构化筛查条件")
 
 
-# 档案查询请求结构
 class ArchiveQuerySchema(SQLModel):
+    """GA/T 2350.5-2025 A.9/A.11 `ArchiveQueryObject` 查询请求包装"""
+
     ArchiveQueryObject: ArchiveQuery

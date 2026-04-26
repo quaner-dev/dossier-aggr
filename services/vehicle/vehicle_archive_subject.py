@@ -11,6 +11,12 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class VehicleArchiveSubjectService:
+    """编排 GA/T 2350.5 A.15/A.16 车辆档案明细业务链路。
+
+    查询使用 repo 的档案明细筛选语义；增改删经 Taskiq task 执行，
+    其中删除接口保留协议定义的多类标识列表匹配边界。
+    """
+
     async def query_vehicle_archive_subjects(
         self, query: ArchiveSubjectQuery | None = None
     ) -> list[VehicleArchiveSubject]:
@@ -19,17 +25,21 @@ class VehicleArchiveSubjectService:
     async def create_vehicle_archive_subjects(
         self, subjects: list[VehicleArchiveSubject]
     ) -> list[VehicleArchiveSubject]:
-        return await dispatch_and_wait(
-            create_vehicle_archive_subjects_task,
-            subjects=subjects,
+        return list(
+            await dispatch_and_wait(
+                create_vehicle_archive_subjects_task,
+                subjects=subjects,
+            )
         )
 
     async def update_vehicle_archive_subjects(
         self, subjects: list[VehicleArchiveSubject]
     ) -> list[VehicleArchiveSubject]:
-        return await dispatch_and_wait(
-            update_vehicle_archive_subjects_task,
-            subjects=subjects,
+        return list(
+            await dispatch_and_wait(
+                update_vehicle_archive_subjects_task,
+                subjects=subjects,
+            )
         )
 
     async def delete_vehicle_archive_subjects(

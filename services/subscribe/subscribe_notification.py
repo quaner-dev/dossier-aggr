@@ -10,6 +10,12 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class SubscribeNotificationService:
+    """编排 GA/T 1400 订阅通知业务链路。
+
+    通知查询的过滤语义留在 repo；创建和删除经 Taskiq task 写入，
+    使通知回调数据和协议包装对象不侵入 API 层之外的持久化细节。
+    """
+
     async def list_subscribe_notifications(
         self, filters: dict[str, str] | None = None
     ) -> list[SubscribeNotification]:

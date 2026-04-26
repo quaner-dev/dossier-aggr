@@ -15,6 +15,13 @@ async def list_archives_repo() -> Sequence[Archive]:
 async def query_archives_repo(
     query: ArchiveQuery | None,
 ) -> Sequence[Archive]:
+    """按 GA/T 2350.5 B.6 查询人员档案。
+
+    Repo 层负责解释当前支持的 `Fields` 和 `PictureQueryCondition.SubjectID`
+    过滤语义；分页仍由 API 层按协议响应包装裁剪，避免数据访问层混入
+    HTTP 响应结构。
+    """
+
     def _picture_subject_ids() -> list[str]:
         if query is None or query.PictureQueryCondition is None:
             return []

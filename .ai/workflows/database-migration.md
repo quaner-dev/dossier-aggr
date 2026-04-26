@@ -17,3 +17,4 @@ alembic upgrade head
 
 6. 更新或新增 `tests/migrations/` 测试。
 7. 同步更新 `.ai/project/data-models.md`。
+8. 按 `.ai/workflows/pre-commit-checklist.md` 完成验证，并额外确认 `alembic upgrade head` 可执行。

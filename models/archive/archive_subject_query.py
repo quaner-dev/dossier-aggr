@@ -14,6 +14,7 @@ class ArchiveSubjectQuery(ArchiveQuery):
     )
 
 
-# 档案明细查询对象结构
 class ArchiveSubjectQuerySchema(SQLModel):
+    """GA/T 2350.5-2025 A.13/A.15 `ArchiveSubjectQueryObject` 查询请求包装"""
+
     ArchiveSubjectQueryObject: ArchiveSubjectQuery

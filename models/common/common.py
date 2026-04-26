@@ -15,8 +15,9 @@ class PictureQueryCondition(SQLModel):
     SubjectID: str | None = Field(default=None, description="数据标识", max_length=48)
 
 
-# 以图像搜图查询条件对象列表
 class PictureQueryConditionList(SQLModel):
+    """GA/T 2350.5-2025 B.7 以图像搜图查询条件对象列表"""
+
     PictureQueryConditionObject: list[PictureQueryCondition]
 
 
@@ -32,7 +33,7 @@ class GeoRectangleType(SQLModel):
 class DeviceSelector(SQLModel):
     """GA/T 2350.5-2025 B.13 检索设备范围对象"""
 
-    # TODO 这里是个List，但是里面的device其实是个str，不是具有字段类型的model，所以这里直接使用List str来处理
+    # 协议只定义设备标识字符串列表，没有嵌套设备对象字段。
     DeviceIDs: list[str] | None = Field(default=None, description="设备ID列表")
     DevicePlaceCode: str | None = Field(
         default=None, max_length=6, description="设备行政区划"

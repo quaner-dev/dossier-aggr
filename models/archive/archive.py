@@ -35,11 +35,13 @@ class Archive(SQLModel, table=True):
     )
 
 
-# 人员档案基础信息对象列表
 class ArchiveList(SQLModel):
+    """GA/T 2350.5-2025 B.3 人员档案基础信息对象列表"""
+
     ArchiveObject: list[Archive]
 
 
-# 人员档案基础信息对象列表结构
 class ArchiveListSchema(SQLModel):
+    """GA/T 2350.5-2025 A.10 `ArchiveListObject` 请求/响应包装"""
+
     ArchiveListObject: ArchiveList

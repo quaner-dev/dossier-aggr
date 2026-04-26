@@ -15,6 +15,12 @@ async def list_vehicle_archives_repo() -> Sequence[VehicleArchive]:
 async def query_vehicle_archives_repo(
     query: ArchiveQuery | None,
 ) -> Sequence[VehicleArchive]:
+    """按 GA/T 2350.5 B.6 查询车辆档案。
+
+    Repo 层解释车辆可支持的 `Fields` 条件和图像查询 `SubjectID`
+    过滤语义；API 层继续负责协议分页字段和响应包装。
+    """
+
     def _picture_subject_ids() -> list[str]:
         if query is None or query.PictureQueryCondition is None:
             return []

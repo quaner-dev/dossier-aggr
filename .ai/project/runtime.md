@@ -20,7 +20,8 @@ Broker 选择位于 `core/brokers.py`：
 数据库配置位于 `core/settings.py`：
 
 - `DATABASE_URL` 默认值为 `sqlite+aiosqlite:///db.sqlite3`。
-- 迁移使用 `Alembic`。
+- 应用运行时使用异步 SQLAlchemy URL。
+- 迁移使用 `Alembic`，并通过 `core.database_urls.make_sync_database_url` 将 `DATABASE_URL` 转换为同步驱动 URL。
 
 ## 异常处理
 

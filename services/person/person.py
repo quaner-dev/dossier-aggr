@@ -13,6 +13,12 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class PersonService():
+    """编排 GA/T 1400 人员资源业务链路。
+
+    单查和列表读取直接委托 repo；创建、更新和删除通过 Taskiq task
+    写入，兼容单资源与批量接口共用同一 service。
+    """
+
     async def get_person(self, person_id: str) -> Person:
         """根据PersonID查询人员信息"""
         person = await get_person_repo(person_id=person_id)

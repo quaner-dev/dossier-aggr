@@ -48,6 +48,7 @@ class SubscribeNotificationList(SQLModel):
     SubscribeNotificationObject: list[SubscribeNotification]
 
 
-# 通知对象列表结构
 class SubscribeNotificationListSchema(SQLModel):
+    """GA/T 1400.3-2017 C.20 `SubscribeNotificationListObject` 请求/响应包装"""
+
     SubscribeNotificationListObject: SubscribeNotificationList

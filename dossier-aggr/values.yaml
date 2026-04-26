@@ -70,8 +70,13 @@ args:
   - "8000"
 
 env:
-  ENV: dev
-  DATABASE_URL: sqlite+aiosqlite:///app/db.sqlite3
+  ENV: prod
+  DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgresql:5432/dossier_aggr
+  RABBITMQ_USERNAME: guest
+  RABBITMQ_PASSWORD: guest
+  RABBITMQ_IP: rabbitmq
+  RABBITMQ_PORT: "5672"
+  TASK_RESULT_TIMEOUT_SECONDS: "10"
 
 monitoring:
   enabled: true
@@ -106,6 +111,19 @@ worker:
     - worker
     - core.brokers:broker
   env: {}
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+migration:
+  enabled: true
+  command:
+    - alembic
+  args:
+    - upgrade
+    - head
+  annotations: {}
   resources: {}
   nodeSelector: {}
   tolerations: []

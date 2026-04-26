@@ -3,6 +3,8 @@ uvicorn
 pytest
 pytest-asyncio
 httpx
+ruff
+pyright
 
 # DataBase
 sqlmodel

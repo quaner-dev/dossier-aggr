@@ -14,6 +14,12 @@ from tasks import (
 
 
 class FaceService:
+    """编排 GA/T 1400 人脸资源业务链路。
+
+    单查和列表读取直接委托 repo；创建、更新和删除通过 Taskiq task
+    写入，兼容单资源与批量接口共用同一 service。
+    """
+
     async def get_face(self, face_id: str) -> Face:
         """根据FaceID查询人脸信息"""
         face = await get_face_repo(face_id=face_id)

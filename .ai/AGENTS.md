@@ -20,7 +20,7 @@
   - `models/`：协议模型与数据模型
   - `tests/`：测试用例
   - `alembic/`：数据库迁移
-  - `.ai/`：AI 协作上下文、协议导航、测试说明和历史计划
+  - `.ai/`：AI 协作上下文、协议导航、测试说明和历史计划摘要
   - `.protocol/`：本地原始协议资料，已被 `.gitignore` 忽略，不纳入仓库跟踪
 
 ## 3. 协议与文档优先级
@@ -39,6 +39,9 @@
 - 安装依赖：`pip install -r requirements.txt`
 - 启动 API：`uvicorn main:app --host 0.0.0.0 --port 8000`
 - 启动 worker：`taskiq worker core.brokers:broker`
+- 代码质量检查：`ruff check .`
+- 代码质量自动修复：`ruff check . --fix`
+- 类型检查：`pyright`
 - 运行测试：`pytest -q`
 - 生成迁移：`alembic revision --autogenerate -m "<message>"`
 - 执行迁移：`alembic upgrade head`
@@ -57,10 +60,10 @@
 
 ## 6. 测试与验证约束
 
-- 每次修改后至少尝试运行：`pytest -q`。
+- 每次修改后按 `.ai/workflows/pre-commit-checklist.md` 至少尝试完成质量检查、类型检查和测试。
 - 改动涉及 API 行为时，优先补充或更新 `tests/` 下对应测试。
 - 改动涉及数据库 schema 时，必须同时提供 Alembic 迁移，并验证 `alembic upgrade head` 可执行。
-- 若环境缺少测试依赖，必须在输出中说明具体失败原因。
+- 若环境缺少质量检查、类型检查或测试依赖，必须在输出中说明具体失败原因。
 
 ## 7. 文档同步约束
 
@@ -71,16 +74,24 @@
 - `.ai/testing/`
 - `.ai/workflows/`（涉及流程变化时）
 
-历史计划归档在 `.ai/plans/archive/`，只在需要追溯决策时更新。
+历史计划摘要在 `.ai/plans/archive/`，只在需要追溯决策时查看或更新。
 
-## 8. 禁止事项
+## 8. 上下文读取约束
+
+- 默认只读取 `.ai/AGENTS.md` 和当前任务相关入口，不全量读取 `.ai/`。
+- 协议任务先从 `.ai/protocols/README.md` 进入，再按协议和接口选择具体索引文件。
+- 测试、流程、编码规范分别从对应目录 README 进入。
+- `.ai/plans/` 不属于默认上下文；只有追溯历史决策、设计来源或迁移背景时才读取。
+- 常规 `.ai` 检索可使用：`rg "<keyword>" .ai --glob '!.ai/plans/archive/**'`
+
+## 9. 禁止事项
 
 - 不在未说明的情况下修改部署模板（`dossier-aggr/templates/`）或 Helm 配置（`dossier-aggr/values.yaml`）。
 - 不引入与当前任务无关的新依赖。
 - 不进行大规模格式化导致噪音 diff。
 - 不提交 `.protocol/`、`.codex/`、`.vscode/`、缓存、本地数据库、日志、`.env*` 等本地文件。
 
-## 9. 输出与协作约定
+## 10. 输出与协作约定
 
 - 提交结果时说明本次改动文件清单。
 - 明确说明验证命令是否执行。

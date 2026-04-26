@@ -10,6 +10,12 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class SubscribeService:
+    """编排 GA/T 1400.4 7.2.20 订阅任务业务链路。
+
+    读取路径直接使用 repo；订阅创建、更新、取消和删除经 Taskiq task
+    进入持久化层，路由层只负责协议请求和状态对象包装。
+    """
+
     async def get_subscribe(self, subscribe_id: str) -> Subscribe:
         """根据SubscribeID查询单条订阅信息"""
         return await get_subscribe_repo(subscribe_id=subscribe_id)
@@ -20,11 +26,11 @@ class SubscribeService:
 
     async def create_subscribes(self, subscribes: list[Subscribe]) -> list[Subscribe]:
         """创建订阅任务"""
-        return await dispatch_and_wait(create_subscribes_task, subscribes=subscribes)
+        return list(await dispatch_and_wait(create_subscribes_task, subscribes=subscribes))
 
     async def update_subscribes(self, subscribes: list[Subscribe]) -> list[Subscribe]:
         """更新订阅信息"""
-        return await dispatch_and_wait(update_subscribes_task, subscribes=subscribes)
+        return list(await dispatch_and_wait(update_subscribes_task, subscribes=subscribes))
 
     async def update_subscribe_by_id(
         self, subscribe_id: str, subscribe: Subscribe

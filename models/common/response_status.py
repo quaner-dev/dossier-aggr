@@ -18,6 +18,7 @@ class ResponseStatusList(SQLModel):
     ResponseStatusObject: list[ResponseStatus]
 
 
-# 应答状态对象列表结构
 class ResponseStatusListSchema(SQLModel):
+    """GA/T 1400.3-2017 C.25 `ResponseStatusListObject` 响应包装"""
+
     ResponseStatusListObject: ResponseStatusList

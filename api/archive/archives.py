@@ -29,6 +29,12 @@ async def archives_query_sync(
     data: ArchiveQuerySchema,
     service: Annotated[ArchiveService, Depends(ArchiveService)],
 ) -> ArchiveQueryResultSchema:
+    """处理 A.9 人员档案同步查询并包装 `ArchiveQueryResultObject`。
+
+    Repo/service 返回完整匹配集合；路由层按协议分页字段裁剪本页结果，
+    并生成查询结果顶层包装对象。
+    """
+
     query = data.ArchiveQueryObject
     archives = await service.query_archives(query=query)
     record_start_no = query.RecordStartNo or 0
@@ -56,6 +62,8 @@ async def archives_create(
     data: ArchiveListSchema,
     service: Annotated[ArchiveService, Depends(ArchiveService)],
 ) -> ResponseStatusListSchema:
+    """处理 A.10 人员档案批量新增并返回逐档案状态。"""
+
     archives = data.ArchiveListObject.ArchiveObject
     _ = await service.create_archives(archives=archives)
     return ResponseStatusListSchema(
@@ -83,6 +91,8 @@ async def archives_update(
     data: ArchiveListSchema,
     service: Annotated[ArchiveService, Depends(ArchiveService)],
 ) -> ResponseStatusListSchema:
+    """处理 A.10 人员档案批量更新并返回逐档案状态。"""
+
     archives = data.ArchiveListObject.ArchiveObject
     _ = await service.update_archives(archives=archives)
     return ResponseStatusListSchema(
@@ -112,6 +122,12 @@ async def archives_delete(
     ],
     service: Annotated[ArchiveService, Depends(ArchiveService)],
 ) -> ResponseStatusListSchema:
+    """处理 A.10 人员档案批量删除。
+
+    `IDList` 在参数边界解析为档案标识列表，响应按传入 ID 生成
+    `ResponseStatusListObject`。
+    """
+
     _ = await service.delete_archives(archive_ids=archive_ids)
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(

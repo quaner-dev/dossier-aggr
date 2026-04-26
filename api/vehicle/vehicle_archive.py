@@ -29,6 +29,12 @@ async def vehicle_archives_query_sync(
     data: ArchiveQuerySchema,
     service: Annotated[VehicleArchiveService, Depends(VehicleArchiveService)],
 ) -> ArchiveQueryResultSchema:
+    """处理 A.11 车辆档案同步查询并包装 `ArchiveQueryResultObject`。
+
+    Repo/service 返回完整匹配集合；路由层按协议分页字段裁剪本页结果，
+    并放入车辆档案列表包装。
+    """
+
     query = data.ArchiveQueryObject
     archives = await service.query_vehicle_archives(query=query)
     record_start_no = query.RecordStartNo or 0
@@ -56,6 +62,8 @@ async def vehicle_archives_create(
     data: VehicleArchiveListSchema,
     service: Annotated[VehicleArchiveService, Depends(VehicleArchiveService)],
 ) -> ResponseStatusListSchema:
+    """处理 A.12 车辆档案批量新增并返回逐档案状态。"""
+
     archives = data.VehicleArchiveListObject.VehicleArchiveObject
     _ = await service.create_vehicle_archives(archives=archives)
     return ResponseStatusListSchema(
@@ -83,6 +91,8 @@ async def vehicle_archives_update(
     data: VehicleArchiveListSchema,
     service: Annotated[VehicleArchiveService, Depends(VehicleArchiveService)],
 ) -> ResponseStatusListSchema:
+    """处理 A.12 车辆档案批量更新并返回逐档案状态。"""
+
     archives = data.VehicleArchiveListObject.VehicleArchiveObject
     _ = await service.update_vehicle_archives(archives=archives)
     return ResponseStatusListSchema(
@@ -112,6 +122,12 @@ async def vehicle_archives_delete(
     ],
     service: Annotated[VehicleArchiveService, Depends(VehicleArchiveService)],
 ):
+    """处理 A.12 车辆档案批量删除。
+
+    `IDList` 在参数边界解析为档案标识列表，响应按传入 ID 生成
+    `ResponseStatusListObject`。
+    """
+
     _ = await service.delete_vehicle_archives(archive_ids=archive_ids)
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(

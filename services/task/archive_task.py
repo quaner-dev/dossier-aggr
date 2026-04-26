@@ -11,6 +11,12 @@ from tasks.task.archive_task import (
 
 
 class ArchiveTaskService:
+    """编排 GA/T 2350 聚档任务业务链路。
+
+    任务列表过滤由 repo 解释；任务创建、更新和删除经 Taskiq task
+    写入，避免 service 层直接依赖数据库会话。
+    """
+
     async def list_archive_tasks(
         self,
         filters: Mapping[str, str] | None = None,

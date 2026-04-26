@@ -13,6 +13,7 @@ class ArchiveSubjectQueryResult(ArchiveQueryResult):
     )
 
 
-# 档案明细查询结果对象结构
 class ArchiveSubjectQueryResultSchema(SQLModel):
+    """GA/T 2350.5-2025 A.13/A.15 `ArchiveSubjectQueryResultObject` 响应包装"""
+
     ArchiveSubjectQueryResultObject: ArchiveSubjectQueryResult

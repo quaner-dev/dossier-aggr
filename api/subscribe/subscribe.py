@@ -28,6 +28,8 @@ async def subscribes_create(
     data: SubscribeListSchema,
     service: Annotated[SubscribeService, Depends(SubscribeService)],
 ) -> ResponseStatusListSchema:
+    """处理 7.2.20.1 批量订阅消息并返回逐订阅状态。"""
+
     subscribes = data.SubscribeListObject.SubscribeObject
     _ = await service.create_subscribes(subscribes=subscribes)
 
@@ -55,7 +57,8 @@ async def subscribes_create(
 async def subscribes_query(
     service: Annotated[SubscribeService, Depends(SubscribeService)],
 ) -> SubscribeListSchema:
-    """订阅任务的查询接口"""
+    """处理 7.2.20.2 订阅任务查询并包装 `SubscribeListObject`。"""
+
     subscribes = await service.list_subscribes()
     return SubscribeListSchema(
         SubscribeListObject=SubscribeList(SubscribeObject=subscribes)
@@ -71,7 +74,8 @@ async def subscribes_update(
     data: SubscribeListSchema,
     service: Annotated[SubscribeService, Depends(SubscribeService)],
 ) -> ResponseStatusListSchema:
-    """批量订阅修改接口"""
+    """处理 7.2.20.2 批量订阅更新并返回逐订阅状态。"""
+
     subscribes = data.SubscribeListObject.SubscribeObject
     _ = await service.update_subscribes(subscribes)
 
@@ -107,7 +111,12 @@ async def subscribes_delete(
         Query(alias="subscribe_ids", include_in_schema=False),
     ] = None,
 ):
-    """批量订阅删除接口"""
+    """处理 7.2.20.2 订阅任务批量删除。
+
+    正式参数为 `IDList`；`subscribe_ids` 仅作为旧调用兼容入口，
+    不进入 OpenAPI 协议说明。
+    """
+
     raw_subscribe_ids = (
         subscribe_ids if subscribe_ids is not None else legacy_subscribe_ids
     )
@@ -143,7 +152,12 @@ async def subscribe_cancel(
     data: Subscribe,
     service: Annotated[SubscribeService, Depends(SubscribeService)],
 ) -> ResponseStatus:
-    """单条订阅取消接口"""
+    """处理 7.2.20.3 单条订阅取消。
+
+    路径 `subscribe_id` 是响应状态 ID 和任务定位依据，请求体保留
+    协议订阅对象用于更新订阅状态。
+    """
+
     _ = await service.update_subscribe_by_id(
         subscribe_id=subscribe_id,
         subscribe=data,

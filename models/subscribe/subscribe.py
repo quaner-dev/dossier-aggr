@@ -61,6 +61,7 @@ class SubscribeList(SQLModel):
     SubscribeObject: list[Subscribe]
 
 
-# 订阅对象列表结构
 class SubscribeListSchema(SQLModel):
+    """GA/T 1400.3-2017 C.19 `SubscribeListObject` 请求/响应包装"""
+
     SubscribeListObject: SubscribeList

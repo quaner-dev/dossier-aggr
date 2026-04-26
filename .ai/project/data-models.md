@@ -33,3 +33,9 @@
 - 多个实体使用 JSON 字段承载嵌套对象，例如 `SubImageList`、`FaceObjectList`、`PersonObjectList`。
 - 时间字段通过 `models/common/enums.py` 中 `VIIDDateTime` 与 `core/utils.py` 中的 `parse_datetime` / `serialize_datetime` 做协议时间格式转换。
 - `alembic/env.py` 使用 `sqlmodel.SQLModel.metadata` 作为迁移元数据来源。
+
+## 唯一性约束
+
+- 资源主标识字段使用唯一约束，例如 `PersonID`、`FaceID`、`ArchiveID`、`VehicleArchive.ArchiveID`、`SubscribeID`、`NotificationID`、`ArchiveLibraryID`、`TaskID`、`ApeID`、`ApsID`。
+- `SourceID` 是 GA/T 1400 人员、人脸等对象中的来源标识，当前协议资料将其定义为必填来源引用字段，未要求数据库全局唯一；当前模型不增加 `unique=True`。
+- `ImageID` 在当前实现中主要位于 `SubImageInfo` 等嵌套 JSON 对象内，GA/T 2350 正式模型已由 `SourceIDList` 和 `SubImageList` 替代旧迁移中的档案级 `ImageID` 列；当前不在关系表上新增独立唯一约束。

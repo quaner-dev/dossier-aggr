@@ -13,6 +13,12 @@ _TABLE_READY = False
 
 
 async def _ensure_table() -> None:
+    """保留 ArchiveSubject 表的启动期兼容兜底。
+
+    正式 schema 已由 Alembic 迁移管理；这里的 `create_all` 只用于兼容
+    尚未执行迁移的本地或测试环境。
+    """
+
     global _TABLE_READY
     if _TABLE_READY:
         return
@@ -32,6 +38,12 @@ async def _ensure_table() -> None:
 async def query_archive_subjects_repo(
     query: ArchiveSubjectQuery | None = None,
 ) -> Sequence[ArchiveSubject]:
+    """按 GA/T 2350.5 B.9 查询人员档案明细。
+
+    `ArchiveIDList` 先在数据库侧过滤；以图像搜图的 `SubjectID`
+    需要匹配明细对象中各类 ID 列表，因此在取回候选结果后做列表交集判断。
+    """
+
     def _picture_subject_ids() -> list[str]:
         if query is None or query.PictureQueryCondition is None:
             return []
@@ -121,6 +133,12 @@ async def delete_archive_subjects_repo(
     motor_vehicle_id_list: list[str] | None = None,
     non_motor_vehicle_id_list: list[str] | None = None,
 ) -> list[str]:
+    """按 A.14 删除键删除人员档案明细并返回匹配的 ArchiveID。
+
+    协议删除条件允许 `ArchiveID` 或多类对象 ID 列表；任一条件命中即删除
+    对应明细，返回值用于 API 层生成逐项 `ResponseStatus`。
+    """
+
     await _ensure_table()
     async with AsyncSession(engine) as session:
         subjects = (await session.exec(select(ArchiveSubject))).all()

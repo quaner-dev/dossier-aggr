@@ -12,8 +12,6 @@
 6. `pytest.md`：自动化落地建议。
 7. `report-template.md`：测试报告模板。
 
-每次修改后至少尝试运行：
+完整提交前验证以 `.ai/workflows/pre-commit-checklist.md` 为准。
 
-```bash
-pytest -q
-```
+`pyright` 使用仓库根目录 `pyrightconfig.json`，当前覆盖生产代码和 `alembic/env.py`。`tests/` 中的动态替身、直接路由调用和 `alembic/versions/` 生成迁移不纳入 Pyright 基线，分别由 `pytest` 和 `alembic upgrade head` 验证。

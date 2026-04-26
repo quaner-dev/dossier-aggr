@@ -24,11 +24,12 @@ async def register(
     data: RegisterSchema,
     service: Annotated[APSService, Depends(APSService)],
 ):
-    """注册接口"""
+    """处理 7.2.1 注册消息并返回单项状态。"""
+
     device_id = data.RegisterObject.DeviceID
     _ = await service.update_aps(aps_id=device_id)
 
-    # TODO 这里是硬编码，需要后期将输出的方法整体迁移到固定位置，防止反复描述
+    # 注册成功语义固定，当前接口不暴露额外业务错误映射。
     return ResponseStatusList(
         ResponseStatusObject=[
             ResponseStatus(

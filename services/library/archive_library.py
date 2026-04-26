@@ -11,6 +11,12 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class ArchiveLibraryService:
+    """编排 GA/T 2350 目标档案库业务链路。
+
+    查询过滤由 repo 解释；新增、更新和删除通过 Taskiq task 执行，
+    service 层只保留档案库资源的业务动作边界。
+    """
+
     async def list_archive_libraries(
         self, filters: dict[str, str] | None = None
     ) -> Sequence[ArchiveLibrary]:

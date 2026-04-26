@@ -22,6 +22,9 @@
 - `tests/services/test_collection_archive_layering.py`
 - `tests/services/test_subject_verify_layering.py`
 - `tests/test_api_metrics.py`
+- `tests/helm/test_chart.py`
 - `tests/protocol/test_protocol_matrix_guard.py`
 
 2350 查询回归建议覆盖 `PictureQueryCondition.SubjectID`，并验证其在 `Archive.SourceIDList`、`VehicleArchive.SourceIDList` 以及档案明细五类 ID 列表上的命中行为。
+
+Helm Chart 变更至少运行 `pytest -q tests/helm/test_chart.py`，确认默认生产 values、开发覆盖 values、API/worker selector 隔离和迁移 Job 渲染符合预期。

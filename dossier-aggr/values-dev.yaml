@@ -1,0 +1,9 @@
+env:
+  ENV: dev
+  DATABASE_URL: sqlite+aiosqlite:///app/db.sqlite3
+
+worker:
+  enabled: false
+
+migration:
+  enabled: false

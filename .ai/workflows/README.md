@@ -2,6 +2,8 @@
 
 本目录保存 AI 执行常见任务时的流程卡片。
 
+验证命令只在 `pre-commit-checklist.md` 维护；其他流程卡只引用该清单，避免命令漂移。
+
 - `add-api-endpoint.md`：新增接口。
 - `protocol-change.md`：协议相关变更。
 - `database-migration.md`：数据库 schema 和 Alembic。

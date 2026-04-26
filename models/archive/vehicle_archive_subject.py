@@ -8,7 +8,7 @@ from ..person.person import PersonList
 
 
 class VehicleArchiveSubject(SQLModel, table=True):
-    """GA/T 2350.5-2025 车辆档案明细对象"""
+    """GA/T 2350.5-2025 B.5 车辆档案明细对象"""
 
     id: int | None = Field(default=None, primary_key=True, exclude=True)
 
@@ -66,8 +66,12 @@ class VehicleArchiveSubject(SQLModel, table=True):
 
 
 class VehicleArchiveSubjectList(SQLModel):
+    """GA/T 2350.5-2025 B.5 车辆档案明细对象列表"""
+
     VehicleArchiveSubjectObject: list[VehicleArchiveSubject]
 
 
 class VehicleArchiveSubjectSchema(SQLModel):
+    """GA/T 2350.5-2025 A.16 `VehicleArchiveSubjectListObject` 请求包装"""
+
     VehicleArchiveSubjectListObject: VehicleArchiveSubjectList

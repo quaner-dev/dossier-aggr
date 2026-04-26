@@ -9,10 +9,14 @@ from ..face.face import FaceList
 
 
 class MotorVehicleList(SQLModel):
+    """GA/T 2350.5-2025 B.5 机动车完整信息对象列表兼容容器"""
+
     MotorVehicleObject: list[dict[str, Any]]
 
 
 class NonMotorVehicleList(SQLModel):
+    """GA/T 2350.5-2025 B.5 非机动车完整信息对象列表兼容容器"""
+
     NonMotorVehicleObject: list[dict[str, Any]]
 
 
@@ -74,11 +78,13 @@ class ArchiveSubject(SQLModel, table=True):
     )
 
 
-# 档案明细列表
 class ArchiveSubjectList(SQLModel):
+    """GA/T 2350.5-2025 B.5 人员档案明细对象列表"""
+
     ArchiveSubjectObject: list[ArchiveSubject]
 
 
-# 档案明细列表结构
 class ArchiveSubjectSchema(SQLModel):
+    """GA/T 2350.5-2025 A.14 `ArchiveSubjectListObject` 请求包装"""
+
     ArchiveSubjectListObject: ArchiveSubjectList

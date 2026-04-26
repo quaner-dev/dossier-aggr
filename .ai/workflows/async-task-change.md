@@ -13,3 +13,4 @@ taskiq worker core.brokers:broker
 ```
 
 8. 同步更新 `.ai/project/architecture.md` 和 `.ai/testing/layers.md` 中相关说明。
+9. 按 `.ai/workflows/pre-commit-checklist.md` 完成验证。

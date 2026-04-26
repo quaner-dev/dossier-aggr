@@ -28,6 +28,12 @@ async def archive_subject_query_sync(
     data: ArchiveSubjectQuerySchema,
     service: Annotated[ArchiveSubjectService, Depends(ArchiveSubjectService)],
 ) -> ArchiveSubjectQueryResultSchema:
+    """处理 A.13 人员档案明细同步查询并包装查询结果。
+
+    明细筛选由 service/repo 完成；路由层只负责协议分页字段和
+    `ArchiveSubjectQueryResultObject` 顶层包装。
+    """
+
     query = data.ArchiveSubjectQueryObject
     subjects = await service.query_archive_subjects(query=query)
     record_start_no = query.RecordStartNo or 0
@@ -54,6 +60,8 @@ async def archive_subjects_create(
     data: ArchiveSubjectSchema,
     service: ArchiveSubjectService = Depends(ArchiveSubjectService),
 ) -> ResponseStatusListSchema:
+    """处理 A.14 人员档案明细批量新增并返回逐明细状态。"""
+
     subjects = data.ArchiveSubjectListObject.ArchiveSubjectObject
     _ = await service.create_archive_subjects(subjects=subjects)
     return ResponseStatusListSchema(
@@ -81,6 +89,8 @@ async def archive_subjects_update(
     data: ArchiveSubjectSchema,
     service: ArchiveSubjectService = Depends(ArchiveSubjectService),
 ) -> ResponseStatusListSchema:
+    """处理 A.14 人员档案明细批量更新并返回逐明细状态。"""
+
     subjects = data.ArchiveSubjectListObject.ArchiveSubjectObject
     _ = await service.update_archive_subjects(subjects=subjects)
     return ResponseStatusListSchema(
@@ -114,6 +124,12 @@ async def archive_subjects_delete(
     ] = None,
     service: ArchiveSubjectService = Depends(ArchiveSubjectService),
 ) -> ResponseStatusListSchema:
+    """处理 A.14 人员档案明细删除。
+
+    删除条件支持协议定义的 `ArchiveID` 与四类对象 ID 列表；路由层只做
+    查询参数解析，实际匹配和删除语义交给 service/repo。
+    """
+
     deleted_ids = await service.delete_archive_subjects(
         archive_id=archive_id,
         face_id_list=parse_id_list(face_id_list) if face_id_list else None,

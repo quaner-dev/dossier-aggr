@@ -6,7 +6,11 @@ from services.task_dispatch import dispatch_and_wait
 
 
 class APEService:
-    """APE服务类，封装APE相关的业务逻辑"""
+    """编排 GA/T 1400 APE 前端设备业务链路。
+
+    APE 列表读取直接使用 repo；更新通过 Taskiq task 写入，
+    保持设备资源接口与持久化层之间的异步边界。
+    """
 
     async def list_apes(self) -> Sequence[APE]:
         """查询所有APE信息"""

@@ -37,8 +37,12 @@ class VehicleArchive(SQLModel, table=True):
 
 
 class VehicleArchiveList(SQLModel):
+    """GA/T 2350.5-2025 B.4 车辆档案基础信息对象列表"""
+
     VehicleArchiveObject: list[VehicleArchive]
 
 
 class VehicleArchiveListSchema(SQLModel):
+    """GA/T 2350.5-2025 A.12 `VehicleArchiveListObject` 请求包装"""
+
     VehicleArchiveListObject: VehicleArchiveList

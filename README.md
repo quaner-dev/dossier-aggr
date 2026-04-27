@@ -1,131 +1,234 @@
-# dossier-aggr / VIID 服务系统
+# dossier-aggr / VIID Service
 
-基于 FastAPI 的视频图像信息数据库（VIID）接口服务，覆盖 GA/T 1400-2017、GA/T 1400-2018 试行，以及 GA/T 2350.5-2025 目标聚档相关实现。
+<p align="center">
+  <img src="docs/assets/dossier-aggr-overview.svg" alt="dossier-aggr VIID service overview" width="860">
+</p>
 
-本项目面向协议接口实现、后端服务部署和系统集成联调。当前仓库交付 FastAPI API 服务、Taskiq worker、数据库迁移和 Helm Chart，不包含独立前端应用。
+<p align="center">
+  <a href="https://www.python.org/downloads/release/python-3120/"><img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white"></a>
+  <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white"></a>
+  <a href="https://docs.pydantic.dev/"><img alt="Pydantic v2" src="https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white"></a>
+  <a href="https://docs.pytest.org/"><img alt="pytest" src="https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white"></a>
+  <a href="https://github.com/astral-sh/ruff"><img alt="ruff" src="https://img.shields.io/badge/lint-ruff-261230"></a>
+  <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
+</p>
 
-## 项目简介
+`dossier-aggr` 是一个基于 FastAPI 的视频图像信息数据库（VIID）接口服务，面向公安视频图像协议接口实现、后端服务部署和系统集成联调。当前仓库交付 API 服务、Taskiq worker、数据库迁移和 Helm Chart，不包含独立前端应用。
 
-VIID 服务系统提供标准化的视频图像数据采集、管理、查询、订阅通知和目标聚档接口。系统采用异步 Python 技术栈构建，核心链路按 `api -> services -> tasks -> repo -> models/database` 分层组织。
+## Highlights
 
-## 当前状态
+- GA/T 1400-2017/2018 试行链路：系统注册、保活、注销、校时、采集系统、采集设备、人员、人脸、订阅与通知。
+- GA/T 2350.5-2025 目标聚档链路：目标档案库、聚档任务、人员/车辆档案、档案明细和档案核验。
+- 自动生成 OpenAPI，并通过 Swagger UI 与 ReDoc 提供交互式接口文档。
+- 开发环境默认 SQLite + Taskiq InMemoryBroker；生产环境支持 PostgreSQL + RabbitMQ。
+- 提供 Dockerfile、Helm Chart、Kubernetes 探针、Prometheus 指标和 Grafana Dashboard 模板。
 
-- GA/T 1400 主体接口已实现，包含系统注册、保活、注销、采集系统与设备、人员、人脸、订阅与通知等能力。
-- GA/T 2350.5 目标聚档主流程已具备，包含档案库、档案、档案明细、档案核验等链路。
-- GA/T 2350.5 与正式版协议仍有部分字段、查询约束和细节需要继续对齐；这些内容作为后续 Roadmap 推进。
-- API 默认暴露 FastAPI OpenAPI 文档，服务启动后可访问 `/docs` 和 `/openapi.json`。
+## Compatibility
 
-## 技术栈
+| Item | Current target |
+| --- | --- |
+| Python | 3.12 |
+| API framework | FastAPI |
+| Data model | SQLModel / Pydantic v2 |
+| Migration | Alembic |
+| Task queue | Taskiq |
+| Dev database | SQLite |
+| Production database | PostgreSQL |
+| Production broker | RabbitMQ |
 
-- 后端框架：FastAPI
-- 数据模型：SQLModel / Pydantic
-- 数据库访问：SQLAlchemy AsyncSession
-- 数据库迁移：Alembic
-- 任务队列：Taskiq
-- 开发/轻量测试数据库：SQLite
-- 生产数据库：PostgreSQL
-- 生产任务队列：RabbitMQ
-- 部署：Docker / Kubernetes / Helm
+> 仓库当前没有 GitHub Actions 工作流，因此 README 不展示远端 CI 通过徽章。质量状态以本地执行 `ruff check .`、`pyright`、`pytest -q` 的结果为准。
 
-## 快速开始
+## Protocol References
 
-安装依赖：
+本仓库不分发标准原文。`.protocol/` 是本地原始协议资料目录，已被 `.gitignore` 忽略；协议判断先查 `.ai/protocols/` 的索引，必要时回到本地 `.protocol/` 文件核验。
+
+| Protocol | Local source path | Public reference |
+| --- | --- | --- |
+| GA/T 1400.1-2017 通用技术要求 | `.protocol/1400/GA-T 1400.1-2017 公安视频图像信息应用系统 第1部分：通用技术要求.doc` | [国家数字标准馆](https://www.ndls.org.cn/standard/detail/f71a4415fcb5553126a987f4c79415c9) |
+| GA/T 1400.2-2017 应用平台技术要求 | `.protocol/1400/GA-T 1400.2-2017 公安视频图像信息应用系统 第2部分：应用平台技术要求.doc` | [国家数字标准馆](https://www.ndls.org.cn/standard/detail/764238571834b42cfbeb6fc31a47204c) |
+| GA/T 1400.3-2017 数据库技术要求 | `.protocol/1400/GA-T 1400.3-2017 公安视频图像信息应用系统 第3部分：数据库技术要求.doc` | [国家数字标准馆](https://www.ndls.org.cn/standard/detail/87eccff00012e165e1ae34d25c3747f6) |
+| GA/T 1400.4-2017 接口协议要求 | `.protocol/1400/GA-T 1400.4-2017 公安视频图像信息应用系统 第4部分：接口协议要求.doc` | [国家数字标准馆](https://www.ndls.org.cn/standard/detail/4ac5697f21cc24610b6f66da80722c1e) |
+| GA/T 1400 试行资料 | `.protocol/1400/20180521 视图库对接技术要-试行.pdf` | 本地资料 |
+| GA/T 2350.5-2025 目标聚档服务 | `.protocol/2350/GA-T 2350.5-2025.pdf`、`.protocol/2350/GA-T 2350.5-2025.docx` | [国家数字标准馆关联条目](https://www.ndls.org.cn/standard/detail/e9bd6546ff969e6a6335c973e1271738)、[公安部标准公告转载](https://www.secrss.com/articles/84327) |
+
+## Feature Matrix
+
+状态说明：`√` 表示当前仓库已有对应 API/模型/服务主链路；`×` 表示当前仓库未实现。带备注的 `√` 代表接口已存在，但仍有字段、查询语义或正式版细节需要继续核对。
+
+### GA/T 1400
+
+| Protocol area | Typical path | Status | Notes |
+| --- | --- | --- | --- |
+| System register | `/VIID/System/Register` | √ | Digest 鉴权；返回协议状态对象 |
+| System unregister | `/VIID/System/UnRegister` | √ | 返回协议状态对象 |
+| System keepalive | `/VIID/System/Keepalive` | √ | 返回协议状态对象 |
+| System time | `/VIID/System/Time` | √ | 返回系统时间对象 |
+| VIID server resource | `/VIID/VIIDServers` | × | 未实现 |
+| APE collection device | `/VIID/APEs` | √ | 已实现查询和修改主链路 |
+| APS collection system | `/VIID/APSs` | √ | 已实现查询主链路 |
+| Tollgate | `/VIID/Tollgates` | × | 未实现 |
+| Lane | `/VIID/Lanes` | × | 未实现 |
+| Video slice metadata/data | `/VIID/VideoSlices` | × | 未实现 |
+| Image metadata/data | `/VIID/Images` | × | 未实现 |
+| File metadata/data | `/VIID/Files` | × | 未实现 |
+| Person | `/VIID/Persons` | √ | 支持批量和单项查询、增加、修改、删除 |
+| Face | `/VIID/Faces` | √ | 支持批量和单项查询、增加、修改、删除 |
+| Motor vehicle | `/VIID/MotorVehicles` | × | 未实现 |
+| Non-motor vehicle | `/VIID/NonMotorVehicles` | × | 未实现 |
+| Thing | `/VIID/Things` | × | 未实现 |
+| Scene | `/VIID/Scenes` | × | 未实现 |
+| Case | `/VIID/Cases` | × | 未实现 |
+| Disposition | `/VIID/Dispositions` | × | 未实现 |
+| Disposition notification | `/VIID/DispositionNotifications` | × | 未实现 |
+| Subscribe | `/VIID/Subscribes` | √ | 支持订阅查询、创建、更新、删除、取消 |
+| Subscribe notification | `/VIID/SubscribeNotifications` | √ | 支持通知上报、查询和删除 |
+| Analysis rule | `/VIID/AnalysisRules` | × | 未实现 |
+| Video label | `/VIID/VideoLabels` | × | 未实现 |
+| VIAS system/capability | `/VIAS/System*`、`/VIAS/SystemCapability/*` | × | 未实现 |
+
+### GA/T 2350.5
+
+| Clause | Protocol area | Path | Status | Notes |
+| --- | --- | --- | --- | --- |
+| A.5 | Target archive library | `/VIID/ArchiveLibraries` | √ | 已基本对齐 |
+| A.6 | Archive task | `/VIAS/Tasks` | √ | 主链路已实现；`Task` 字段仍需结合 GA/T 1399-2017 继续核对 |
+| A.7 | Subscribe | `/VIID/Subscribes` | √ | 复用 1400 路由；2350 扩展语义仍需核对 |
+| A.8 | Subscribe notification | `/VIID/SubscribeNotifications` | √ | 复用 1400 路由；已补齐部分 2350 扩展列表 |
+| A.9 | Person archive query | `/VIID/ArchivesQuerySync` | √ | 查询行为尚未覆盖正式版全部检索语义 |
+| A.10 | Person archive write | `/VIID/Archives` | √ | 批量增加、修改、删除主链路 |
+| A.11 | Vehicle archive query | `/VIID/VehicleArchivesQuerySync` | √ | 查询行为尚未覆盖正式版全部检索语义 |
+| A.12 | Vehicle archive write | `/VIID/VehicleArchives` | √ | 批量增加、修改、删除主链路 |
+| A.13 | Person archive subject query | `/VIID/ArchiveSubjectQuerySync` | √ | 查询行为尚未覆盖正式版全部检索语义 |
+| A.14 | Person archive subject write | `/VIID/ArchiveSubjects` | √ | 删除支持正式版五类删除键 |
+| A.15 | Vehicle archive subject query | `/VIID/VehicleArchiveSubjectQuerySync` | √ | 查询行为尚未覆盖正式版全部检索语义 |
+| A.16 | Vehicle archive subject write | `/VIID/VehicleArchiveSubjects` | √ | 删除支持正式版五类删除键 |
+| A.17 | Person archive confidence | `/VIID/ArchiveConfidence` | √ | 成功响应使用 `ArchiveList` |
+| A.18 | Vehicle archive confidence | `/VIID/VehicleArchiveConfidence` | √ | 成功响应使用 `VehicleArchiveList` |
+
+## Quick Start
+
+Create a Python 3.12 environment and install dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-开发环境默认使用 `ENV=dev`，任务队列使用内存 broker，数据库默认使用 SQLite：
+Run migrations and start the API service:
 
 ```bash
 ENV=dev alembic upgrade head
 ENV=dev uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-服务启动后可访问：
+Open the interactive documentation:
 
-- API 文档：`http://127.0.0.1:8000/docs`
-- OpenAPI JSON：`http://127.0.0.1:8000/openapi.json`
-- 健康检查：`/startup`、`/live`、`/ready`
-- Prometheus 指标：`/metrics`
+| UI | URL |
+| --- | --- |
+| Swagger UI | http://127.0.0.1:8000/docs |
+| ReDoc | http://127.0.0.1:8000/redoc |
+| OpenAPI JSON | http://127.0.0.1:8000/openapi.json |
+| Health probes | `/startup`、`/live`、`/ready` |
+| Metrics | `/metrics` |
 
-## 数据库迁移
+## API Examples
 
-应用运行时使用异步数据库 URL，例如 `sqlite+aiosqlite://` 或 `postgresql+asyncpg://`。Alembic 迁移会自动转换为同步驱动 URL 执行迁移。
+The OpenAPI schema is the easiest way to inspect request/response models:
 
-执行现有迁移：
+```bash
+curl http://127.0.0.1:8000/openapi.json
+```
+
+GA/T 1400 keepalive:
+
+```bash
+curl -X POST http://127.0.0.1:8000/VIID/System/Keepalive \
+  -H 'Content-Type: application/json' \
+  -d '{"KeepaliveObject":{"DeviceID":"APS-003"}}'
+```
+
+## Development Commands
+
+```bash
+ruff check .
+pyright
+pytest -q
+```
+
+Database migrations:
 
 ```bash
 alembic upgrade head
-```
-
-创建新的迁移文件：
-
-```bash
 alembic revision --autogenerate -m "describe change"
 ```
 
-## 任务队列
-
-- `ENV=dev`：使用 Taskiq `InMemoryBroker`，适合本地开发和轻量测试。
-- 非 `dev` 环境：使用 RabbitMQ，对应 `RABBITMQ_USERNAME`、`RABBITMQ_PASSWORD`、`RABBITMQ_IP`、`RABBITMQ_PORT`。
-
-生产 worker 启动命令：
+Taskiq worker:
 
 ```bash
 taskiq worker core.brokers:broker
 ```
 
-## Helm 部署
+## Docker
 
-Helm Chart 位于 `dossier-aggr/`。默认 `values.yaml` 面向生产环境：
+Build and run the API container:
 
-- `ENV=prod`
-- `DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgresql:5432/dossier_aggr`
-- `RABBITMQ_IP=rabbitmq`
-- 包含 API Deployment、worker Deployment、Service、Ingress、HPA、监控资源和 Alembic migration Job
-- 安装和升级前通过 Helm hook 执行 `alembic upgrade head`
+```bash
+docker build -t dossier-aggr:local .
+docker run --rm -p 8000:8000 -e ENV=dev dossier-aggr:local
+```
 
-生产集群需要提前提供可解析的 `postgresql` 与 `rabbitmq` Service，或通过 values 覆盖为已有中间件地址。部署前通常还需要覆盖镜像仓库和镜像 tag。
+The default container command is:
 
-渲染生产配置：
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+## Helm Deployment
+
+Helm Chart is located in `dossier-aggr/`.
+
+Render the production-oriented default chart:
 
 ```bash
 helm template dossier-aggr dossier-aggr
 ```
 
-低资源开发环境可使用 `values-dev.yaml`，该配置会启用 SQLite，并关闭独立 worker 和迁移 Job：
+Render the low-resource development profile:
 
 ```bash
 helm template dossier-aggr-dev dossier-aggr -f dossier-aggr/values-dev.yaml
 ```
 
-## 项目结构
+Default production values expect resolvable `postgresql` and `rabbitmq` Services, or equivalent overrides in values:
+
+- `ENV=prod`
+- `DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgresql:5432/dossier_aggr`
+- `RABBITMQ_IP=rabbitmq`
+
+The chart includes API Deployment, optional worker Deployment, Service, Ingress, HPA, ServiceMonitor, PrometheusRule, Grafana Dashboard, and an Alembic migration Job.
+
+## Project Layout
 
 ```text
-api/              FastAPI 路由与协议入口
-services/         业务编排层
-tasks/            Taskiq 异步任务
-repo/             数据访问层
-models/           SQLModel/Pydantic 协议与数据库模型
-alembic/          数据库迁移
-core/             配置、数据库、broker 和通用基础设施
-observability/    指标与可观测性
+api/              FastAPI routes and protocol entry points
+services/         Business orchestration
+tasks/            Taskiq async tasks
+repo/             Data access
+models/           SQLModel/Pydantic protocol and database models
+alembic/          Database migrations
+core/             Config, database, broker and shared infrastructure
+observability/    Metrics and observability setup
 dossier-aggr/     Helm Chart
-tests/            单元、协议、仓库、服务、Helm 和迁移测试
-.ai/              项目上下文、协议索引、开发约束和计划文档
+tests/            Unit, protocol, service, repository, Helm and migration tests
+.ai/              AI collaboration context, protocol indexes and workflow docs
+.protocol/        Local protocol source files, ignored by git
 ```
-
-## 协议资料与开源边界
-
-`.protocol/` 是本地原始协议资料目录，已被 `.gitignore` 忽略，不随开源仓库分发。README 和代码只描述协议名称、接口行为和实现状态，不提交原始协议文件。
 
 ## Roadmap
 
-- 继续对齐 GA/T 2350.5-2025 正式版字段、约束和响应细节。
-- 补充 RabbitMQ 真实 worker 场景的端到端回归。
-- 细化附录扩展字段的查询和过滤约束。
-- 后续补充贡献指南、安全策略和更完整的开源协作流程。
+- Continue aligning GA/T 2350.5-2025 fields, query constraints and response details with the official baseline.
+- Add stronger RabbitMQ worker end-to-end regression coverage.
+- Refine appendix extension-field filtering and query constraints.
+- Add contribution, security and release process documents as the project opens to more collaborators.
 
 ## License
 

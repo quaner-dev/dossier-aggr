@@ -71,6 +71,52 @@ def test_postgresql_engine_uses_configured_pool_options(
     }
 
 
+def test_postgresql_engine_uses_default_pool_options_when_env_is_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_create_async_engine(url: str, **kwargs: Any) -> object:
+        captured["url"] = url
+        captured["kwargs"] = kwargs
+        return object()
+
+    _fresh_database_module(
+        monkeypatch,
+        fake_create_async_engine,
+        DATABASE_URL="postgresql+asyncpg://postgres:postgres@postgresql:5432/app",
+    )
+
+    assert captured["url"].startswith("postgresql+asyncpg://")
+    assert captured["kwargs"] == {
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_timeout": 30.0,
+        "pool_recycle": 1800,
+        "pool_pre_ping": True,
+    }
+
+
+def test_db_pool_pre_ping_accepts_true_case_insensitively(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_create_async_engine(url: str, **kwargs: Any) -> object:
+        captured["url"] = url
+        captured["kwargs"] = kwargs
+        return object()
+
+    _fresh_database_module(
+        monkeypatch,
+        fake_create_async_engine,
+        DATABASE_URL="postgresql+asyncpg://postgres:postgres@postgresql:5432/app",
+        DB_POOL_PRE_PING="TRUE",
+    )
+
+    assert captured["kwargs"]["pool_pre_ping"] is True
+
+
 def test_sqlite_engine_does_not_use_pool_options(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

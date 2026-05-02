@@ -2,12 +2,9 @@ from collections.abc import Sequence
 
 from core import exceptions
 from core.database import engine
-from models import Face
+from models import Face, FaceQueryParams
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-
-_DEFAULT_FACE_LIST_LIMIT = 100
-
 
 async def get_face_repo(face_id: str) -> Face:
     async with AsyncSession(engine) as session:
@@ -18,9 +15,13 @@ async def get_face_repo(face_id: str) -> Face:
         return face
 
 
-async def list_faces_repo() -> Sequence[Face]:
+async def list_faces_repo(query: FaceQueryParams) -> Sequence[Face]:
     async with AsyncSession(engine) as session:
-        statement = select(Face).order_by(Face.FaceID).limit(_DEFAULT_FACE_LIST_LIMIT)
+        statement = select(Face).order_by(Face.FaceID)
+        if query.RecordStartNo:
+            statement = statement.offset(query.RecordStartNo)
+        if query.PageRecordNum is not None:
+            statement = statement.limit(query.PageRecordNum)
         faces = (await session.exec(statement)).all()
         return faces
 

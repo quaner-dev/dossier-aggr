@@ -44,6 +44,15 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           {{- end }}
+          {{- if or .Values.envFrom .Values.migration.envFrom }}
+          envFrom:
+            {{- with .Values.envFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.migration.envFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
           {{- with .Values.migration.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

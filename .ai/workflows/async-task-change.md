@@ -9,8 +9,11 @@
 7. 真实 broker 场景需要启动：
 
 ```bash
-taskiq worker core.brokers:broker
+taskiq worker core.brokers:broker tasks
 ```
+
+非 `dev` 环境还必须配置 `TASKIQ_RESULT_BACKEND_URL`，否则写接口无法可靠等待
+worker 任务结果。
 
 8. 同步更新 `.ai/project/architecture.md` 和 `.ai/testing/layers.md` 中相关说明。
 9. 按 `.ai/workflows/pre-commit-checklist.md` 完成验证。

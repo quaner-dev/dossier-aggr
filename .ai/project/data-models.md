@@ -18,7 +18,9 @@
 - `alembic/versions/ba1f5f1f8b9e_add_vehicle_archive_table.py`
 - `alembic/versions/7f7fb248ab04_align_2350_official_models.py`
 
-`ArchiveSubject`、`VehicleArchiveSubject` 仍保留 repository 启动阶段的 `create_all` 兼容兜底，但正式 schema 已纳入 Alembic 迁移。
+`ArchiveSubject`、`VehicleArchiveSubject` 仍保留 repository 启动阶段的 `create_all`
+兼容兜底，但仅在 `ENV=dev` 生效；生产 schema 已纳入 Alembic 迁移并由
+migration Job 管理。
 
 ## 协议/聚合模型
 

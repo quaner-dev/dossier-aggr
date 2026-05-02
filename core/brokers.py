@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from taskiq import AsyncBroker, InMemoryBroker
 from taskiq_aio_pika import AioPikaBroker
+from taskiq_redis import RedisAsyncResultBackend
 
 from core import settings
 
@@ -13,9 +14,13 @@ broker: AsyncBroker
 if settings.ENV == "dev":
     broker = InMemoryBroker()
 else:
+    if not settings.TASKIQ_RESULT_BACKEND_URL:
+        raise RuntimeError("TASKIQ_RESULT_BACKEND_URL is required when ENV is not dev")
+
     broker = AioPikaBroker(
-        f"amqp://{settings.RABBITMQ_USERNAME}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_IP}:{settings.RABBITMQ_PORT}"
-    )
+        f"amqp://{settings.RABBITMQ_USERNAME}:{settings.RABBITMQ_PASSWORD}"
+        f"@{settings.RABBITMQ_IP}:{settings.RABBITMQ_PORT}",
+    ).with_result_backend(RedisAsyncResultBackend(settings.TASKIQ_RESULT_BACKEND_URL))
 
 
 @asynccontextmanager

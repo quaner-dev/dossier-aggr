@@ -1,6 +1,6 @@
 import asyncio
 
-from models import Face, Person
+from models import Face, FaceQueryParams, Person
 from models.common import enums
 from services.face.face import FaceService
 from services.person.person import PersonService
@@ -102,8 +102,11 @@ def test_face_service_sync_reads_use_repository(monkeypatch):
         face = _sample_face()
         called = {"list_repo": False, "get_repo": False}
 
-        async def fake_list_repo():
+        query = FaceQueryParams(RecordStartNo=1, PageRecordNum=1)
+
+        async def fake_list_repo(query: FaceQueryParams):
             called["list_repo"] = True
+            assert query == FaceQueryParams(RecordStartNo=1, PageRecordNum=1)
             return [face]
 
         async def fake_get_repo(face_id: str):
@@ -125,7 +128,7 @@ def test_face_service_sync_reads_use_repository(monkeypatch):
         )
         service = FaceService()
         list_res = await asyncio.wait_for(
-            service.list_faces(),
+            service.list_faces(query=query),
             timeout=1,
         )
         get_res = await asyncio.wait_for(service.get_face("F-LAYER-001"), timeout=1)

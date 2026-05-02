@@ -1,5 +1,4 @@
 import asyncio
-from types import SimpleNamespace
 
 import httpx
 
@@ -14,7 +13,7 @@ from api.face.face import (
 )
 from core import exceptions
 from main import app
-from models import Face, FaceList, FaceListObjectSchema
+from models import Face, FaceList, FaceListObjectSchema, FaceQueryParams
 from models.common import enums
 from services.face.face import FaceService
 from tests.type_helpers import as_service, as_status_list
@@ -28,6 +27,7 @@ class _FakeFaceService:
         self.deleted_with: list[str] = []
         self.get_calls: list[str] = []
         self.list_calls: int = 0
+        self.list_queries: list[FaceQueryParams] = []
         self.update_face_calls: list[str] = []
         self.update_faces_calls: list[list[str]] = []
         self.delete_face_calls: list[str] = []
@@ -40,9 +40,12 @@ class _FakeFaceService:
                 return face
         raise exceptions.DataNotFoundError(detail=f"{face_id} not exist")
 
-    async def list_faces(self) -> list[Face]:
+    async def list_faces(self, query: FaceQueryParams) -> list[Face]:
         self.list_calls += 1
-        return self._faces[:100]
+        self.list_queries.append(query)
+        start = query.RecordStartNo
+        end = None if query.PageRecordNum is None else start + query.PageRecordNum
+        return self._faces[start:end]
 
     async def create_faces(self, faces: list[Face]):
         self.created_with = faces
@@ -122,6 +125,38 @@ def test_faces_query_lists_faces_with_default_pagination():
         assert len(items) == 2
         assert fake.get_calls == []
         assert fake.list_calls == 1
+        assert fake.list_queries == [FaceQueryParams()]
+
+    asyncio.run(_run())
+
+
+def test_faces_query_accepts_pagination_query_params_via_http():
+    async def _run():
+        fake = _FakeFaceService(_sample_faces())
+
+        async def _face_dep() -> _FakeFaceService:
+            return fake
+
+        app.dependency_overrides[FaceService] = _face_dep
+        try:
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport,
+                base_url="http://test",
+            ) as client:
+                response = await client.get(
+                    "/VIID/Faces",
+                    params={"RecordStartNo": "1", "PageRecordNum": "1"},
+                )
+
+                assert response.status_code == 200
+                items = response.json()["FaceListObject"]["FaceObject"]
+                assert [item["FaceID"] for item in items] == ["F-002"]
+                assert fake.list_queries == [
+                    FaceQueryParams(RecordStartNo=1, PageRecordNum=1)
+                ]
+        finally:
+            app.dependency_overrides.pop(FaceService, None)
 
     asyncio.run(_run())
 
@@ -135,9 +170,6 @@ def test_faces_create_update_delete_return_status_list():
         create_res = await faces_create(data=payload, service=as_service(fake))
         update_res = await faces_update(data=payload, service=as_service(fake))
         delete_res = await faces_delete(
-            request=SimpleNamespace(
-                query_params=SimpleNamespace(getlist=lambda _key: [])
-            ),
             face_ids=["F-001", "F-002"],
             service=as_service(fake),
         )
@@ -172,7 +204,7 @@ def test_faces_create_update_delete_return_status_list():
     asyncio.run(_run())
 
 
-def test_faces_delete_accepts_idlist_and_legacy_id_list_via_http():
+def test_faces_delete_accepts_protocol_idlist_only_via_http():
     async def _run():
         fake = _FakeFaceService(_sample_faces())
 
@@ -196,19 +228,16 @@ def test_faces_delete_accepts_idlist_and_legacy_id_list_via_http():
                 ]
                 assert [item["Id"] for item in idlist_status] == ["F-001", "F-002"]
 
-                legacy_res = await client.delete(
+                lowercase_res = await client.delete(
                     "/VIID/Faces",
                     params={"id_list": "F-001,F-002"},
                 )
-                assert legacy_res.status_code == 200
-                legacy_status = legacy_res.json()["ResponseStatusListObject"][
+                assert lowercase_res.status_code == 400
+                lowercase_status = lowercase_res.json()["ResponseStatusListObject"][
                     "ResponseStatusObject"
-                ]
-                assert [item["Id"] for item in legacy_status] == ["F-001", "F-002"]
-                assert fake.delete_faces_calls == [
-                    ["F-001", "F-002"],
-                    ["F-001", "F-002"],
-                ]
+                ][0]
+                assert lowercase_status["StatusString"] == "IDList is required"
+                assert fake.delete_faces_calls == [["F-001", "F-002"]]
         finally:
             app.dependency_overrides.pop(FaceService, None)
 

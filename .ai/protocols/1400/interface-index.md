@@ -32,7 +32,7 @@
 
 | 方法 | 路径 | 请求模型 | 响应模型 |
 | --- | --- | --- | --- |
-| GET | `/VIID/Faces` | 无 | `FaceListObjectSchema` |
+| GET | `/VIID/Faces` | `Face` 属性键/值对；当前已实现 `RecordStartNo`、`PageRecordNum` 分页参数 | `FaceListObjectSchema` |
 | POST/PUT | `/VIID/Faces` | `FaceListObjectSchema` | `ResponseStatusListSchema` |
 | DELETE | `/VIID/Faces` | `IDList` | `ResponseStatusListSchema` |
 | GET/PUT/DELETE | `/VIID/Faces/{face_id}` | 路径参数或 `Face` | `Face` / `ResponseStatus` |

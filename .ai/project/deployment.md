@@ -22,11 +22,24 @@ Helm Chart 位于 `dossier-aggr/`。
 - `ENV=prod`
 - `RABBITMQ_IP=rabbitmq`，使用集群内默认 RabbitMQ 服务名
 - `DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgresql:5432/dossier_aggr`，使用集群内默认 PostgreSQL 服务名
+- `TASKIQ_RESULT_BACKEND_URL=redis://redis:6379/0`，使用集群内默认 Redis 服务名保存 Taskiq 任务结果
+- 数据库连接池默认参数：`DB_POOL_SIZE=10`、`DB_MAX_OVERFLOW=20`、
+  `DB_POOL_TIMEOUT_SECONDS=30`、`DB_POOL_RECYCLE_SECONDS=1800`、
+  `DB_POOL_PRE_PING=true`
 - API 和 worker 通过 `app.kubernetes.io/component` 标签隔离，Service 只选择 API Pod
 - 安装和升级前通过 Helm hook 执行 `alembic upgrade head`
 - Alembic 迁移读取 `DATABASE_URL`，并在运行迁移前将异步驱动 URL 转换为同步驱动 URL
 
-生产集群需要提前提供可解析的 `rabbitmq` 与 `postgresql` Service，或通过 `values.yaml` 覆盖上述环境变量指向已有中间件。
+生产集群需要提前提供可解析的 `rabbitmq`、`postgresql` 与 `redis` Service，
+或通过 `values.yaml` 覆盖上述环境变量指向已有中间件。非 `dev` 环境如果未配置
+`TASKIQ_RESULT_BACKEND_URL`，应用会启动失败，避免写接口在没有共享任务结果后端时
+错误地返回成功。
+API、worker 和 migration Job 支持通过全局 `envFrom` 引用外部
+Kubernetes Secret/ConfigMap 注入运行时配置；worker 和 migration 也保留各自的
+`worker.envFrom`、`migration.envFrom` 扩展项。生产凭据优先通过 Secret 注入，
+不要写入仓库跟踪的 values 文件。
+生产 schema 只由 Alembic migration Job 管理；repository 中保留的 `create_all`
+兼容兜底仅在 `ENV=dev` 生效。
 
 低资源开发环境可使用 `dossier-aggr/values-dev.yaml`：
 
@@ -45,7 +58,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 worker 可选启动命令：
 
 ```bash
-taskiq worker core.brokers:broker
+taskiq worker core.brokers:broker tasks
 ```
 
 ## 探针

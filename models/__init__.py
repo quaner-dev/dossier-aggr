@@ -2,7 +2,7 @@
 from .collection.aps import APS, APSList, APSListSchema
 from .collection.ape import APE, APEList, APEListSchema
 from .person.person import Person, PersonList, PersonListObjectSchema
-from .face.face import Face, FaceList, FaceListObjectSchema
+from .face.face import Face, FaceList, FaceListObjectSchema, FaceQueryParams
 from .subscribe.subscribe import Subscribe, SubscribeList, SubscribeListSchema
 from .subscribe.subscribe_notification import (
     SubscribeNotification,
@@ -61,6 +61,7 @@ __all__ = [
     "Face",
     "FaceList",
     "FaceListObjectSchema",
+    "FaceQueryParams",
     "Subscribe",
     "SubscribeList",
     "SubscribeListSchema",

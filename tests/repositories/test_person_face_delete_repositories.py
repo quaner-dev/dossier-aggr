@@ -1,6 +1,6 @@
 import asyncio
 
-from models import Face, Person
+from models import Face, FaceQueryParams, Person
 from repo.face import face as face_repo
 from repo.person import person as person_repo
 
@@ -83,13 +83,34 @@ def test_list_persons_repo_orders_and_limits_without_not_found(monkeypatch):
     asyncio.run(_run())
 
 
-def test_list_faces_repo_orders_and_limits_without_explicit_asc(monkeypatch):
+def test_list_faces_repo_orders_without_default_limit(monkeypatch):
     async def _run():
         expected = [_sample_face("F-002"), _sample_face("F-001")]
         fake_session = _FakeAsyncSession(found_obj=expected)
         monkeypatch.setattr(face_repo, "AsyncSession", lambda _engine: fake_session)
 
-        result = await face_repo.list_faces_repo()
+        result = await face_repo.list_faces_repo(query=FaceQueryParams())
+
+        assert result == expected
+        assert fake_session.statement is not None
+        statement_text = str(fake_session.statement)
+        assert "ORDER BY" in statement_text
+        assert "FaceID" in statement_text
+        assert "LIMIT" not in statement_text
+        assert "ASC" not in statement_text
+
+    asyncio.run(_run())
+
+
+def test_list_faces_repo_applies_pagination_query(monkeypatch):
+    async def _run():
+        expected = [_sample_face("F-002")]
+        fake_session = _FakeAsyncSession(found_obj=expected)
+        monkeypatch.setattr(face_repo, "AsyncSession", lambda _engine: fake_session)
+
+        result = await face_repo.list_faces_repo(
+            query=FaceQueryParams(RecordStartNo=1, PageRecordNum=1)
+        )
 
         assert result == expected
         assert fake_session.statement is not None
@@ -97,7 +118,7 @@ def test_list_faces_repo_orders_and_limits_without_explicit_asc(monkeypatch):
         assert "ORDER BY" in statement_text
         assert "FaceID" in statement_text
         assert "LIMIT" in statement_text
-        assert "ASC" not in statement_text
+        assert "OFFSET" in statement_text
 
     asyncio.run(_run())
 

@@ -61,4 +61,42 @@ spec:
           annotations:
             summary: "dossier-aggr task enqueue errors detected"
             description: "Task enqueue error rate is non-zero."
+
+{{- if .Values.monitoring.prometheusRule.routeAlerts.enabled }}
+{{- range .Values.monitoring.prometheusRule.routeAlerts.routes }}
+        - alert: DossierAggrRouteHighErrorRate{{ .name }}
+          expr: |
+            (
+              sum(rate(dossier_aggr_http_requests_total{method="{{ .method }}",route="{{ .route }}",status_code=~"5.."}[{{ $.Values.monitoring.prometheusRule.routeAlerts.window }}]))
+              /
+              clamp_min(
+                sum(rate(dossier_aggr_http_requests_total{method="{{ .method }}",route="{{ .route }}"}[{{ $.Values.monitoring.prometheusRule.routeAlerts.window }}])),
+                0.001
+              )
+            ) > {{ default $.Values.monitoring.prometheusRule.errorRateThreshold .errorRateThreshold }}
+          for: {{ $.Values.monitoring.prometheusRule.for }}
+          labels:
+            severity: warning
+            method: {{ .method | quote }}
+            route: {{ .route | quote }}
+          annotations:
+            summary: "dossier-aggr route HTTP 5xx error rate is high"
+            description: "{{ .method }} {{ .route }} HTTP 5xx ratio has exceeded threshold."
+
+        - alert: DossierAggrRouteHighP95Latency{{ .name }}
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum(rate(dossier_aggr_http_request_duration_seconds_bucket{method="{{ .method }}",route="{{ .route }}"}[{{ $.Values.monitoring.prometheusRule.routeAlerts.window }}])) by (le)
+            ) > {{ default $.Values.monitoring.prometheusRule.p95LatencySeconds .p95LatencySeconds }}
+          for: {{ $.Values.monitoring.prometheusRule.for }}
+          labels:
+            severity: warning
+            method: {{ .method | quote }}
+            route: {{ .route | quote }}
+          annotations:
+            summary: "dossier-aggr route HTTP p95 latency is high"
+            description: "{{ .method }} {{ .route }} HTTP p95 latency has exceeded threshold."
+{{- end }}
+{{- end }}
 {{- end }}

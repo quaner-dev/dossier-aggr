@@ -72,11 +72,19 @@ args:
 env:
   ENV: prod
   DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgresql:5432/dossier_aggr
+  TASKIQ_RESULT_BACKEND_URL: redis://redis:6379/0
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  DB_POOL_TIMEOUT_SECONDS: "30"
+  DB_POOL_RECYCLE_SECONDS: "1800"
+  DB_POOL_PRE_PING: "true"
   RABBITMQ_USERNAME: guest
   RABBITMQ_PASSWORD: guest
   RABBITMQ_IP: rabbitmq
   RABBITMQ_PORT: "5672"
   TASK_RESULT_TIMEOUT_SECONDS: "10"
+
+envFrom: []
 
 monitoring:
   enabled: true
@@ -101,6 +109,175 @@ monitoring:
     p95LatencySeconds: 1.0
     ormP95Seconds: 0.2
     for: 10m
+    routeAlerts:
+      enabled: true
+      window: 5m
+      routes:
+        - name: SystemRegister
+          method: POST
+          route: "/VIID/System/Register"
+        - name: SystemUnRegister
+          method: POST
+          route: "/VIID/System/UnRegister"
+        - name: SystemKeepalive
+          method: POST
+          route: "/VIID/System/Keepalive"
+        - name: SystemTime
+          method: GET
+          route: "/VIID/System/Time"
+        - name: ApsList
+          method: GET
+          route: "/VIID/APSs"
+        - name: ApeList
+          method: GET
+          route: "/VIID/APEs"
+        - name: ApeUpdate
+          method: PUT
+          route: "/VIID/APEs"
+        - name: FaceList
+          method: GET
+          route: "/VIID/Faces"
+        - name: FaceCreate
+          method: POST
+          route: "/VIID/Faces"
+        - name: FaceUpdate
+          method: PUT
+          route: "/VIID/Faces"
+        - name: FaceDelete
+          method: DELETE
+          route: "/VIID/Faces"
+        - name: FaceGetByID
+          method: GET
+          route: "/VIID/Faces/{face_id}"
+        - name: FaceUpdateByID
+          method: PUT
+          route: "/VIID/Faces/{face_id}"
+        - name: FaceDeleteByID
+          method: DELETE
+          route: "/VIID/Faces/{face_id}"
+        - name: PersonList
+          method: GET
+          route: "/VIID/Persons"
+        - name: PersonCreate
+          method: POST
+          route: "/VIID/Persons"
+        - name: PersonUpdate
+          method: PUT
+          route: "/VIID/Persons"
+        - name: PersonDelete
+          method: DELETE
+          route: "/VIID/Persons"
+        - name: PersonGetByID
+          method: GET
+          route: "/VIID/Persons/{person_id}"
+        - name: PersonUpdateByID
+          method: PUT
+          route: "/VIID/Persons/{person_id}"
+        - name: PersonDeleteByID
+          method: DELETE
+          route: "/VIID/Persons/{person_id}"
+        - name: SubscribeCreate
+          method: POST
+          route: "/VIID/Subscribes"
+        - name: SubscribeList
+          method: GET
+          route: "/VIID/Subscribes"
+        - name: SubscribeUpdate
+          method: PUT
+          route: "/VIID/Subscribes"
+        - name: SubscribeDelete
+          method: DELETE
+          route: "/VIID/Subscribes"
+        - name: SubscribeUpdateByID
+          method: PUT
+          route: "/VIID/Subscribes/{subscribe_id}"
+        - name: SubscribeNotificationCreate
+          method: POST
+          route: "/VIID/SubscribeNotifications"
+        - name: SubscribeNotificationList
+          method: GET
+          route: "/VIID/SubscribeNotifications"
+        - name: SubscribeNotificationDelete
+          method: DELETE
+          route: "/VIID/SubscribeNotifications"
+        - name: ArchiveLibraryList
+          method: GET
+          route: "/VIID/ArchiveLibraries"
+        - name: ArchiveLibraryCreate
+          method: POST
+          route: "/VIID/ArchiveLibraries"
+        - name: ArchiveLibraryUpdate
+          method: PUT
+          route: "/VIID/ArchiveLibraries"
+        - name: ArchiveLibraryDelete
+          method: DELETE
+          route: "/VIID/ArchiveLibraries"
+        - name: TaskList
+          method: GET
+          route: "/VIAS/Tasks"
+        - name: TaskCreate
+          method: POST
+          route: "/VIAS/Tasks"
+        - name: TaskUpdate
+          method: PUT
+          route: "/VIAS/Tasks"
+        - name: TaskDelete
+          method: DELETE
+          route: "/VIAS/Tasks"
+        - name: ArchivesQuerySync
+          method: POST
+          route: "/VIID/ArchivesQuerySync"
+        - name: ArchivesCreate
+          method: POST
+          route: "/VIID/Archives"
+        - name: ArchivesUpdate
+          method: PUT
+          route: "/VIID/Archives"
+        - name: ArchivesDelete
+          method: DELETE
+          route: "/VIID/Archives"
+        - name: ArchiveSubjectQuerySync
+          method: POST
+          route: "/VIID/ArchiveSubjectQuerySync"
+        - name: ArchiveSubjectCreate
+          method: POST
+          route: "/VIID/ArchiveSubjects"
+        - name: ArchiveSubjectUpdate
+          method: PUT
+          route: "/VIID/ArchiveSubjects"
+        - name: ArchiveSubjectDelete
+          method: DELETE
+          route: "/VIID/ArchiveSubjects"
+        - name: VehicleArchivesQuerySync
+          method: POST
+          route: "/VIID/VehicleArchivesQuerySync"
+        - name: VehicleArchivesCreate
+          method: POST
+          route: "/VIID/VehicleArchives"
+        - name: VehicleArchivesUpdate
+          method: PUT
+          route: "/VIID/VehicleArchives"
+        - name: VehicleArchivesDelete
+          method: DELETE
+          route: "/VIID/VehicleArchives"
+        - name: VehicleArchiveSubjectQuerySync
+          method: POST
+          route: "/VIID/VehicleArchiveSubjectQuerySync"
+        - name: VehicleArchiveSubjectCreate
+          method: POST
+          route: "/VIID/VehicleArchiveSubjects"
+        - name: VehicleArchiveSubjectUpdate
+          method: PUT
+          route: "/VIID/VehicleArchiveSubjects"
+        - name: VehicleArchiveSubjectDelete
+          method: DELETE
+          route: "/VIID/VehicleArchiveSubjects"
+        - name: ArchiveConfidenceCreate
+          method: POST
+          route: "/VIID/ArchiveConfidence"
+        - name: VehicleArchiveConfidenceCreate
+          method: POST
+          route: "/VIID/VehicleArchiveConfidence"
 
 worker:
   enabled: true
@@ -110,7 +287,9 @@ worker:
   args:
     - worker
     - core.brokers:broker
+    - tasks
   env: {}
+  envFrom: []
   resources: {}
   nodeSelector: {}
   tolerations: []
@@ -124,6 +303,7 @@ migration:
     - upgrade
     - head
   annotations: {}
+  envFrom: []
   resources: {}
   nodeSelector: {}
   tolerations: []

@@ -166,7 +166,7 @@ alembic revision --autogenerate -m "describe change"
 启动 Taskiq worker：
 
 ```bash
-taskiq worker core.brokers:broker
+taskiq worker core.brokers:broker tasks
 ```
 
 ## Docker
@@ -200,13 +200,16 @@ helm template dossier-aggr dossier-aggr
 helm template dossier-aggr-dev dossier-aggr -f dossier-aggr/values-dev.yaml
 ```
 
-默认生产配置要求集群内存在可解析的 `postgresql` 和 `rabbitmq` Service，或通过 values 覆盖为实际中间件地址：
+默认生产配置要求集群内存在可解析的 `postgresql`、`rabbitmq` 和 `redis` Service，或通过 values 覆盖为实际中间件地址：
 
 - `ENV=prod`
 - `DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgresql:5432/dossier_aggr`
 - `RABBITMQ_IP=rabbitmq`
+- `TASKIQ_RESULT_BACKEND_URL=redis://redis:6379/0`
+- `DB_POOL_SIZE=10`、`DB_MAX_OVERFLOW=20`、`DB_POOL_TIMEOUT_SECONDS=30`
 
 Chart 包含 API Deployment、可选 worker Deployment、Service、Ingress、HPA、ServiceMonitor、PrometheusRule、Grafana Dashboard，以及 Alembic migration Job。
+API、worker 和 migration Job 支持通过 `envFrom` 引用外部 Secret/ConfigMap 注入运行时配置；生产凭据建议使用 Secret 覆盖默认示例值。
 
 ## 项目结构
 

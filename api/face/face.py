@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query
 
 from core import constants
 from core import exceptions
@@ -10,6 +10,7 @@ from models import (
     Face,
     FaceList,
     FaceListObjectSchema,
+    FaceQueryParams,
     ResponseStatus,
     ResponseStatusList,
     ResponseStatusListSchema,
@@ -26,9 +27,15 @@ router = APIRouter()
 )
 async def faces_query(
     service: Annotated[FaceService, Depends(FaceService)],
+    record_start_no: Annotated[int, Query(alias="RecordStartNo", ge=0)] = 0,
+    page_record_num: Annotated[int | None, Query(alias="PageRecordNum", ge=1)] = None,
 ):
     """批量人脸查询接口"""
-    faces = await service.list_faces()
+    query = FaceQueryParams(
+        RecordStartNo=record_start_no,
+        PageRecordNum=page_record_num,
+    )
+    faces = await service.list_faces(query=query)
 
     return FaceListObjectSchema(
         FaceListObject=FaceList(FaceObject=[face for face in faces])
@@ -101,7 +108,6 @@ async def faces_update(
     description="GA/T 1400.4-2017 7.2.12.1 批量人脸删除",
 )
 async def faces_delete(
-    request: Request,
     service: Annotated[FaceService, Depends(FaceService)],
     face_ids: Annotated[
         str | list[str] | None,
@@ -112,10 +118,7 @@ async def faces_delete(
 ):
     """批量人脸删除接口"""
     if face_ids is None:
-        legacy_face_ids = request.query_params.getlist("id_list")
-        if not legacy_face_ids:
-            raise exceptions.InvalidParameterError(detail="IDList is required")
-        face_ids = legacy_face_ids
+        raise exceptions.InvalidParameterError(detail="IDList is required")
     parsed_face_ids = parse_id_list(face_ids)
     _ = await service.delete_faces(parsed_face_ids)
 

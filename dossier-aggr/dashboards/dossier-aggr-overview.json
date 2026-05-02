@@ -346,7 +346,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 6
       },
@@ -366,13 +366,67 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (route) (rate(dossier_aggr_http_requests_total[5m]))",
-          "legendFormat": "{{route}}",
+          "expr": "sum by (method, route) (rate(dossier_aggr_http_requests_total[5m]))",
+          "legendFormat": "{{method}} {{route}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Request Rate by Route",
+      "title": "HTTP QPS by Interface",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 3,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 6
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "100 * sum by (method, route) (rate(dossier_aggr_http_requests_total{status_code=~\"5..\"}[5m])) / clamp_min(sum by (method, route) (rate(dossier_aggr_http_requests_total[5m])), 0.001)",
+          "legendFormat": "{{method}} {{route}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP 5xx Ratio by Interface",
       "type": "timeseries"
     },
     {
@@ -400,8 +454,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 16,
         "y": 6
       },
       "id": 6,
@@ -420,13 +474,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(dossier_aggr_http_request_duration_seconds_bucket[5m])) by (le, route))",
-          "legendFormat": "{{route}}",
+          "expr": "histogram_quantile(0.95, sum(rate(dossier_aggr_http_request_duration_seconds_bucket[5m])) by (le, method, route))",
+          "legendFormat": "{{method}} {{route}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "HTTP P95 Latency by Route",
+      "title": "HTTP P95 Latency by Interface",
       "type": "timeseries"
     },
     {

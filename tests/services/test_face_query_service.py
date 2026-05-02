@@ -1,7 +1,7 @@
 import asyncio
 
 import pytest
-from models import Face
+from models import Face, FaceQueryParams
 from models.common import enums
 from services.face.face import FaceService
 import services.face.face as face_service_module
@@ -25,8 +25,11 @@ def test_list_faces_reads_from_repository(monkeypatch: pytest.MonkeyPatch):
     async def _run():
         called = {"list_repo": False}
 
-        async def fake_list_repo():
+        query = FaceQueryParams(RecordStartNo=1, PageRecordNum=2)
+
+        async def fake_list_repo(query: FaceQueryParams):
             called["list_repo"] = True
+            assert query == FaceQueryParams(RecordStartNo=1, PageRecordNum=2)
             return [_sample_face()]
 
         monkeypatch.setattr(
@@ -36,7 +39,7 @@ def test_list_faces_reads_from_repository(monkeypatch: pytest.MonkeyPatch):
             raising=False,
         )
         service = FaceService()
-        result = await service.list_faces()
+        result = await service.list_faces(query=query)
 
         assert len(result) == 1
         assert called["list_repo"] is True

@@ -35,3 +35,10 @@ class FaceList(SQLModel):
 # 人脸对象列表结构
 class FaceListObjectSchema(SQLModel):
     FaceListObject: FaceList
+
+
+class FaceQueryParams(SQLModel):
+    """GA/T 1400.4 `/VIID/Faces` 查询字符串中的分页条件。"""
+
+    RecordStartNo: int = Field(default=0, ge=0, description="起始记录号")
+    PageRecordNum: int | None = Field(default=None, ge=1, description="本页记录数")

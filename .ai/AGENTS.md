@@ -38,7 +38,7 @@
 
 - 安装依赖：`pip install -r requirements.txt`
 - 启动 API：`uvicorn main:app --host 0.0.0.0 --port 8000`
-- 启动 worker：`taskiq worker core.brokers:broker`
+- 启动 worker：`taskiq worker core.brokers:broker tasks`
 - 代码质量检查：`ruff check .`
 - 代码质量自动修复：`ruff check . --fix`
 - 类型检查：`pyright`

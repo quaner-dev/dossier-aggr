@@ -4,7 +4,7 @@ import httpx
 
 from core import exceptions
 from main import app
-from models import Face, Person
+from models import Face, FaceQueryParams, Person
 from models.common import enums
 from services.face.face import FaceService
 from services.person.person import PersonService
@@ -40,8 +40,10 @@ class _FakeFaceService:
                 return face
         raise exceptions.DataNotFoundError(detail=f"{face_id} not exist")
 
-    async def list_faces(self):
-        return self._faces[:100]
+    async def list_faces(self, query: FaceQueryParams):
+        start = query.RecordStartNo
+        end = None if query.PageRecordNum is None else start + query.PageRecordNum
+        return self._faces[start:end]
 
     async def update_face(self, face: Face):
         return face

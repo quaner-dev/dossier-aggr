@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import Sequence
 from typing import Any, cast
 
-from core import exceptions
+from core import exceptions, settings
 from core.database import engine
 from models import ArchiveSubject, ArchiveSubjectQuery
 from sqlmodel import SQLModel, select
@@ -21,6 +21,9 @@ async def _ensure_table() -> None:
 
     global _TABLE_READY
     if _TABLE_READY:
+        return
+    if settings.ENV != "dev":
+        _TABLE_READY = True
         return
 
     async with _TABLE_INIT_LOCK:

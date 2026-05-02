@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from models import Face
+from models import Face, FaceQueryParams
 from repo.face.face import get_face_repo, list_faces_repo
 from services.task_dispatch import dispatch_and_wait
 from tasks import (
@@ -25,8 +25,8 @@ class FaceService:
         face = await get_face_repo(face_id=face_id)
         return face
 
-    async def list_faces(self) -> Sequence[Face]:
-        faces = await list_faces_repo()
+    async def list_faces(self, query: FaceQueryParams) -> Sequence[Face]:
+        faces = await list_faces_repo(query=query)
         return faces
 
     async def create_face(self, face: Face):

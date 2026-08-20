@@ -1,9 +1,7 @@
 from sqlalchemy.engine import make_url
 
-
 _ASYNC_TO_SYNC_DRIVERS = {
     "postgresql+asyncpg": "postgresql+psycopg2",
-    "sqlite+aiosqlite": "sqlite",
 }
 
 

@@ -1,10 +1,10 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
 from ..common import enums
 from ..common.common import (
-    GeoRectangleType,
     DeviceSelector,
     FieldsType,
+    GeoRectangleType,
     PictureQueryConditionList,
 )
 

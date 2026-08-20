@@ -1,13 +1,13 @@
 from typing import Annotated
 
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 
+from core import constants
 from models import (
     APSList,
     APSListSchema,
 )
 from services import APSService
-from core import constants
 
 router = APIRouter()
 

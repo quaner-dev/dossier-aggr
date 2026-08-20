@@ -1,45 +1,34 @@
 from collections.abc import Sequence
 
 from models import ArchiveLibrary
-from repo.library.archive_library import list_archive_libraries_repo
-from tasks.library.archive_library import (
-    create_archive_libraries_task,
-    update_archive_libraries_task,
-    delete_archive_libraries_task,
+from repo.library.archive_library import (
+    create_archive_libraries_repo,
+    delete_archive_libraries_repo,
+    list_archive_libraries_repo,
+    update_archive_libraries_repo,
 )
-from services.task_dispatch import dispatch_and_wait
 
 
 class ArchiveLibraryService:
     """编排 GA/T 2350 目标档案库业务链路。
 
-    查询过滤由 repo 解释；新增、更新和删除通过 Taskiq task 执行，
-    service 层只保留档案库资源的业务动作边界。
+    档案库是低频控制数据，查询和写入均直接委托 repo。
     """
 
     async def list_archive_libraries(
         self, filters: dict[str, str] | None = None
-    ) -> Sequence[ArchiveLibrary]:
-        return await list_archive_libraries_repo(filters=filters)
+    ) -> list[ArchiveLibrary]:
+        return list(await list_archive_libraries_repo(filters=filters))
 
     async def create_archive_libraries(
         self, libraries: Sequence[ArchiveLibrary]
-    ) -> Sequence[ArchiveLibrary]:
-        return await dispatch_and_wait(
-            create_archive_libraries_task,
-            libraries=libraries,
-        )
+    ) -> list[ArchiveLibrary]:
+        return list(await create_archive_libraries_repo(libraries=list(libraries)))
 
     async def update_archive_libraries(
         self, libraries: Sequence[ArchiveLibrary]
-    ) -> Sequence[ArchiveLibrary]:
-        return await dispatch_and_wait(
-            update_archive_libraries_task,
-            libraries=libraries,
-        )
+    ) -> list[ArchiveLibrary]:
+        return list(await update_archive_libraries_repo(libraries=list(libraries)))
 
     async def delete_archive_libraries(self, library_ids: list[str]) -> list[str]:
-        return await dispatch_and_wait(
-            delete_archive_libraries_task,
-            library_ids=library_ids,
-        )
+        return await delete_archive_libraries_repo(library_ids=library_ids)

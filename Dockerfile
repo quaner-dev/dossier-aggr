@@ -1,14 +1,19 @@
-FROM python:3.12-alpine
+FROM python:3.14-alpine
 
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
-COPY requirements.txt .
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir --group runtime
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
+COPY main.py alembic.ini ./
+COPY alembic ./alembic
+COPY api ./api
+COPY core ./core
+COPY models ./models
+COPY repo ./repo
+COPY services ./services
 
 EXPOSE 8000
 

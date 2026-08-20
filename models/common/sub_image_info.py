@@ -1,5 +1,5 @@
-from sqlalchemy import Column, JSON
-from sqlmodel import SQLModel, Field
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
 
 from . import enums
 from .feature_info import FeatureInfo

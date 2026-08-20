@@ -186,6 +186,7 @@ def test_faces_create_update_delete_return_status_list():
 
         assert len(create_status) == 2
         assert create_status[0].StatusCode == "0"
+        assert create_status[0].StatusString == "已接收"
         assert create_status[0].Id == "F-001"
         assert len(update_status) == 2
         assert update_status[1].Id == "F-002"

@@ -4,6 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from core import constants
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
     ArchiveList,
     ArchiveSubjectQueryResult,
@@ -16,7 +18,6 @@ from models import (
     VehicleArchiveSubjectSchema,
 )
 from services import VehicleArchiveSubjectService
-from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -77,9 +78,9 @@ async def vehicle_archive_subjects_create(
                 ResponseStatus(
                     RequestURL=constants.VEHICLE_ARCHIVE_SUBJECTS_URL,
                     StatusCode="0",
-                    StatusString="新增成功",
+                    StatusString="已接收",
                     Id=subject.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subject in subjects
             ]
@@ -110,7 +111,7 @@ async def vehicle_archive_subjects_update(
                     StatusCode="0",
                     StatusString="更新成功",
                     Id=subject.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subject in subjects
             ]
@@ -124,6 +125,9 @@ async def vehicle_archive_subjects_update(
     description="GA/T 2350.5-2025 A.16 车辆档案明细删除接口",
 )
 async def vehicle_archive_subjects_delete(
+    service: Annotated[
+        VehicleArchiveSubjectService, Depends(VehicleArchiveSubjectService)
+    ],
     archive_id: Annotated[str | None, Query(alias="ArchiveID")] = None,
     face_id_list: Annotated[str | None, Query(alias="FaceIDList")] = None,
     person_id_list: Annotated[str | None, Query(alias="PersonIDList")] = None,
@@ -131,7 +135,6 @@ async def vehicle_archive_subjects_delete(
     non_motor_vehicle_id_list: Annotated[
         str | None, Query(alias="NonMotorVehicleIDList")
     ] = None,
-    service: VehicleArchiveSubjectService = Depends(VehicleArchiveSubjectService),
 ):
     """处理 A.16 车辆档案明细删除。
 
@@ -160,7 +163,7 @@ async def vehicle_archive_subjects_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=deleted_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for deleted_id in deleted_ids
             ]

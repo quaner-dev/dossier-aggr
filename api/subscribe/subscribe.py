@@ -1,20 +1,20 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
-from core import exceptions
+from core import constants, exceptions
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
     ResponseStatus,
-    ResponseStatusListSchema,
     ResponseStatusList,
+    ResponseStatusListSchema,
     Subscribe,
     SubscribeList,
     SubscribeListSchema,
 )
-from core import constants
 from services import SubscribeService
-from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ async def subscribes_create(
                     StatusCode="0",
                     StatusString="订阅成功",
                     Id=subscribe.SubscribeID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subscribe in subscribes
             ]
@@ -87,7 +87,7 @@ async def subscribes_update(
                     StatusCode="0",
                     StatusString="修改成功",
                     Id=subscribe.SubscribeID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subscribe in subscribes
             ]
@@ -134,7 +134,7 @@ async def subscribes_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=subscribe_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subscribe_id in parsed_subscribe_ids
             ]
@@ -167,5 +167,5 @@ async def subscribe_cancel(
         StatusCode="0",
         StatusString="取消订阅成功",
         Id=subscribe_id,
-        LocalTime=datetime.now(),
+        LocalTime=datetime.now(tz=CHINA_TZ),
     )

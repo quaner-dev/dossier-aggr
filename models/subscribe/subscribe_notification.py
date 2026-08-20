@@ -1,5 +1,5 @@
-from sqlalchemy import Column, JSON
-from sqlmodel import SQLModel, Field
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
 
 from ..archive.archive import ArchiveList
 from ..archive.archive_subject import ArchiveSubjectList as ArchiveSubjectPayloadList

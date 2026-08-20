@@ -1,17 +1,18 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 
+from core import constants
+from core.time import CHINA_TZ
 from models import (
     APEList,
     APEListSchema,
-    ResponseStatusListSchema,
     ResponseStatus,
     ResponseStatusList,
+    ResponseStatusListSchema,
 )
 from services import APEService
-from core import constants
 
 router = APIRouter()
 
@@ -50,7 +51,7 @@ async def apes_update(
                     StatusCode="0",
                     StatusString="修改成功",
                     Id=ape.ApeID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for ape in apes
             ]

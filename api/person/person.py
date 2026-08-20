@@ -3,17 +3,17 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from core import exceptions
+from core import constants, exceptions
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
-    ResponseStatusListSchema,
-    PersonListObjectSchema,
     Person,
     PersonList,
+    PersonListObjectSchema,
     ResponseStatus,
     ResponseStatusList,
+    ResponseStatusListSchema,
 )
-from core import constants
-from core.utils import parse_id_list
 from services import PersonService
 
 router = APIRouter()
@@ -54,9 +54,9 @@ async def persons_create(
                 ResponseStatus(
                     RequestURL=constants.PERSONS_URL,
                     StatusCode="0",
-                    StatusString="上传成功",
+                    StatusString="已接收",
                     Id=person.PersonID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for person in persons
             ]
@@ -75,7 +75,7 @@ async def persons_update(
 ) -> ResponseStatusListSchema:
     """批量人员修改接口"""
     persons = data.PersonListObject.PersonObject
-    _ = await service.update_persons(persons=persons)
+    await service.update_persons(persons=persons)
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
@@ -85,7 +85,7 @@ async def persons_update(
                     StatusCode="0",
                     StatusString="修改成功",
                     Id=person.PersonID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for person in persons
             ]
@@ -115,7 +115,7 @@ async def persons_delete(
         raise exceptions.InvalidParameterError(detail="IDList is required")
 
     parsed_person_ids = parse_id_list(raw_person_ids)
-    _ = await service.delete_persons(person_ids=parsed_person_ids)
+    await service.delete_persons(person_ids=parsed_person_ids)
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
@@ -125,7 +125,7 @@ async def persons_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=person_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for person_id in parsed_person_ids
             ]
@@ -159,13 +159,13 @@ async def person_update(
 ) -> ResponseStatus:
     """单个人员修改接口"""
     data.PersonID = person_id
-    _ = await service.update_person(data)
+    await service.update_person(data)
     return ResponseStatus(
         RequestURL=f"{constants.PERSONS_URL}/{person_id}",
         StatusCode="0",
         StatusString="修改成功",
         Id=person_id,
-        LocalTime=datetime.now(),
+        LocalTime=datetime.now(tz=CHINA_TZ),
     )
 
 
@@ -179,11 +179,11 @@ async def person_delete(
     service: Annotated[PersonService, Depends(PersonService)],
 ) -> ResponseStatus:
     """单个人员删除接口"""
-    _ = await service.delete_person(person_id)
+    await service.delete_person(person_id)
     return ResponseStatus(
         RequestURL=f"{constants.PERSONS_URL}/{person_id}",
         StatusCode="0",
         StatusString="删除成功",
         Id=person_id,
-        LocalTime=datetime.now(),
+        LocalTime=datetime.now(tz=CHINA_TZ),
     )

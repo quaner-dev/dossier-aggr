@@ -3,8 +3,8 @@ import asyncio
 from api.archive.archive_subject import (
     archive_subject_query_sync,
     archive_subjects_create,
-    archive_subjects_update,
     archive_subjects_delete,
+    archive_subjects_update,
 )
 from models import (
     ArchiveSubject,
@@ -146,6 +146,7 @@ def test_archive_subject_create_update_delete_return_status_list():
         )
 
         assert len(create_status) == 2
+        assert create_status[0].StatusString == "已接收"
         assert create_status[0].Id == "AS-001"
         assert len(update_status) == 2
         assert update_status[1].Id == "AS-002"

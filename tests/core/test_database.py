@@ -97,6 +97,37 @@ def test_postgresql_engine_uses_default_pool_options_when_env_is_absent(
     }
 
 
+def test_default_database_url_uses_postgresql(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_create_async_engine(url: str, **kwargs: Any) -> object:
+        captured["url"] = url
+        captured["kwargs"] = kwargs
+        return object()
+
+    _fresh_database_module(monkeypatch, fake_create_async_engine)
+
+    assert captured["url"] == (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/dossier_aggr"
+    )
+
+
+def test_database_url_rejects_non_postgresql_driver(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_create_async_engine(url: str, **kwargs: Any) -> object:
+        return object()
+
+    with pytest.raises(ValueError, match="PostgreSQL"):
+        _fresh_database_module(
+            monkeypatch,
+            fake_create_async_engine,
+            DATABASE_URL="mysql+pymysql://user:password@localhost:3306/app",
+        )
+
+
 def test_db_pool_pre_ping_accepts_true_case_insensitively(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -117,7 +148,7 @@ def test_db_pool_pre_ping_accepts_true_case_insensitively(
     assert captured["kwargs"]["pool_pre_ping"] is True
 
 
-def test_sqlite_engine_does_not_use_pool_options(
+def test_postgresql_engine_always_uses_pool_options(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict[str, Any] = {}
@@ -130,7 +161,7 @@ def test_sqlite_engine_does_not_use_pool_options(
     _fresh_database_module(
         monkeypatch,
         fake_create_async_engine,
-        DATABASE_URL="sqlite+aiosqlite:///db.sqlite3",
+        DATABASE_URL="postgresql+asyncpg://postgres:postgres@postgresql:5432/app",
         DB_POOL_SIZE="7",
         DB_MAX_OVERFLOW="11",
         DB_POOL_TIMEOUT_SECONDS="3.5",
@@ -138,5 +169,11 @@ def test_sqlite_engine_does_not_use_pool_options(
         DB_POOL_PRE_PING="false",
     )
 
-    assert captured["url"] == "sqlite+aiosqlite:///db.sqlite3"
-    assert captured["kwargs"] == {}
+    assert captured["url"].startswith("postgresql+asyncpg://")
+    assert captured["kwargs"] == {
+        "pool_size": 7,
+        "max_overflow": 11,
+        "pool_timeout": 3.5,
+        "pool_recycle": 1800,
+        "pool_pre_ping": False,
+    }

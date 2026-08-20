@@ -3,13 +3,13 @@ import asyncio
 import httpx
 
 from api.person.person import (
-    persons_query,
-    persons_create,
-    persons_update,
-    persons_delete,
+    person_delete,
     person_query,
     person_update,
-    person_delete,
+    persons_create,
+    persons_delete,
+    persons_query,
+    persons_update,
 )
 from main import app
 from models import Person, PersonList, PersonListObjectSchema
@@ -118,6 +118,7 @@ def test_persons_create_update_delete_return_status_list():
 
         assert len(create_status) == 2
         assert create_status[0].StatusCode == "0"
+        assert create_status[0].StatusString == "已接收"
         assert create_status[0].Id == "P-001"
         assert len(update_status) == 2
         assert update_status[1].Id == "P-002"

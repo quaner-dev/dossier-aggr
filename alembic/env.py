@@ -1,12 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
 import sqlmodel
+from sqlalchemy import engine_from_config, pool
+
 import models  # noqa: F401
+from alembic import context
 from core import settings
 from core.database_urls import make_sync_database_url
 

@@ -1,54 +1,50 @@
 from models import Person
-from repo.person.person import get_person_repo, list_persons_repo
-from tasks import (
-    create_person_task,
-    create_persons_task,
-    update_person_task,
-    update_persons_task,
-    delete_person_task,
-    delete_persons_task,
+from repo.person.person import (
+    create_person_repo,
+    create_persons_repo,
+    delete_person_repo,
+    delete_persons_repo,
+    get_person_repo,
+    list_persons_repo,
+    update_person_repo,
+    update_persons_repo,
 )
-from collections.abc import Sequence
-from services.task_dispatch import dispatch_and_wait
 
 
-class PersonService():
+class PersonService:
     """编排 GA/T 1400 人员资源业务链路。
 
-    单查和列表读取直接委托 repo；创建、更新和删除通过 Taskiq task
-    写入，兼容单资源与批量接口共用同一 service。
+    读写请求统一委托 repo，保证请求完成时数据已经持久化。
     """
 
     async def get_person(self, person_id: str) -> Person:
         """根据PersonID查询人员信息"""
-        person = await get_person_repo(person_id=person_id)
-        return person
+        return await get_person_repo(person_id=person_id)
 
-    async def list_persons(self) -> Sequence[Person]:
+    async def list_persons(self) -> list[Person]:
         """查询所有人员信息"""
-        persons = await list_persons_repo()
-        return persons
+        return list(await list_persons_repo())
 
-    async def create_person(self, person: Person):
+    async def create_person(self, person: Person) -> Person:
         """创建人员信息"""
-        _ = await dispatch_and_wait(create_person_task, person=person)
+        return await create_person_repo(person=person)
 
-    async def create_persons(self, persons: list[Person]):
+    async def create_persons(self, persons: list[Person]) -> list[Person]:
         """创建多个人员信息"""
-        _ = await dispatch_and_wait(create_persons_task, persons=persons)
+        return await create_persons_repo(persons=persons)
 
-    async def update_person(self, person: Person) -> None:
+    async def update_person(self, person: Person) -> Person:
         """更新人员信息"""
-        _ = await dispatch_and_wait(update_person_task, person=person)
+        return await update_person_repo(person=person)
 
-    async def update_persons(self, persons: list[Person]) -> None:
+    async def update_persons(self, persons: list[Person]) -> list[Person]:
         """批量更新人员信息"""
-        _ = await dispatch_and_wait(update_persons_task, persons=persons)
+        return await update_persons_repo(persons=persons)
 
-    async def delete_person(self, person_id: str) -> None:
+    async def delete_person(self, person_id: str) -> str:
         """删除人员信息"""
-        _ = await dispatch_and_wait(delete_person_task, person_id=person_id)
+        return await delete_person_repo(person_id=person_id)
 
-    async def delete_persons(self, person_ids: list[str]) -> None:
+    async def delete_persons(self, person_ids: list[str]) -> list[str]:
         """批量删除人员信息"""
-        _ = await dispatch_and_wait(delete_persons_task, person_ids=person_ids)
+        return await delete_persons_repo(person_ids=person_ids)

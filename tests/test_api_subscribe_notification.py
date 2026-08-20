@@ -11,8 +11,8 @@ from models import (
     ArchiveList,
     ArchiveSubject,
     ArchiveSubjectList,
-    SubscribeNotification,
     ResponseStatusListSchema,
+    SubscribeNotification,
     SubscribeNotificationList,
     SubscribeNotificationListSchema,
     VehicleArchive,
@@ -153,6 +153,7 @@ def test_subscribe_notifications_create_returns_status_list():
 
         assert len(status) == 2
         assert status[0].StatusCode == "0"
+        assert status[0].StatusString == "已接收"
         assert status[0].Id == "N-001"
         assert fake.created_with is not None
         assert len(fake.created_with) == 2

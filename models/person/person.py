@@ -1,5 +1,5 @@
-from sqlmodel import SQLModel, Field
-from sqlalchemy import Column, JSON
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
 
 from ..common import enums
 from ..common.sub_image_info import SubImageInfoList

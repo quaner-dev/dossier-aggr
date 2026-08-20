@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 
+from core.time import CHINA_TZ
 from models import (
     FeatureInfo,
     FeatureInfoList,
@@ -24,7 +25,7 @@ def as_status_list(
 
 
 def dt(value: str) -> datetime:
-    return datetime.strptime(value, "%Y%m%d%H%M%S")
+    return datetime.strptime(value, "%Y%m%d%H%M%S").replace(tzinfo=CHINA_TZ)
 
 
 def sample_feature_info(tag: str) -> FeatureInfo:

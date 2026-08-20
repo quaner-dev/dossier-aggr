@@ -1,16 +1,15 @@
 # 从功能模块导入所有services
+from .archive.archive_subject import ArchiveSubjectService
+from .archive.archives import ArchiveService
 from .collection.ape import APEService
 from .collection.aps import APSService
-from .person.person import PersonService
 from .face.face import FaceService
+from .library.archive_library import ArchiveLibraryService
+from .person.person import PersonService
 from .subscribe.subscribe import SubscribeService
 from .subscribe.subscribe_notification import SubscribeNotificationService
 from .system.time import SystemTimeService
-
-from .library.archive_library import ArchiveLibraryService
 from .task.archive_task import ArchiveTaskService
-from .archive.archives import ArchiveService
-from .archive.archive_subject import ArchiveSubjectService
 from .vehicle.vehicle_archive import VehicleArchiveService
 from .vehicle.vehicle_archive_subject import VehicleArchiveSubjectService
 from .verify.archive_confidence import ArchiveConfidenceService
@@ -19,17 +18,17 @@ from .verify.vehicle_archive_confidence import VehicleArchiveConfidenceService
 __all__ = [
     "APEService",
     "APSService",
-    "SubscribeService",
+    "ArchiveConfidenceService",
+    "ArchiveLibraryService",
+    "ArchiveService",
+    "ArchiveSubjectService",
+    "ArchiveTaskService",
     "FaceService",
     "PersonService",
     "SubscribeNotificationService",
+    "SubscribeService",
     "SystemTimeService",
-    "ArchiveService",
-    "ArchiveLibraryService",
-    "ArchiveTaskService",
-    "ArchiveSubjectService",
+    "VehicleArchiveConfidenceService",
     "VehicleArchiveService",
     "VehicleArchiveSubjectService",
-    "ArchiveConfidenceService",
-    "VehicleArchiveConfidenceService",
 ]

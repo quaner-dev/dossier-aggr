@@ -1,10 +1,10 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
-from .sub_image_info import SubImageInfo
 from .enums import (
     ColorTypeEnum,
     VehicleBrandTypeEnum,
 )
+from .sub_image_info import SubImageInfo
 
 
 class PictureQueryCondition(SQLModel):

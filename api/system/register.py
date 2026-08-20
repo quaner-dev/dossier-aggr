@@ -1,13 +1,12 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, Request, APIRouter
+from fastapi import APIRouter, Depends, Request
 
-from core import auth
-
-from models import ResponseStatusList, ResponseStatus, RegisterSchema
+from core import auth, constants
+from core.time import CHINA_TZ
+from models import RegisterSchema, ResponseStatus, ResponseStatusList
 from services import APSService
-from core import constants
 
 router = APIRouter()
 security = auth.HTTPDigest1400()
@@ -36,7 +35,7 @@ async def register(
                 RequestURL=str(request.url),
                 StatusCode="0",
                 StatusString="注册成功",
-                LocalTime=datetime.now(),
+                LocalTime=datetime.now(tz=CHINA_TZ),
             )
         ]
     )

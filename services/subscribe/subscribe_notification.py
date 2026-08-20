@@ -1,19 +1,15 @@
 from models import SubscribeNotification
 from repo.subscribe.subscribe_notification import (
+    create_subscribe_notifications_repo,
+    delete_subscribe_notifications_repo,
     list_subscribe_notifications_repo,
 )
-from tasks import (
-    create_subscribe_notifications_task,
-    delete_subscribe_notifications_task,
-)
-from services.task_dispatch import dispatch_and_wait
 
 
 class SubscribeNotificationService:
     """编排 GA/T 1400 订阅通知业务链路。
 
-    通知查询的过滤语义留在 repo；创建和删除经 Taskiq task 写入，
-    使通知回调数据和协议包装对象不侵入 API 层之外的持久化细节。
+    通知查询、创建和删除统一委托 repo。
     """
 
     async def list_subscribe_notifications(
@@ -23,16 +19,16 @@ class SubscribeNotificationService:
 
     async def create_subscribe_notifications(
         self, subscribe_notifications: list[SubscribeNotification]
-    ):
-        return await dispatch_and_wait(
-            create_subscribe_notifications_task,
-            subscribe_notifications=subscribe_notifications,
+    ) -> list[SubscribeNotification]:
+        return list(
+            await create_subscribe_notifications_repo(
+                subscribe_notifications=subscribe_notifications
+            )
         )
 
     async def delete_subscribe_notifications(
         self, notification_ids: list[str]
     ) -> list[str]:
-        return await dispatch_and_wait(
-            delete_subscribe_notifications_task,
-            notification_ids=notification_ids,
+        return await delete_subscribe_notifications_repo(
+            notification_ids=notification_ids
         )

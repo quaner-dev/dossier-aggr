@@ -3,8 +3,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from core import constants
-from core import exceptions
+from core import constants, exceptions
+from core.time import CHINA_TZ
 from core.utils import parse_id_list
 from models import (
     Face,
@@ -58,9 +58,9 @@ async def faces_create(
         ResponseStatus(
             RequestURL=constants.FACES_URL,
             StatusCode="0",
-            StatusString="上传成功",
+            StatusString="已接收",
             Id=face.FaceID,
-            LocalTime=datetime.now(),
+            LocalTime=datetime.now(tz=CHINA_TZ),
         )
         for face in faces
     ]
@@ -82,7 +82,7 @@ async def faces_update(
 ):
     """批量人脸修改接口"""
     faces = data.FaceListObject.FaceObject
-    _ = await service.update_faces(faces)
+    await service.update_faces(faces)
 
     response_status_objects = [
         ResponseStatus(
@@ -90,7 +90,7 @@ async def faces_update(
             StatusCode="0",
             StatusString="修改成功",
             Id=face.FaceID,
-            LocalTime=datetime.now(),
+            LocalTime=datetime.now(tz=CHINA_TZ),
         )
         for face in faces
     ]
@@ -120,7 +120,7 @@ async def faces_delete(
     if face_ids is None:
         raise exceptions.InvalidParameterError(detail="IDList is required")
     parsed_face_ids = parse_id_list(face_ids)
-    _ = await service.delete_faces(parsed_face_ids)
+    await service.delete_faces(parsed_face_ids)
 
     response_status_objects = [
         ResponseStatus(
@@ -128,7 +128,7 @@ async def faces_delete(
             StatusCode="0",
             StatusString="删除成功",
             Id=face_id,
-            LocalTime=datetime.now(),
+            LocalTime=datetime.now(tz=CHINA_TZ),
         )
         for face_id in parsed_face_ids
     ]
@@ -166,13 +166,13 @@ async def face_update(
 ) -> ResponseStatus:
     """单个人脸修改接口"""
     data.FaceID = face_id
-    _ = await service.update_face(data)
+    await service.update_face(data)
     return ResponseStatus(
         RequestURL=f"{constants.FACES_URL}/{face_id}",
         StatusCode="0",
         StatusString="修改成功",
         Id=face_id,
-        LocalTime=datetime.now(),
+        LocalTime=datetime.now(tz=CHINA_TZ),
     )
 
 
@@ -186,11 +186,11 @@ async def face_delete(
     service: Annotated[FaceService, Depends(FaceService)],
 ) -> ResponseStatus:
     """单个人脸删除接口"""
-    _ = await service.delete_face(face_id)
+    await service.delete_face(face_id)
     return ResponseStatus(
         RequestURL=f"{constants.FACES_URL}/{face_id}",
         StatusCode="0",
         StatusString="删除成功",
         Id=face_id,
-        LocalTime=datetime.now(),
+        LocalTime=datetime.now(tz=CHINA_TZ),
     )

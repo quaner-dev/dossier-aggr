@@ -1,21 +1,23 @@
-from fastapi import APIRouter, Depends, Query
 from datetime import datetime
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, Query
+
 from core import constants
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
-    ArchiveSubjectSchema,
+    ArchiveList,
     ArchiveSubjectList,
-    ArchiveSubjectQuerySchema,
     ArchiveSubjectQueryResult,
     ArchiveSubjectQueryResultSchema,
-    ArchiveList,
-    ResponseStatusListSchema,
-    ResponseStatusList,
+    ArchiveSubjectQuerySchema,
+    ArchiveSubjectSchema,
     ResponseStatus,
+    ResponseStatusList,
+    ResponseStatusListSchema,
 )
 from services import ArchiveSubjectService
-from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -46,7 +48,9 @@ async def archive_subject_query_sync(
             PageRecordNum=len(page_subjects),
             TotalNum=len(subjects),
             ArchiveListObject=ArchiveList(ArchiveObject=[]),
-            ArchiveSubjectInfoList=ArchiveSubjectList(ArchiveSubjectObject=page_subjects),
+            ArchiveSubjectInfoList=ArchiveSubjectList(
+                ArchiveSubjectObject=page_subjects
+            ),
         )
     )
 
@@ -58,7 +62,7 @@ async def archive_subject_query_sync(
 )
 async def archive_subjects_create(
     data: ArchiveSubjectSchema,
-    service: ArchiveSubjectService = Depends(ArchiveSubjectService),
+    service: Annotated[ArchiveSubjectService, Depends(ArchiveSubjectService)],
 ) -> ResponseStatusListSchema:
     """处理 A.14 人员档案明细批量新增并返回逐明细状态。"""
 
@@ -70,9 +74,9 @@ async def archive_subjects_create(
                 ResponseStatus(
                     RequestURL=constants.ARCHIVE_SUBJECTS_URL,
                     StatusCode="0",
-                    StatusString="新增成功",
+                    StatusString="已接收",
                     Id=subject.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subject in subjects
             ]
@@ -87,7 +91,7 @@ async def archive_subjects_create(
 )
 async def archive_subjects_update(
     data: ArchiveSubjectSchema,
-    service: ArchiveSubjectService = Depends(ArchiveSubjectService),
+    service: Annotated[ArchiveSubjectService, Depends(ArchiveSubjectService)],
 ) -> ResponseStatusListSchema:
     """处理 A.14 人员档案明细批量更新并返回逐明细状态。"""
 
@@ -101,7 +105,7 @@ async def archive_subjects_update(
                     StatusCode="0",
                     StatusString="修改成功",
                     Id=subject.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subject in subjects
             ]
@@ -115,14 +119,16 @@ async def archive_subjects_update(
     description="GA/T 2350.5-2025 A.14 人员档案明细删除接口",
 )
 async def archive_subjects_delete(
+    service: Annotated[ArchiveSubjectService, Depends(ArchiveSubjectService)],
     archive_id: Annotated[str | None, Query(alias="ArchiveID")] = None,
     face_id_list: Annotated[str | None, Query(alias="FaceIDList")] = None,
     person_id_list: Annotated[str | None, Query(alias="PersonIDList")] = None,
-    motor_vehicle_id_list: Annotated[str | None, Query(alias="MotorVehicleIDList")] = None,
+    motor_vehicle_id_list: Annotated[
+        str | None, Query(alias="MotorVehicleIDList")
+    ] = None,
     non_motor_vehicle_id_list: Annotated[
         str | None, Query(alias="NonMotorVehicleIDList")
     ] = None,
-    service: ArchiveSubjectService = Depends(ArchiveSubjectService),
 ) -> ResponseStatusListSchema:
     """处理 A.14 人员档案明细删除。
 
@@ -152,7 +158,7 @@ async def archive_subjects_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=deleted_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for deleted_id in deleted_ids
             ]

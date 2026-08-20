@@ -1,0 +1,53 @@
+[dependency-groups]
+runtime = [
+  "alembic",
+  "asyncpg",
+  "fastapi",
+  "psycopg2-binary",
+  "sqlmodel",
+  "uvicorn",
+]
+dev = [
+  { include-group = "runtime" },
+  "httpx",
+  "pyright",
+  "pytest",
+  "pytest-asyncio",
+  "ruff",
+]
+
+[tool.pyright]
+include = [
+  "api",
+  "core",
+  "models",
+  "repo",
+  "services",
+  "alembic/env.py",
+  "main.py",
+]
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  "**/.*",
+  ".git",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".venv",
+  "alembic/versions",
+  "dossier-aggr",
+  ".protocol",
+  "tests",
+]
+typeCheckingMode = "basic"
+pythonVersion = "3.14"
+venvPath = ".."
+venv = "dossier-aggr-venv"
+extraPaths = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py314"

@@ -1,5 +1,4 @@
 from hashlib import md5
-from typing import Optional, Dict
 
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPDigest, utils
@@ -18,7 +17,7 @@ class HTTPDigest1400(HTTPDigest):
 
     async def __call__(
         self, request: Request
-    ) -> Optional[HTTPAuthorizationCredentials]:
+    ) -> HTTPAuthorizationCredentials | None:
         authorization = request.headers.get("Authorization")
         scheme, credentials = utils.get_authorization_scheme_param(authorization)
 
@@ -44,7 +43,7 @@ class HTTPDigest1400(HTTPDigest):
                 return None
 
         # 摘要认证算法
-        params: Dict[str, str] = {}
+        params: dict[str, str] = {}
         for credential in credentials.split(", "):
             key, value = credential.split("=", 1)
             params[key] = value.strip('"')

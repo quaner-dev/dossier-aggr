@@ -1,9 +1,10 @@
 from typing import Annotated
 
-from sqlmodel import SQLModel, Field
 from pydantic import BeforeValidator, PlainSerializer
+from sqlmodel import Field, SQLModel
 
 from core import utils
+
 from ..common import enums
 
 

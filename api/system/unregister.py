@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 
-from models import UnRegisterSchema, ResponseStatus
 from core import constants
+from core.time import CHINA_TZ
+from models import ResponseStatus, UnRegisterSchema
 from services import APSService
 
 router = APIRouter()
@@ -25,5 +26,5 @@ async def unregister(
         RequestURL=constants.UNREGISTER_URL,
         StatusCode="0",
         StatusString="注销成功",
-        LocalTime=datetime.now(),
+        LocalTime=datetime.now(tz=CHINA_TZ),
     )

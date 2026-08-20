@@ -1,11 +1,12 @@
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 
 from core import constants
-from models import ResponseStatus, KeepaliveSchema
+from core.time import CHINA_TZ
+from models import KeepaliveSchema, ResponseStatus
 from services import APSService
-from typing import Annotated
 
 router = APIRouter()
 
@@ -26,5 +27,5 @@ async def keepalive(
         RequestURL=constants.KEEPALIVE_URL,
         StatusCode="0",
         StatusString="保活成功",
-        LocalTime=datetime.now(),
+        LocalTime=datetime.now(tz=CHINA_TZ),
     )

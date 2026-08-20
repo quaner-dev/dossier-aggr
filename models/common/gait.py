@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
 from . import enums
 from .sub_image_info import SubImageInfoList

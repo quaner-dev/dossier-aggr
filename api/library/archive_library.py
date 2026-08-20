@@ -1,18 +1,20 @@
-from fastapi import APIRouter, Depends, Query, Request
 from datetime import datetime
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BeforeValidator
 
 from core import constants
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
-    ArchiveLibraryListSchema,
     ArchiveLibraryList,
-    ResponseStatusListSchema,
-    ResponseStatusList,
+    ArchiveLibraryListSchema,
     ResponseStatus,
+    ResponseStatusList,
+    ResponseStatusListSchema,
 )
 from services import ArchiveLibraryService
-from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -23,7 +25,7 @@ router = APIRouter()
 )
 async def archive_libraries_query(
     request: Request,
-    service: ArchiveLibraryService = Depends(ArchiveLibraryService),
+    service: Annotated[ArchiveLibraryService, Depends(ArchiveLibraryService)],
 ) -> ArchiveLibraryListSchema:
     libraries = await service.list_archive_libraries(filters=dict(request.query_params))
     return ArchiveLibraryListSchema(
@@ -40,7 +42,7 @@ async def archive_libraries_query(
 )
 async def archive_library_create(
     data: ArchiveLibraryListSchema,
-    service: ArchiveLibraryService = Depends(ArchiveLibraryService),
+    service: Annotated[ArchiveLibraryService, Depends(ArchiveLibraryService)],
 ) -> ResponseStatusListSchema:
     libraries = data.ArchiveLibraryListObject.ArchiveLibraryObject
     _ = await service.create_archive_libraries(libraries=libraries)
@@ -52,7 +54,7 @@ async def archive_library_create(
                     StatusCode="0",
                     StatusString="新增成功",
                     Id=library.ArchiveLibraryID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for library in libraries
             ]
@@ -67,7 +69,7 @@ async def archive_library_create(
 )
 async def archive_library_update(
     data: ArchiveLibraryListSchema,
-    service: ArchiveLibraryService = Depends(ArchiveLibraryService),
+    service: Annotated[ArchiveLibraryService, Depends(ArchiveLibraryService)],
 ) -> ResponseStatusListSchema:
     libraries = data.ArchiveLibraryListObject.ArchiveLibraryObject
     _ = await service.update_archive_libraries(libraries=libraries)
@@ -79,7 +81,7 @@ async def archive_library_update(
                     StatusCode="0",
                     StatusString="修改成功",
                     Id=library.ArchiveLibraryID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for library in libraries
             ]
@@ -96,7 +98,7 @@ async def archive_library_delete(
     library_ids: Annotated[
         list[str], BeforeValidator(parse_id_list), Query(alias="IDList")
     ],
-    service: ArchiveLibraryService = Depends(ArchiveLibraryService),
+    service: Annotated[ArchiveLibraryService, Depends(ArchiveLibraryService)],
 ) -> ResponseStatusListSchema:
     _ = await service.delete_archive_libraries(library_ids=library_ids)
     return ResponseStatusListSchema(
@@ -107,7 +109,7 @@ async def archive_library_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=library_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for library_id in library_ids
             ]

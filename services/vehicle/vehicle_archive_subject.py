@@ -1,20 +1,16 @@
 from models import ArchiveSubjectQuery, VehicleArchiveSubject
 from repo.vehicle.vehicle_archive_subject import (
+    create_vehicle_archive_subjects_repo,
+    delete_vehicle_archive_subjects_repo,
     query_vehicle_archive_subjects_repo,
+    update_vehicle_archive_subjects_repo,
 )
-from tasks.vehicle.vehicle_archive_subject import (
-    create_vehicle_archive_subjects_task,
-    update_vehicle_archive_subjects_task,
-    delete_vehicle_archive_subjects_task,
-)
-from services.task_dispatch import dispatch_and_wait
 
 
 class VehicleArchiveSubjectService:
     """编排 GA/T 2350.5 A.15/A.16 车辆档案明细业务链路。
 
-    查询使用 repo 的档案明细筛选语义；增改删经 Taskiq task 执行，
-    其中删除接口保留协议定义的多类标识列表匹配边界。
+    查询、创建、更新和删除统一委托 repo。
     """
 
     async def query_vehicle_archive_subjects(
@@ -25,22 +21,12 @@ class VehicleArchiveSubjectService:
     async def create_vehicle_archive_subjects(
         self, subjects: list[VehicleArchiveSubject]
     ) -> list[VehicleArchiveSubject]:
-        return list(
-            await dispatch_and_wait(
-                create_vehicle_archive_subjects_task,
-                subjects=subjects,
-            )
-        )
+        return list(await create_vehicle_archive_subjects_repo(subjects=subjects))
 
     async def update_vehicle_archive_subjects(
         self, subjects: list[VehicleArchiveSubject]
     ) -> list[VehicleArchiveSubject]:
-        return list(
-            await dispatch_and_wait(
-                update_vehicle_archive_subjects_task,
-                subjects=subjects,
-            )
-        )
+        return list(await update_vehicle_archive_subjects_repo(subjects=subjects))
 
     async def delete_vehicle_archive_subjects(
         self,
@@ -50,8 +36,7 @@ class VehicleArchiveSubjectService:
         motor_vehicle_id_list: list[str] | None = None,
         non_motor_vehicle_id_list: list[str] | None = None,
     ) -> list[str]:
-        return await dispatch_and_wait(
-            delete_vehicle_archive_subjects_task,
+        return await delete_vehicle_archive_subjects_repo(
             archive_id=archive_id,
             face_id_list=face_id_list,
             person_id_list=person_id_list,

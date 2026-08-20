@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.python.org/downloads/release/python-3120/"><img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white"></a>
+  <a href="https://www.python.org/downloads/release/python-3140/"><img alt="Python 3.14" src="https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white"></a>
   <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white"></a>
   <a href="https://docs.pydantic.dev/"><img alt="Pydantic v2" src="https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white"></a>
   <a href="https://docs.pytest.org/"><img alt="pytest" src="https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white"></a>
@@ -15,28 +15,27 @@
 
 `dossier-aggr` 是一个基于 FastAPI 的视频图像信息数据库（VIID）接口服务，面向 GA/T 1400、GA/T 2350.5 等国内公共安全行业标准的协议实现、后端部署和系统集成联调。
 
-当前仓库交付 API 服务、Taskiq worker、数据库迁移和 Helm Chart，不包含独立前端应用。
+当前仓库交付 API 服务和数据库迁移，不包含独立前端应用。
 
 ## 项目能力
 
 - 覆盖 GA/T 1400-2017 与 2018 试行资料中的系统注册、保活、注销、校时、采集系统、采集设备、人员、人脸、订阅与通知等主链路。
 - 覆盖 GA/T 2350.5-2025 目标聚档服务中的目标档案库、聚档任务、人员/车辆档案、档案明细和档案核验主链路。
 - 自动生成 OpenAPI，并通过 Swagger UI 与 ReDoc 提供接口调试页面。
-- 开发环境默认使用 SQLite 和 Taskiq 内存 broker；生产环境支持 PostgreSQL 和 RabbitMQ。
-- 提供 Dockerfile、Helm Chart、Kubernetes 探针、Prometheus 指标和 Grafana Dashboard 模板。
+- 所有新增、查询、更新和删除请求都通过业务层调用 repository，数据库事务完成后返回结果，避免为单个需求引入额外消息模块。
+- 提供 Dockerfile。
 
 ## 运行环境
 
 | 项目 | 当前目标 |
 | --- | --- |
-| Python | 3.12 |
+| Python | 3.14 |
 | API 框架 | FastAPI |
 | 数据模型 | SQLModel / Pydantic v2 |
 | 数据库迁移 | Alembic |
-| 异步任务 | Taskiq |
-| 开发数据库 | SQLite |
+| 写入方式 | SQLModel / SQLAlchemy AsyncSession |
+| 开发数据库 | PostgreSQL |
 | 生产数据库 | PostgreSQL |
-| 生产消息队列 | RabbitMQ |
 
 > 仓库当前没有 GitHub Actions 工作流，因此 README 不展示远端 CI 通过徽章。质量状态以本地执行 `ruff check .`、`pyright`、`pytest -q` 的结果为准。
 
@@ -109,10 +108,17 @@
 
 ## 快速开始
 
-创建 Python 3.12 环境并安装依赖：
+创建 Python 3.14 环境并安装运行及开发依赖：
 
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install --group dev
+```
+
+生产环境只安装 `pyproject.toml` 中的 `runtime` 依赖组：
+
+```bash
+python -m pip install --group runtime
 ```
 
 执行数据库迁移并启动 API 服务：
@@ -129,8 +135,6 @@ ENV=dev uvicorn main:app --host 0.0.0.0 --port 8000
 | Swagger UI | http://127.0.0.1:8000/docs |
 | ReDoc | http://127.0.0.1:8000/redoc |
 | OpenAPI JSON | http://127.0.0.1:8000/openapi.json |
-| 健康检查 | `/startup`、`/live`、`/ready` |
-| Prometheus 指标 | `/metrics` |
 
 ## 接口示例
 
@@ -163,11 +167,7 @@ alembic upgrade head
 alembic revision --autogenerate -m "describe change"
 ```
 
-启动 Taskiq worker：
-
-```bash
-taskiq worker core.brokers:broker tasks
-```
+新增接口在数据库事务成功后返回“已接收”；后续查询可以立即看到已提交的数据。
 
 ## Docker
 
@@ -184,46 +184,17 @@ docker run --rm -p 8000:8000 -e ENV=dev dossier-aggr:local
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-## Helm 部署
-
-Helm Chart 位于 `dossier-aggr/`。
-
-渲染默认生产配置：
-
-```bash
-helm template dossier-aggr dossier-aggr
-```
-
-渲染低资源开发配置：
-
-```bash
-helm template dossier-aggr-dev dossier-aggr -f dossier-aggr/values-dev.yaml
-```
-
-默认生产配置要求集群内存在可解析的 `postgresql`、`rabbitmq` 和 `redis` Service，或通过 values 覆盖为实际中间件地址：
-
-- `ENV=prod`
-- `DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgresql:5432/dossier_aggr`
-- `RABBITMQ_IP=rabbitmq`
-- `TASKIQ_RESULT_BACKEND_URL=redis://redis:6379/0`
-- `DB_POOL_SIZE=10`、`DB_MAX_OVERFLOW=20`、`DB_POOL_TIMEOUT_SECONDS=30`
-
-Chart 包含 API Deployment、可选 worker Deployment、Service、Ingress、HPA、ServiceMonitor、PrometheusRule、Grafana Dashboard，以及 Alembic migration Job。
-API、worker 和 migration Job 支持通过 `envFrom` 引用外部 Secret/ConfigMap 注入运行时配置；生产凭据建议使用 Secret 覆盖默认示例值。
-
 ## 项目结构
 
 ```text
 api/              FastAPI 路由与协议入口
 services/         业务编排层
-tasks/            Taskiq 异步任务
 repo/             数据访问层
 models/           SQLModel/Pydantic 协议模型与数据库模型
 alembic/          数据库迁移
-core/             配置、数据库、broker 和通用基础设施
-observability/    指标与可观测性
-dossier-aggr/     Helm Chart
-tests/            单元、协议、服务、仓库、Helm 和迁移测试
+core/             配置、数据库和通用基础设施
+tests/            单元、协议、服务、仓库和迁移测试
+pyproject.toml    运行/开发依赖和 Python 工具配置
 .ai/              AI 协作上下文、协议索引和开发流程文档
 .protocol/        本地协议原始资料，已被 git 忽略
 ```
@@ -231,7 +202,7 @@ tests/            单元、协议、服务、仓库、Helm 和迁移测试
 ## Roadmap
 
 - 继续对齐 GA/T 2350.5-2025 正式版字段、查询约束和响应细节。
-- 补充 RabbitMQ worker 真实场景端到端回归测试。
+- 补充真实 PostgreSQL 场景的并发写入与事务回归测试。
 - 细化附录扩展字段的查询与过滤约束。
 - 补充贡献指南、安全策略和发布流程文档。
 

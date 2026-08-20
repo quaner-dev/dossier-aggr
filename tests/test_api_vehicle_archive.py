@@ -1,10 +1,10 @@
 import asyncio
 
 from api.vehicle.vehicle_archive import (
-    vehicle_archives_query_sync,
     vehicle_archives_create,
-    vehicle_archives_update,
     vehicle_archives_delete,
+    vehicle_archives_query_sync,
+    vehicle_archives_update,
 )
 from models import (
     ArchiveQuery,
@@ -133,6 +133,7 @@ def test_vehicle_archive_create_update_delete_return_status_list():
         )
 
         assert len(create_status) == 2
+        assert create_status[0].StatusString == "已接收"
         assert create_status[0].Id == "VA-001"
         assert len(update_status) == 2
         assert update_status[1].Id == "VA-002"

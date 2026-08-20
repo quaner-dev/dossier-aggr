@@ -1,10 +1,12 @@
 from collections.abc import Sequence
 
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
 from core import exceptions
 from core.database import engine
 from models import Face, FaceQueryParams
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+
 
 async def get_face_repo(face_id: str) -> Face:
     async with AsyncSession(engine) as session:

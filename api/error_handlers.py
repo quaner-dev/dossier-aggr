@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from core import exceptions
+from core.time import CHINA_TZ
 from models import ResponseStatus, ResponseStatusList, ResponseStatusListSchema
 
 
@@ -30,7 +31,7 @@ def _error_response(
                     RequestURL=str(request.url),
                     StatusCode=status_code,
                     StatusString=status_string,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
             ]
         )
@@ -72,18 +73,6 @@ def register_exception_handlers(app: FastAPI) -> None:
             request,
             http_status=exc.status_code,
             status_code="400",
-            status_string=_detail_to_text(exc.detail),
-        )
-
-    @app.exception_handler(exceptions.TaskExecutionError)
-    async def task_execution_exception_handler(
-        request: Request,
-        exc: exceptions.TaskExecutionError,
-    ) -> JSONResponse:
-        return _error_response(
-            request,
-            http_status=exc.status_code,
-            status_code="503",
             status_string=_detail_to_text(exc.detail),
         )
 

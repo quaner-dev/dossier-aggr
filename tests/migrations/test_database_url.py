@@ -10,13 +10,6 @@ def test_make_sync_database_url_converts_async_postgresql_driver():
     )
 
 
-def test_make_sync_database_url_converts_async_sqlite_driver():
-    assert (
-        make_sync_database_url("sqlite+aiosqlite:///db.sqlite3")
-        == "sqlite:///db.sqlite3"
-    )
-
-
 def test_make_sync_database_url_leaves_sync_url_unchanged():
     assert make_sync_database_url("postgresql+psycopg2://db/app") == (
         "postgresql+psycopg2://db/app"

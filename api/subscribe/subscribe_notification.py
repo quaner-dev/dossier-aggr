@@ -4,16 +4,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BeforeValidator
 
+from core import constants
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
+    ResponseStatus,
+    ResponseStatusList,
     ResponseStatusListSchema,
     SubscribeNotificationList,
     SubscribeNotificationListSchema,
-    ResponseStatus,
-    ResponseStatusList,
 )
-from core import constants
 from services import SubscribeNotificationService
-from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -40,9 +41,9 @@ async def subscribe_notifications_create(
                 ResponseStatus(
                     RequestURL=constants.SUBSCRIBE_NOTIFICATIONS_URL,
                     StatusCode="0",
-                    StatusString="通知成功",
+                    StatusString="已接收",
                     Id=subscribe_notification.NotificationID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for subscribe_notification in subscribe_notifications
             ]
@@ -95,7 +96,7 @@ async def subscribe_notifications_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=notification_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for notification_id in deleted_notification_ids
             ]

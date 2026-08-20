@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 from typing import Any, cast
 
+from sqlmodel import delete, select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
 from core import exceptions
 from core.database import engine
 from models import ArchiveQuery, VehicleArchive
-from sqlmodel import delete, select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 async def list_vehicle_archives_repo() -> Sequence[VehicleArchive]:

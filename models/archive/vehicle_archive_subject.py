@@ -1,10 +1,10 @@
-from sqlalchemy import Column, JSON
-from sqlmodel import SQLModel, Field
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
 
-from .archive_subject import MotorVehicleList, NonMotorVehicleList
 from ..common.gait import GaitList
 from ..face.face import FaceList
 from ..person.person import PersonList
+from .archive_subject import MotorVehicleList, NonMotorVehicleList
 
 
 class VehicleArchiveSubject(SQLModel, table=True):

@@ -1,11 +1,11 @@
 from typing import Any
 
-from sqlalchemy import Column, JSON
-from sqlmodel import SQLModel, Field
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
 
 from ..common.gait import GaitList
-from ..person.person import PersonList
 from ..face.face import FaceList
+from ..person.person import PersonList
 
 
 class MotorVehicleList(SQLModel):

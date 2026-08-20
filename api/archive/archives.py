@@ -1,22 +1,23 @@
-from fastapi import APIRouter, Query
 from datetime import datetime
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 from pydantic import BeforeValidator
 
 from core import constants
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
     ArchiveList,
     ArchiveListSchema,
-    ArchiveQuerySchema,
     ArchiveQueryResult,
     ArchiveQueryResultSchema,
-    ResponseStatusList,
+    ArchiveQuerySchema,
     ResponseStatus,
+    ResponseStatusList,
     ResponseStatusListSchema,
 )
 from services import ArchiveService
-from fastapi import Depends
-from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -72,9 +73,9 @@ async def archives_create(
                 ResponseStatus(
                     RequestURL=constants.ARCHIVES_URL,
                     StatusCode="0",
-                    StatusString="新增成功",
+                    StatusString="已接收",
                     Id=archive.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for archive in archives
             ]
@@ -103,7 +104,7 @@ async def archives_update(
                     StatusCode="0",
                     StatusString="修改成功",
                     Id=archive.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for archive in archives
             ]
@@ -137,7 +138,7 @@ async def archives_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=archive_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for archive_id in archive_ids
             ]

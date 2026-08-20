@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BeforeValidator
 
 from core import constants
+from core.time import CHINA_TZ
+from core.utils import parse_id_list
 from models import (
     ArchiveQueryResult,
     ArchiveQueryResultSchema,
@@ -16,7 +18,6 @@ from models import (
     VehicleArchiveListSchema,
 )
 from services import VehicleArchiveService
-from core.utils import parse_id_list
 
 router = APIRouter()
 
@@ -72,9 +73,9 @@ async def vehicle_archives_create(
                 ResponseStatus(
                     RequestURL=constants.VEHICLE_ARCHIVES_URL,
                     StatusCode="0",
-                    StatusString="新增成功",
+                    StatusString="已接收",
                     Id=archive.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for archive in archives
             ]
@@ -103,7 +104,7 @@ async def vehicle_archives_update(
                     StatusCode="0",
                     StatusString="更新成功",
                     Id=archive.ArchiveID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for archive in archives
             ]
@@ -137,7 +138,7 @@ async def vehicle_archives_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=archive_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for archive_id in archive_ids
             ]

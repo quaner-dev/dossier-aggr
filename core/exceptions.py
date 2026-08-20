@@ -29,13 +29,3 @@ class DataAlreadyExistsError(HTTPException):
         detail: str | list[str],
     ):
         super().__init__(status_code=409, detail=detail)
-
-
-class TaskExecutionError(HTTPException):
-    """任务执行失败"""
-
-    def __init__(
-        self,
-        detail: str | list[str],
-    ):
-        super().__init__(status_code=503, detail=detail)

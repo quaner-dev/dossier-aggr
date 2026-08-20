@@ -1,6 +1,7 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
-from models import enums
+from models.common import enums
+
 from .archive_query import ArchiveQuery
 
 

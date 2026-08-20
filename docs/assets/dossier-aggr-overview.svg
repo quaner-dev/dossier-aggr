@@ -1,6 +1,6 @@
 <svg width="1200" height="520" viewBox="0 0 1200 520" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">dossier-aggr VIID 服务系统总览</title>
-  <desc id="desc">架构总览图，展示 GA/T 1400 和 GA/T 2350.5 协议请求进入 FastAPI 服务，并流转到服务层、Taskiq、仓库层和数据存储。</desc>
+  <desc id="desc">架构总览图，展示 GA/T 1400 和 GA/T 2350.5 协议请求进入 FastAPI 服务，高频新增经 Kafka 消费者逐消息写入数据库。</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="520" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#0F2A3A"/>
@@ -60,7 +60,7 @@
     <text x="902" y="190" fill="#5F4A00" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">服务编排</text>
 
     <rect x="870" y="242" width="196" height="74" rx="16" fill="#F1F5F9" stroke="#CAD5E0"/>
-    <text x="902" y="286" fill="#334155" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Taskiq 任务</text>
+    <text x="902" y="286" fill="#334155" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Kafka 消费投影</text>
 
     <rect x="870" y="338" width="196" height="74" rx="16" fill="#ECFDF5" stroke="#AFE4C9"/>
     <text x="902" y="382" fill="#205B43" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">仓库 + 数据库</text>

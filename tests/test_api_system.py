@@ -1,13 +1,12 @@
 import asyncio
-from datetime import datetime
 
 from starlette.requests import Request
 
-from core import constants
 from api.system.keepalive import keepalive
 from api.system.register import register
 from api.system.time import system_time
 from api.system.unregister import unregister
+from core import constants
 from models import KeepaliveSchema, RegisterSchema, SystemTime, UnRegisterSchema
 from tests.type_helpers import as_service, as_status_list, dt
 
@@ -99,6 +98,6 @@ def test_system_time_returns_current_time_schema():
         fake = _FakeSystemTimeService()
         res = await system_time(service=as_service(fake))
 
-        assert res.LocalTime == datetime.strptime("20260302091530", "%Y%m%d%H%M%S")
+        assert res.LocalTime == dt("20260302091530")
 
     asyncio.run(_run())

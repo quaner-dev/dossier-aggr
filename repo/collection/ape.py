@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
 from core import exceptions
 from core.database import engine
 from models import APE
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 async def list_apes_repo() -> Sequence[APE]:

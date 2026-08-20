@@ -1,12 +1,18 @@
 import asyncio
 
 from api.archive.archives import (
-    archives_query_sync,
     archives_create,
-    archives_update,
     archives_delete,
+    archives_query_sync,
+    archives_update,
 )
-from models import Archive, ArchiveList, ArchiveListSchema, ArchiveQuery, ArchiveQuerySchema
+from models import (
+    Archive,
+    ArchiveList,
+    ArchiveListSchema,
+    ArchiveQuery,
+    ArchiveQuerySchema,
+)
 from models.common import enums
 from tests.type_helpers import (
     as_service,
@@ -128,6 +134,7 @@ def test_archives_create_update_delete_return_status_list():
         )
 
         assert len(create_status) == 2
+        assert create_status[0].StatusString == "已接收"
         assert create_status[0].Id == "A-001"
         assert len(update_status) == 2
         assert update_status[1].Id == "A-002"

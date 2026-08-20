@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
 from core import exceptions
 from core.database import engine
 from models import Person
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 _DEFAULT_PERSON_LIST_LIMIT = 100
 

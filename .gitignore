@@ -3,7 +3,13 @@
 .continue/
 .codex/
 .cursor/
+.agents/
+.claude/
+.gemini/
 .idea/
+*.swp
+*.swo
+*~
 
 # Python bytecode and tool caches
 __pycache__/
@@ -34,9 +40,20 @@ ENV/
 # Local protocol source materials
 .protocol/
 
-# Local branch execution plans
-.ai/plans/*-plan.md
-.ai/plans/**/*-plan.md
+# Local AI context and detailed discussion documents
+# Keep the short, public repository instructions in /AGENTS.md.
+.ai/
+docs/superpowers/
+
+# Local configuration overrides
+.envrc
+.direnv/
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
+*.local.yaml
+*.local.yml
 
 # Test and coverage output
 .coverage
@@ -55,9 +72,7 @@ pip-wheel-metadata/
 *.log
 logs/
 *.pid
-*.sqlite
-*.sqlite3
-*.sqlite3-*
+*.pid.lock
 *.db
 *.db-*
 
@@ -68,3 +83,4 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
+Desktop.ini

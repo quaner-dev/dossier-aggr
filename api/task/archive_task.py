@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BeforeValidator
 
 from core import constants
+from core.time import CHINA_TZ
 from core.utils import parse_id_list
 from models import (
     ArchiveTaskList,
@@ -80,7 +81,7 @@ async def archive_tasks_delete(
                     StatusCode="0",
                     StatusString="删除成功",
                     Id=task_id,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for task_id in task_ids
             ]
@@ -97,7 +98,7 @@ def _archive_task_status_list(tasks, status_string: str) -> ResponseStatusListSc
                     StatusCode="0",
                     StatusString=status_string,
                     Id=task.TaskID,
-                    LocalTime=datetime.now(),
+                    LocalTime=datetime.now(tz=CHINA_TZ),
                 )
                 for task in tasks
             ]

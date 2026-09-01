@@ -11,9 +11,9 @@ from api.person.person import (
     persons_query,
     persons_update,
 )
+from domain.common import enums
 from main import app
-from models import Person, PersonList, PersonListObjectSchema
-from models.common import enums
+from schemas import Person, PersonList, PersonListObjectSchema
 from services.person.person import PersonService
 from tests.type_helpers import as_service, as_status_list
 

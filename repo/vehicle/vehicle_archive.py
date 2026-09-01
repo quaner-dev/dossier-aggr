@@ -6,7 +6,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core import exceptions
 from core.database import engine
-from models import ArchiveQuery, VehicleArchive
+from models import VehicleArchive
+from schemas import ArchiveQuery
 
 
 async def list_vehicle_archives_repo() -> Sequence[VehicleArchive]:

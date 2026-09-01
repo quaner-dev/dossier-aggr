@@ -1,5 +1,6 @@
 from collections.abc import Mapping, Sequence
 
+from domain import ArchiveTask as ArchiveTaskData
 from models import ArchiveTask
 from repo.task.archive_task import (
     create_archive_tasks_repo,
@@ -7,6 +8,7 @@ from repo.task.archive_task import (
     list_archive_tasks_repo,
     update_archive_tasks_repo,
 )
+from services.model_conversion import to_table_models
 
 
 class ArchiveTaskService:
@@ -23,15 +25,15 @@ class ArchiveTaskService:
 
     async def create_archive_tasks(
         self,
-        tasks: Sequence[ArchiveTask],
+        tasks: Sequence[ArchiveTaskData],
     ) -> list[ArchiveTask]:
-        return list(await create_archive_tasks_repo(tasks=list(tasks)))
+        return list(await create_archive_tasks_repo(tasks=to_table_models(ArchiveTask, tasks)))
 
     async def update_archive_tasks(
         self,
-        tasks: Sequence[ArchiveTask],
+        tasks: Sequence[ArchiveTaskData],
     ) -> list[ArchiveTask]:
-        return list(await update_archive_tasks_repo(tasks=list(tasks)))
+        return list(await update_archive_tasks_repo(tasks=to_table_models(ArchiveTask, tasks)))
 
     async def delete_archive_tasks(self, task_ids: list[str]) -> list[str]:
         return await delete_archive_tasks_repo(task_ids=task_ids)

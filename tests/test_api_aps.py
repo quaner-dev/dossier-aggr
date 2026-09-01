@@ -1,8 +1,8 @@
 import asyncio
 
 from api.collection.aps import apss_query
-from models import APS
-from models.common import enums
+from domain import APS
+from domain.common import enums
 from tests.type_helpers import as_service
 
 

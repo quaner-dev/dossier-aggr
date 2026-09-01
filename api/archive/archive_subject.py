@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, Query
 from core import constants
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     ArchiveList,
+    ArchiveSubject,
     ArchiveSubjectList,
     ArchiveSubjectQueryResult,
     ArchiveSubjectQueryResultSchema,
@@ -41,6 +42,10 @@ async def archive_subject_query_sync(
     record_start_no = query.RecordStartNo or 0
     record_limit = query.PageRecordNum or query.MaxNumRecordReturn or len(subjects)
     page_subjects = subjects[record_start_no : record_start_no + record_limit]
+    response_subjects = [
+        ArchiveSubject.model_validate(subject, from_attributes=True)
+        for subject in page_subjects
+    ]
     return ArchiveSubjectQueryResultSchema(
         ArchiveSubjectQueryResultObject=ArchiveSubjectQueryResult(
             QueryID=query.QueryID,
@@ -49,7 +54,7 @@ async def archive_subject_query_sync(
             TotalNum=len(subjects),
             ArchiveListObject=ArchiveList(ArchiveObject=[]),
             ArchiveSubjectInfoList=ArchiveSubjectList(
-                ArchiveSubjectObject=page_subjects
+                ArchiveSubjectObject=response_subjects
             ),
         )
     )

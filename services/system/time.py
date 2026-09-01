@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from core.time import CHINA_TZ
-from models import SystemTime
+from domain import SystemTime
 
 
 class SystemTimeService:

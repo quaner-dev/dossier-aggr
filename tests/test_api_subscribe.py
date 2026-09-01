@@ -9,9 +9,10 @@ from api.subscribe.subscribe import (
     subscribes_query,
     subscribes_update,
 )
+from domain import Subscribe
+from domain.common import enums
 from main import app
-from models import Subscribe, SubscribeList, SubscribeListSchema
-from models.common import enums
+from schemas import SubscribeList, SubscribeListSchema
 from services.subscribe.subscribe import SubscribeService
 from tests.type_helpers import as_service, as_status_list
 

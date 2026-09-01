@@ -1,8 +1,9 @@
 import asyncio
 
 from api.collection.ape import apes_query, apes_update
-from models import APE, APEList, APEListSchema
-from models.common import enums
+from domain import APE
+from domain.common import enums
+from schemas import APEList, APEListSchema
 from tests.type_helpers import as_service, as_status_list
 
 

@@ -32,8 +32,7 @@ flowchart LR
 - 自动生成 OpenAPI，并通过 Swagger UI 与 ReDoc 提供接口调试页面。
 - 当前所有新增、查询、更新和删除请求都通过 Service 调用 Repository，并在
   PostgreSQL 事务提交完成后返回结果。
-- 已确定高并发数据接入和出站订阅推送的目标架构，但 Kafka、Taskiq、RabbitMQ
-  及对应 Worker 尚未实装，不能把目标架构视为当前运行能力。
+- 当前仓库仅提供同步 API 和 PostgreSQL 事务路径；异步数据接入与出站推送尚未实装。
 - 提供 Dockerfile。
 
 ## 运行环境
@@ -50,110 +49,35 @@ flowchart LR
 
 > 仓库当前没有 GitHub Actions 工作流，因此 README 不展示远端 CI 通过徽章。质量状态以本地执行 `ruff check .`、`pyright`、`pytest -q` 的结果为准。
 
-## 数据推送：当前状态与目标架构
+## 数据接入与推送
 
-本节记录后续实现边界，避免将当前同步接口与目标异步链路混为一谈。
-
-| 能力                           | 当前实现                                                | 目标设计                                                         |
-| ------------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------- |
-| 普通增改删                     | Service -> Repository -> PostgreSQL，同一请求内提交事务 | 保持当前同步事务路径                                             |
-| 高并发新增                     | 仍直接写 PostgreSQL                                     | Kafka 确认后响应，由独立 Consumer 幂等物化到 PostgreSQL          |
-| 实时出站推送                   | 未实现                                                  | 消费 Kafka 新增事件，匹配订阅并聚合为 Taskiq 批次                |
-| 历史出站推送                   | 未实现                                                  | 按上级订阅条件查询 PostgreSQL，使用 Keyset 分页生成 Taskiq 批次  |
-| 任务分发与执行                 | 未引入 Taskiq Broker 或 Worker                          | Taskiq + `taskiq-aio-pika` + RabbitMQ，Worker 调用上级 HTTP 接口 |
-| `/VIID/SubscribeNotifications` | 接收入站通知，并支持查询和删除                          | 与出站推送解耦，不代表推送 Worker 已实现                         |
-
-数据接入与上级推送采用历史、实时分流设计。高并发新增数据先进入 Kafka；
-修改、删除和低并发订阅管理直接写 PostgreSQL。实时推送由独立消费者聚合
-Kafka 数据，历史推送按每个上级的订阅条件查询 PostgreSQL；两条链路最终都
-生成批量 Taskiq 任务，由 RabbitMQ Broker 分发给可水平扩容的推送 Worker。
+当前仓库只实现同步 API 和 PostgreSQL 事务路径，所有写接口都在事务提交成功后
+返回成功。出站订阅推送尚未实现；`/VIID/SubscribeNotifications` 是接收入站通知
+并提供查询、删除能力的协议接口，不代表服务会主动向上级发送通知。
 
 ```mermaid
 flowchart TB
-    subgraph APIPlane[API 与控制面]
-        CREATE[高并发新增接口]
-        WRITE[修改 / 删除接口]
-        SUBSCRIBE[订阅管理接口]
-    end
-
-    subgraph RealtimePlane[实时数据面]
-        KAFKA[(Kafka 新增事件)]
-        MATERIALIZER[PostgreSQL 物化 Consumer]
-        ORCHESTRATOR[实时推送编排 Consumer]
-        BUFFER[按上级、订阅、时间和容量聚合]
-    end
-
-    subgraph HistoryPlane[历史数据面]
-        SCHEDULER[历史推送调度器]
-        QUERY[订阅条件查询与 Keyset 分页]
-    end
-
-    subgraph DeliveryPlane[统一投递面]
-        TASKIQ[Taskiq 批次生产者]
-        RABBITMQ[(RabbitMQ Broker)]
-        WORKERS[Taskiq Push Workers]
-        UPSTREAMS[上级系统]
-        AUDIT[(投递审计)]
-    end
-
+    CLIENT[下级系统 / API 调用方]
+    API[FastAPI 路由与协议包装]
+    SERVICE[Service 业务编排]
+    REPO[Repository 数据访问]
     POSTGRES[(PostgreSQL)]
+    OPENAPI[OpenAPI / Swagger UI / ReDoc]
 
-    CREATE -->|Broker 确认后响应| KAFKA
-    WRITE -->|事务提交后响应| POSTGRES
-    SUBSCRIBE -->|事务提交后响应| POSTGRES
-
-    KAFKA --> MATERIALIZER
-    MATERIALIZER -->|幂等写入后提交 offset| POSTGRES
-    KAFKA --> ORCHESTRATOR
-    POSTGRES -->|加载有效订阅| ORCHESTRATOR
-    ORCHESTRATOR --> BUFFER
-    BUFFER --> TASKIQ
-
-    SCHEDULER --> QUERY
-    POSTGRES --> QUERY
-    QUERY --> TASKIQ
-
-    TASKIQ --> RABBITMQ
-    RABBITMQ --> WORKERS
-    WORKERS --> UPSTREAMS
-    WORKERS --> AUDIT
+    CLIENT --> API
+    API --> SERVICE
+    SERVICE --> REPO
+    REPO -->|异步事务提交| POSTGRES
+    API --> OPENAPI
 ```
 
-### 组件边界
+所有查询和写入均由 Service 调用 Repository 完成。Repository 使用异步
+SQLModel/SQLAlchemy 会话处理过滤、排序、分页和持久化；写请求只有在 PostgreSQL
+事务提交成功后才返回协议成功状态。批量写入保持单次请求的事务一致性，避免部分
+提交。
 
-| 组件                     | 单一职责                                                         | 不负责                                   |
-| ------------------------ | ---------------------------------------------------------------- | ---------------------------------------- |
-| FastAPI                  | 协议校验；普通写入事务响应；高并发新增事件投递                   | HTTP 出站推送、长时间批次聚合            |
-| Kafka                    | 承载高并发新增事件，供物化与实时编排两个 Consumer Group 独立消费 | 历史查询、修改删除、Taskiq 任务执行      |
-| PostgreSQL 物化 Consumer | 幂等写入新增业务数据，提交成功后推进消费位点                     | 出站通知                                 |
-| 实时推送编排器           | 缓存有效订阅、匹配新增事件、聚合稳定批次                         | 每条事件查询数据库、每条事件创建一个任务 |
-| 历史推送调度器           | 按上级订阅条件和明确水位分页读取历史数据                         | 将历史数据重新写入 Kafka                 |
-| Taskiq / RabbitMQ        | 生成和可靠分发批次任务，提供 Worker 背压入口                     | 判断 GA/T 协议业务是否成功               |
-| Push Worker              | 调用上级接口，解析 HTTP 与协议状态，执行重试、限流和审计         | 在网络请求期间持有业务数据库事务         |
-
-### 可靠性与容量边界
-
-- Kafka 只承载高并发实时新增数据；修改、删除和订阅管理不经过 Kafka。
-- 实时编排器不会为每条数据立即创建 Taskiq 任务，而是按上级、订阅、
-  `ReportInterval`、最大条数和最大报文大小聚合后再提交批次。
-- 历史数据因各上级查询条件不同，直接按订阅查询 PostgreSQL，不经过 Kafka；
-  查询结果分批后直接提交 Taskiq。
-- Taskiq 的生产 Broker 确定使用 RabbitMQ（`taskiq-aio-pika`）。Redis 可以用于
-  缓存或限流，但不作为该推送链路的 Taskiq Broker。
-- RabbitMQ 负责可靠分发 Taskiq 批次任务；HTTP 成功判定、可重试错误分类、
-  重试次数和死信处理仍由 Taskiq 中间件及推送任务代码负责。
-- 推送采用至少一次语义。批次必须使用稳定的 `batch_id` 和 `NotificationID`，
-  Kafka 到 Taskiq 的重复交接以及 Worker 重投都必须幂等。
-- 高并发新增改为 Kafka-first 后，成功语义将从“PostgreSQL 已提交”变为
-  “Kafka 已可靠接收”；在真正实现前，现有接口仍按 PostgreSQL 事务提交语义运行。
-- 新增事件尚未物化时，修改或删除可能先到达 PostgreSQL。实现阶段必须定义可测试的
-  冲突或重试响应，不能静默丢失变更。
-- 设计容量基线是实时新增 `5,000` 条/秒、最多 `10` 个上级，即最多
-  `50,000` 条逻辑投递/秒。按每批 `100` 到 `200` 条估算，Taskiq 任务约为
-  `250` 到 `500` 个/秒；最终参数必须由真实报文和上级接口压测确定。
-
-完整的实时/历史时序、Broker 选型、失败语义、幂等键、背压指标和实施验收条件见
-[数据推送架构设计](docs/data-push-architecture.md)。
+未来若增加高并发接入或出站推送，应先补充架构决策、协议契约和幂等语义，并保持
+普通修改、删除与订阅管理的同步事务边界。
 
 ## 协议资料
 
@@ -198,7 +122,7 @@ flowchart TB
 | 布控                | `/VIID/Dispositions`                        | ×    | 未实现                                                     |
 | 布控告警通知        | `/VIID/DispositionNotifications`            | ×    | 未实现                                                     |
 | 订阅                | `/VIID/Subscribes`                          | √    | 支持订阅查询、创建、更新、删除、取消                       |
-| 订阅通知            | `/VIID/SubscribeNotifications`              | √    | 当前支持入站通知上报、查询和删除；出站推送按目标架构待实施 |
+| 订阅通知            | `/VIID/SubscribeNotifications`              | √    | 当前支持入站通知上报、查询和删除；出站推送尚未实现         |
 | 分析规则            | `/VIID/AnalysisRules`                       | ×    | 未实现                                                     |
 | 视频标签            | `/VIID/VideoLabels`                         | ×    | 未实现                                                     |
 | VIAS 系统与能力     | `/VIAS/System*`、`/VIAS/SystemCapability/*` | ×    | 未实现                                                     |
@@ -306,7 +230,9 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 api/              FastAPI 路由与协议入口
 services/         业务编排层
 repo/             数据访问层
-models/           SQLModel/Pydantic 协议模型与数据库模型
+domain/           Pydantic 领域对象、枚举与共有字段定义
+models/           SQLModel 数据库表模型与持久化映射
+schemas/          Pydantic HTTP 请求、响应与查询参数模型
 alembic/          数据库迁移
 core/             配置、数据库和通用基础设施
 docs/             公开设计、实现约定和协议说明
@@ -318,8 +244,7 @@ pyproject.toml    运行/开发依赖和 Python 工具配置
 
 ## Roadmap
 
-- 按[数据推送架构设计](docs/data-push-architecture.md)实施 Kafka 实时接入、
-  PostgreSQL 历史查询以及 Taskiq + RabbitMQ 批量推送链路。
+- 补充数据推送需求评估、协议契约和可观测性设计。
 - 继续对齐 GA/T 2350.5-2025 正式版字段、查询约束和响应细节。
 - 补充真实 PostgreSQL 场景的并发写入与事务回归测试。
 - 细化附录扩展字段的查询与过滤约束。

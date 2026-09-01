@@ -1,8 +1,8 @@
 import asyncio
 
-from models import Face, FaceQueryParams, Person
 from repo.face import face as face_repo
 from repo.person import person as person_repo
+from schemas import Face, FaceQueryParams, Person
 
 
 def _sample_person(person_id: str) -> Person:

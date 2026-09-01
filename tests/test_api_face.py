@@ -12,9 +12,9 @@ from api.face.face import (
     faces_update,
 )
 from core import exceptions
+from domain.common import enums
 from main import app
-from models import Face, FaceList, FaceListObjectSchema, FaceQueryParams
-from models.common import enums
+from schemas import Face, FaceList, FaceListObjectSchema, FaceQueryParams
 from services.face.face import FaceService
 from tests.type_helpers import as_service, as_status_list
 

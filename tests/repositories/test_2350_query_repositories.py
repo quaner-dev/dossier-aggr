@@ -3,7 +3,12 @@ import asyncio
 import pytest
 
 from core import exceptions
-from models import (
+from domain.common import enums
+from repo.archive import archive_subject as archive_subject_repo
+from repo.archive import archives as archive_repo
+from repo.vehicle import vehicle_archive as vehicle_archive_repo
+from repo.vehicle import vehicle_archive_subject as vehicle_subject_repo
+from schemas import (
     Archive,
     ArchiveQuery,
     ArchiveSubject,
@@ -11,11 +16,6 @@ from models import (
     VehicleArchive,
     VehicleArchiveSubject,
 )
-from models.common import enums
-from repo.archive import archive_subject as archive_subject_repo
-from repo.archive import archives as archive_repo
-from repo.vehicle import vehicle_archive as vehicle_archive_repo
-from repo.vehicle import vehicle_archive_subject as vehicle_subject_repo
 from tests.type_helpers import dt, sample_feature_info_list, sample_sub_image_list
 
 

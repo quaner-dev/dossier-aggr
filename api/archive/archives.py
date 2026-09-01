@@ -7,7 +7,8 @@ from pydantic import BeforeValidator
 from core import constants
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
+    Archive,
     ArchiveList,
     ArchiveListSchema,
     ArchiveQueryResult,
@@ -48,7 +49,10 @@ async def archives_query_sync(
             PageRecordNum=len(page_archives),
             TotalNum=len(archives),
             ArchiveListObject=ArchiveList(
-                ArchiveObject=[archive for archive in page_archives]
+                ArchiveObject=[
+                    Archive.model_validate(archive, from_attributes=True)
+                    for archive in page_archives
+                ]
             ),
         )
     )

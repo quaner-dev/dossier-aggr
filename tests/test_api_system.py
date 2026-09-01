@@ -7,7 +7,8 @@ from api.system.register import register
 from api.system.time import system_time
 from api.system.unregister import unregister
 from core import constants
-from models import KeepaliveSchema, RegisterSchema, SystemTime, UnRegisterSchema
+from domain import SystemTime
+from schemas import KeepaliveSchema, RegisterSchema, UnRegisterSchema
 from tests.type_helpers import as_service, as_status_list, dt
 
 

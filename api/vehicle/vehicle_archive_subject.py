@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from core import constants
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     ArchiveList,
     ArchiveSubjectQueryResult,
     ArchiveSubjectQueryResultSchema,
@@ -14,6 +14,7 @@ from models import (
     ResponseStatus,
     ResponseStatusList,
     ResponseStatusListSchema,
+    VehicleArchiveSubject,
     VehicleArchiveSubjectList,
     VehicleArchiveSubjectSchema,
 )
@@ -51,7 +52,12 @@ async def vehicle_archive_subject_query_sync_read(
             TotalNum=len(subjects),
             ArchiveListObject=ArchiveList(ArchiveObject=[]),
             ArchiveSubjectInfoList=VehicleArchiveSubjectList(
-                VehicleArchiveSubjectObject=[subject for subject in page_subjects]
+                VehicleArchiveSubjectObject=[
+                    VehicleArchiveSubject.model_validate(
+                        subject, from_attributes=True
+                    )
+                    for subject in page_subjects
+                ]
             ),
         )
     )

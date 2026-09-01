@@ -3,10 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from core import constants
-from models import (
-    APSList,
-    APSListSchema,
-)
+from schemas import APSList, APSListSchema
 from services import APSService
 
 router = APIRouter()

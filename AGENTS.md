@@ -8,7 +8,7 @@
 - `main.py` 是 FastAPI 应用入口；仓库交付 API 服务和数据库迁移，不包含前端应用。
 - `api/` 负责 HTTP 路由和协议包装，`services/` 负责业务编排，`repo/` 负责数据访问，`models/` 负责协议模型和表模型。
 - `core/` 保存配置、数据库、认证、异常和通用工具，`alembic/` 保存数据库迁移，`tests/` 保存分层及协议测试。
-- `docs/data-push-architecture.md` 是后续数据推送实现的公开架构基线；修改相关边界前应同步更新设计文档。
+- `docs/data-push-architecture.md` 是数据接入与推送边界的公开基线；修改相关边界前应同步更新设计文档。
 
 ## 分层与事务
 
@@ -18,17 +18,12 @@
 - 写接口只能在事务提交成功后返回成功；批量操作应保持单次请求的事务一致性，避免部分提交。
 - 保持现有异常边界；除非协议明确要求变化，HTTP 错误继续使用 `ResponseStatusListObject` 协议包装。
 
-## 数据接入与推送目标架构
+## 数据接入与推送边界
 
-- 普通数据库写入仍不得引入后台任务或消息队列；只有 `docs/data-push-architecture.md` 明确纳入的高并发新增接口使用 Kafka-first 接入。
-- 高并发新增数据进入 Kafka 后，由独立 consumer group 分别完成 PostgreSQL 物化和实时推送编排；修改、删除和低频订阅管理直接写 PostgreSQL，不经过 Kafka。
-- 实时编排器按上级、订阅、`ReportInterval`、最大条数和最大字节数聚合，禁止为每条实时数据创建一个 Taskiq 任务。
-- 历史推送按每个上级的订阅条件查询 PostgreSQL，使用 Keyset 分页并直接生成 Taskiq 批次，不经过 Kafka。
-- Taskiq 的生产 Broker 使用 RabbitMQ 和 `taskiq-aio-pika`；Redis 可用于缓存或限流，但未经新的架构决策不得替换生产推送 Broker。
-- Kafka 到 Taskiq、Taskiq 到上级均按至少一次语义实现；批次必须具有稳定 `batch_id` 和 `NotificationID`，并通过投递台账和上级幂等处理重复。
-- RabbitMQ 只负责 Taskiq 任务的可靠分发。HTTP/协议成功判断、重试分类、退避和最终失败由 Taskiq 中间件与推送任务实现，不能假设 Broker 自动完成业务重试。
-- API、Kafka 物化消费者、实时推送编排器、历史推送调度器和 Taskiq Worker 应作为独立进程或 Deployment 运行，并分别设置连接池、并发、限流和健康检查。
-- 新增经 Kafka 异步物化而修改/删除直写 PostgreSQL 会产生先后竞态；实现时必须提供明确的冲突或重试语义和覆盖测试，不得静默丢失变更。
+- 当前仓库只提供 FastAPI、Service、Repository 到 PostgreSQL 的同步事务路径，不为普通数据库写入引入后台任务或消息队列。
+- 所有写接口只能在 PostgreSQL 事务提交成功后返回协议成功；批量操作必须保持单次请求的事务一致性，避免部分提交。
+- `/VIID/SubscribeNotifications` 是入站通知接口；出站订阅推送尚未实现，不能在没有架构决策和契约测试的情况下增加异步推送组件。
+- 未来若引入高并发接入或出站推送，必须先定义事件顺序、批次幂等、失败重试和连接池/并发边界，并同步更新 `docs/data-push-architecture.md`。
 
 ## 协议变更
 

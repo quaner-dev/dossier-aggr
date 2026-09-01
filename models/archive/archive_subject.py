@@ -1,90 +1,29 @@
-from typing import Any
+from sqlalchemy import JSON, Column, UniqueConstraint
+from sqlmodel import Field
 
-from sqlalchemy import JSON, Column
-from sqlmodel import Field, SQLModel
-
-from ..common.gait import GaitList
-from ..face.face import FaceList
-from ..person.person import PersonList
-
-
-class MotorVehicleList(SQLModel):
-    """GA/T 2350.5-2025 B.5 机动车完整信息对象列表兼容容器"""
-
-    MotorVehicleObject: list[dict[str, Any]]
-
-
-class NonMotorVehicleList(SQLModel):
-    """GA/T 2350.5-2025 B.5 非机动车完整信息对象列表兼容容器"""
-
-    NonMotorVehicleObject: list[dict[str, Any]]
+from domain.archive.archive_subject import (
+    ArchiveSubject as ArchiveSubjectDomain,
+)
+from schemas import (
+    FaceList,
+    GaitList,
+    MotorVehicleList,
+    NonMotorVehicleList,
+    PersonList,
+)
 
 
-class ArchiveSubject(SQLModel, table=True):
-    """GA/T 2350.5-2025 B.5 档案明细信息对象"""
+class ArchiveSubject(ArchiveSubjectDomain, table=True):
+    __table_args__ = (UniqueConstraint("ArchiveID"),)
 
     id: int | None = Field(default=None, primary_key=True, exclude=True)
-
-    ArchiveID: str = Field(max_length=48, description="档案标识", unique=True)
-    PersonIDList: list[str] | None = Field(
-        default=None,
-        description="人员信息标识列表",
-        sa_column=Column(JSON),
-    )
-    FaceIDList: list[str] | None = Field(
-        default=None,
-        description="人脸信息标识列表",
-        sa_column=Column(JSON),
-    )
-    GaitIDList: list[str] | None = Field(
-        default=None,
-        description="步态信息标识列表",
-        sa_column=Column(JSON),
-    )
-    MotorVehicleIDList: list[str] | None = Field(
-        default=None,
-        description="机动车信息标识列表",
-        sa_column=Column(JSON),
-    )
-    NonMotorVehicleIDList: list[str] | None = Field(
-        default=None,
-        description="非机动车信息标识列表",
-        sa_column=Column(JSON),
-    )
-    PersonObjectList: PersonList | None = Field(
-        default=None,
-        description="人员完整信息列表",
-        sa_column=Column(JSON),
-    )
-    FaceObjectList: FaceList | None = Field(
-        default=None,
-        description="人脸完整信息列表",
-        sa_column=Column(JSON),
-    )
-    GaitObjectList: GaitList | None = Field(
-        default=None,
-        description="步态完整信息列表",
-        sa_column=Column(JSON),
-    )
-    MotorVehicleObjectList: MotorVehicleList | None = Field(
-        default=None,
-        description="机动车完整信息列表",
-        sa_column=Column(JSON),
-    )
-    NonMotorVehicleObjectList: NonMotorVehicleList | None = Field(
-        default=None,
-        description="非机动车完整信息列表",
-        sa_column=Column(JSON),
-    )
-
-
-class ArchiveSubjectList(SQLModel):
-    """GA/T 2350.5-2025 B.5 人员档案明细对象列表"""
-
-    ArchiveSubjectObject: list[ArchiveSubject]
-
-
-class ArchiveSubjectSchema(SQLModel):
-    """GA/T 2350.5-2025 A.14 `ArchiveSubjectListObject` 请求包装"""
-
-    ArchiveSubjectListObject: ArchiveSubjectList
+    PersonIDList: list[str] | None = Field(default=None, sa_column=Column(JSON))
+    FaceIDList: list[str] | None = Field(default=None, sa_column=Column(JSON))
+    GaitIDList: list[str] | None = Field(default=None, sa_column=Column(JSON))
+    MotorVehicleIDList: list[str] | None = Field(default=None, sa_column=Column(JSON))
+    NonMotorVehicleIDList: list[str] | None = Field(default=None, sa_column=Column(JSON))
+    PersonObjectList: PersonList | None = Field(default=None, sa_column=Column(JSON))
+    FaceObjectList: FaceList | None = Field(default=None, sa_column=Column(JSON))
+    GaitObjectList: GaitList | None = Field(default=None, sa_column=Column(JSON))
+    MotorVehicleObjectList: MotorVehicleList | None = Field(default=None, sa_column=Column(JSON))
+    NonMotorVehicleObjectList: NonMotorVehicleList | None = Field(default=None, sa_column=Column(JSON))

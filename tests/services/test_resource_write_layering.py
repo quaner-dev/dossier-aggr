@@ -20,6 +20,17 @@ def test_resource_creates_call_repositories_directly(monkeypatch):
         import services.vehicle.vehicle_archive as vehicle_archive_module
         import services.vehicle.vehicle_archive_subject as vehicle_subject_module
 
+        for module in (
+            person_module,
+            face_module,
+            archives_module,
+            archive_subject_module,
+            vehicle_archive_module,
+            vehicle_subject_module,
+            notification_module,
+        ):
+            monkeypatch.setattr(module, "to_table_models", lambda _, values: values)
+
         values = cast(list[Any], [object(), object()])
         calls: list[str] = []
 
@@ -96,6 +107,11 @@ def test_person_and_face_services_return_write_results(monkeypatch):
     async def _run() -> None:
         import services.face.face as face_module
         import services.person.person as person_module
+
+        monkeypatch.setattr(person_module, "to_table_model", lambda _, value: value)
+        monkeypatch.setattr(person_module, "to_table_models", lambda _, values: values)
+        monkeypatch.setattr(face_module, "to_table_model", lambda _, value: value)
+        monkeypatch.setattr(face_module, "to_table_models", lambda _, values: values)
 
         person = cast(Any, object())
         face = cast(Any, object())

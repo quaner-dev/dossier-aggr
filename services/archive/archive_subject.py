@@ -1,10 +1,15 @@
-from models import ArchiveSubject, ArchiveSubjectQuery
+from collections.abc import Sequence
+
+from domain import ArchiveSubject as ArchiveSubjectData
+from models import ArchiveSubject
 from repo.archive.archive_subject import (
     create_archive_subjects_repo,
     delete_archive_subjects_repo,
     query_archive_subjects_repo,
     update_archive_subjects_repo,
 )
+from schemas import ArchiveSubjectQuery
+from services.model_conversion import to_table_models
 
 
 class ArchiveSubjectService:
@@ -19,14 +24,14 @@ class ArchiveSubjectService:
         return list(await query_archive_subjects_repo(query=query))
 
     async def create_archive_subjects(
-        self, subjects: list[ArchiveSubject]
+        self, subjects: Sequence[ArchiveSubjectData]
     ) -> list[ArchiveSubject]:
-        return list(await create_archive_subjects_repo(subjects=subjects))
+        return list(await create_archive_subjects_repo(subjects=to_table_models(ArchiveSubject, subjects)))
 
     async def update_archive_subjects(
-        self, subjects: list[ArchiveSubject]
+        self, subjects: Sequence[ArchiveSubjectData]
     ) -> list[ArchiveSubject]:
-        return list(await update_archive_subjects_repo(subjects=subjects))
+        return list(await update_archive_subjects_repo(subjects=to_table_models(ArchiveSubject, subjects)))
 
     async def delete_archive_subjects(
         self,

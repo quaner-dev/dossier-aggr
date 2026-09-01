@@ -6,7 +6,8 @@ from fastapi.responses import JSONResponse
 
 from core import exceptions
 from core.time import CHINA_TZ
-from models import ResponseStatus, ResponseStatusList, ResponseStatusListSchema
+from domain import ResponseStatus
+from schemas import ResponseStatusList, ResponseStatusListSchema
 
 
 def _detail_to_text(detail: object) -> str:

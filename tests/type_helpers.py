@@ -2,14 +2,13 @@ from datetime import datetime
 from typing import Any
 
 from core.time import CHINA_TZ
-from models import (
+from domain import (
     FeatureInfo,
-    FeatureInfoList,
     ResponseStatus,
     SubImageInfo,
-    SubImageInfoList,
     enums,
 )
+from schemas import FeatureInfoList, SubImageInfoList
 
 
 def as_service(service: object) -> Any:

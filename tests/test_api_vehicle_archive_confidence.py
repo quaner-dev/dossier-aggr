@@ -1,12 +1,12 @@
 import asyncio
 
 from api.verify.vehicle_archive_confidence import vehicle_archive_confidence_verify
-from models import (
+from domain.common import enums
+from schemas import (
     VehicleArchive,
     VehicleArchiveList,
     VehicleArchiveListSchema,
 )
-from models.common import enums
 from tests.type_helpers import as_service, dt, sample_sub_image_list
 
 

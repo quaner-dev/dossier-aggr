@@ -1,4 +1,5 @@
-from models import Subscribe, SubscribeNotification
+from domain import Subscribe
+from schemas import SubscribeNotification
 
 
 def test_2350_a7_subscribe_reuse_fields_present():

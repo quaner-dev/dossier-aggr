@@ -6,14 +6,14 @@ from api.vehicle.vehicle_archive import (
     vehicle_archives_query_sync,
     vehicle_archives_update,
 )
-from models import (
+from domain.common import enums
+from schemas import (
     ArchiveQuery,
     ArchiveQuerySchema,
     VehicleArchive,
     VehicleArchiveList,
     VehicleArchiveListSchema,
 )
-from models.common import enums
 from tests.type_helpers import as_service, as_status_list, dt, sample_sub_image_list
 
 

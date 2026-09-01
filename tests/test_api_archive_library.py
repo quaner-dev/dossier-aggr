@@ -7,11 +7,10 @@ from api.library.archive_library import (
     archive_library_delete,
     archive_library_update,
 )
-from models import (
+from domain import (
     ArchiveLibrary,
-    ArchiveLibraryList,
-    ArchiveLibraryListSchema,
 )
+from schemas import ArchiveLibraryList, ArchiveLibraryListSchema
 from tests.type_helpers import as_service, as_status_list, dt
 
 

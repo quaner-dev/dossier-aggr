@@ -6,7 +6,7 @@ from api.archive.archive_subject import (
     archive_subjects_delete,
     archive_subjects_update,
 )
-from models import (
+from schemas import (
     ArchiveSubject,
     ArchiveSubjectList,
     ArchiveSubjectQuery,

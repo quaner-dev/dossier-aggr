@@ -5,7 +5,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core import exceptions
 from core.database import engine
-from models import Face, FaceQueryParams
+from models import Face
+from schemas import FaceQueryParams
 
 
 async def get_face_repo(face_id: str) -> Face:

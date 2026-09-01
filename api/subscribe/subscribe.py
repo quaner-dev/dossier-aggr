@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from core import constants, exceptions
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     ResponseStatus,
     ResponseStatusList,
     ResponseStatusListSchema,
@@ -61,7 +61,12 @@ async def subscribes_query(
 
     subscribes = await service.list_subscribes()
     return SubscribeListSchema(
-        SubscribeListObject=SubscribeList(SubscribeObject=subscribes)
+        SubscribeListObject=SubscribeList(
+            SubscribeObject=[
+                Subscribe.model_validate(subscribe, from_attributes=True)
+                for subscribe in subscribes
+            ]
+        )
     )
 
 

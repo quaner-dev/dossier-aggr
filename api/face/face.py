@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from core import constants, exceptions
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     Face,
     FaceList,
     FaceListObjectSchema,
@@ -38,7 +38,11 @@ async def faces_query(
     faces = await service.list_faces(query=query)
 
     return FaceListObjectSchema(
-        FaceListObject=FaceList(FaceObject=[face for face in faces])
+        FaceListObject=FaceList(
+            FaceObject=[
+                Face.model_validate(face, from_attributes=True) for face in faces
+            ]
+        )
     )
 
 
@@ -151,7 +155,7 @@ async def face_query(
 ) -> Face:
     """单个人脸查询接口"""
     face = await service.get_face(face_id)
-    return face
+    return Face.model_validate(face, from_attributes=True)
 
 
 @router.put(

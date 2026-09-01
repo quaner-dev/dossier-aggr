@@ -5,8 +5,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core import exceptions
 from core.database import engine
+from domain.common import enums
 from models import APS
-from models.common import enums
 
 
 async def list_apss_repo() -> Sequence[APS]:

@@ -7,7 +7,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core import exceptions, settings
 from core.database import engine
-from models import ArchiveSubjectQuery, VehicleArchiveSubject
+from models import VehicleArchiveSubject
+from schemas import ArchiveSubjectQuery
 
 _TABLE_INIT_LOCK = asyncio.Lock()
 _TABLE_READY = False

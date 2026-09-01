@@ -7,10 +7,11 @@ from pydantic import BeforeValidator
 from core import constants
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     ResponseStatus,
     ResponseStatusList,
     ResponseStatusListSchema,
+    SubscribeNotification,
     SubscribeNotificationList,
     SubscribeNotificationListSchema,
 )
@@ -67,7 +68,12 @@ async def subscribe_notifications_query(
     notifications = await service.list_subscribe_notifications(filters=filters)
     return SubscribeNotificationListSchema(
         SubscribeNotificationListObject=SubscribeNotificationList(
-            SubscribeNotificationObject=notifications
+            SubscribeNotificationObject=[
+                SubscribeNotification.model_validate(
+                    notification, from_attributes=True
+                )
+                for notification in notifications
+            ]
         )
     )
 

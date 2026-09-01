@@ -7,7 +7,7 @@ from pydantic import BeforeValidator
 from core import constants
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     ArchiveLibraryList,
     ArchiveLibraryListSchema,
     ResponseStatus,

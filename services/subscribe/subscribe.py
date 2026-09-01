@@ -1,3 +1,4 @@
+from domain import Subscribe as SubscribeData
 from models import Subscribe
 from repo.subscribe.subscribe import (
     create_subscribes_repo,
@@ -7,6 +8,7 @@ from repo.subscribe.subscribe import (
     update_subscribe_by_id_repo,
     update_subscribes_repo,
 )
+from services.model_conversion import to_table_model, to_table_models
 
 
 class SubscribeService:
@@ -23,21 +25,21 @@ class SubscribeService:
         """查询所有订阅信息"""
         return list(await list_subscribes_repo())
 
-    async def create_subscribes(self, subscribes: list[Subscribe]) -> list[Subscribe]:
+    async def create_subscribes(self, subscribes: list[SubscribeData]) -> list[Subscribe]:
         """创建订阅任务"""
-        return list(await create_subscribes_repo(subscribes=subscribes))
+        return list(await create_subscribes_repo(subscribes=to_table_models(Subscribe, subscribes)))
 
-    async def update_subscribes(self, subscribes: list[Subscribe]) -> list[Subscribe]:
+    async def update_subscribes(self, subscribes: list[SubscribeData]) -> list[Subscribe]:
         """更新订阅信息"""
-        return list(await update_subscribes_repo(subscribes=subscribes))
+        return list(await update_subscribes_repo(subscribes=to_table_models(Subscribe, subscribes)))
 
     async def update_subscribe_by_id(
-        self, subscribe_id: str, subscribe: Subscribe
+        self, subscribe_id: str, subscribe: SubscribeData
     ) -> Subscribe:
         """按订阅ID更新单条订阅信息"""
         return await update_subscribe_by_id_repo(
             subscribe_id=subscribe_id,
-            subscribe=subscribe,
+            subscribe=to_table_model(Subscribe, subscribe),
         )
 
     async def delete_subscribe(self, subscribe_ids: list[str]) -> None:

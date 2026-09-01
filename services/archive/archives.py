@@ -1,4 +1,7 @@
-from models import Archive, ArchiveQuery
+from collections.abc import Sequence
+
+from domain import Archive as ArchiveData
+from models import Archive
 from repo.archive.archives import (
     create_archives_repo,
     delete_archives_repo,
@@ -6,6 +9,8 @@ from repo.archive.archives import (
     query_archives_repo,
     update_archives_repo,
 )
+from schemas import ArchiveQuery
+from services.model_conversion import to_table_models
 
 
 class ArchiveService:
@@ -20,11 +25,11 @@ class ArchiveService:
     async def query_archives(self, query: ArchiveQuery) -> list[Archive]:
         return list(await query_archives_repo(query=query))
 
-    async def create_archives(self, archives: list[Archive]) -> list[Archive]:
-        return list(await create_archives_repo(archives=archives))
+    async def create_archives(self, archives: Sequence[ArchiveData]) -> list[Archive]:
+        return list(await create_archives_repo(archives=to_table_models(Archive, archives)))
 
-    async def update_archives(self, archives: list[Archive]) -> list[Archive]:
-        return list(await update_archives_repo(archives=archives))
+    async def update_archives(self, archives: Sequence[ArchiveData]) -> list[Archive]:
+        return list(await update_archives_repo(archives=to_table_models(Archive, archives)))
 
     async def delete_archives(self, archive_ids: list[str]) -> list[str]:
         return await delete_archives_repo(archive_ids=archive_ids)

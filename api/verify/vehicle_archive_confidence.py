@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from core import constants
-from models import VehicleArchiveList, VehicleArchiveListSchema
+from schemas import VehicleArchive, VehicleArchiveList, VehicleArchiveListSchema
 from services import VehicleArchiveConfidenceService
 
 router = APIRouter()
@@ -23,5 +23,10 @@ async def vehicle_archive_confidence_verify(
     archives = data.VehicleArchiveListObject.VehicleArchiveObject
     verified_archives = await service.verify_vehicle_archive_confidence(archives=archives)
     return VehicleArchiveListSchema(
-        VehicleArchiveListObject=VehicleArchiveList(VehicleArchiveObject=verified_archives)
+        VehicleArchiveListObject=VehicleArchiveList(
+            VehicleArchiveObject=[
+                VehicleArchive.model_validate(archive, from_attributes=True)
+                for archive in verified_archives
+            ]
+        )
     )

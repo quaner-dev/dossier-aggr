@@ -1,4 +1,7 @@
-from models import Face, FaceQueryParams
+from collections.abc import Sequence
+
+from domain import Face as FaceData
+from models import Face
 from repo.face.face import (
     create_face_repo,
     create_faces_repo,
@@ -9,6 +12,8 @@ from repo.face.face import (
     update_face_repo,
     update_faces_repo,
 )
+from schemas import FaceQueryParams
+from services.model_conversion import to_table_model, to_table_models
 
 
 class FaceService:
@@ -24,17 +29,17 @@ class FaceService:
     async def list_faces(self, query: FaceQueryParams) -> list[Face]:
         return list(await list_faces_repo(query=query))
 
-    async def create_face(self, face: Face) -> Face:
-        return await create_face_repo(face=face)
+    async def create_face(self, face: FaceData) -> Face:
+        return await create_face_repo(face=to_table_model(Face, face))
 
-    async def create_faces(self, faces: list[Face]) -> list[Face]:
-        return await create_faces_repo(faces=faces)
+    async def create_faces(self, faces: Sequence[FaceData]) -> list[Face]:
+        return await create_faces_repo(faces=to_table_models(Face, faces))
 
-    async def update_face(self, face: Face) -> Face:
-        return await update_face_repo(face=face)
+    async def update_face(self, face: FaceData) -> Face:
+        return await update_face_repo(face=to_table_model(Face, face))
 
-    async def update_faces(self, faces: list[Face]) -> list[Face]:
-        return await update_faces_repo(faces=faces)
+    async def update_faces(self, faces: Sequence[FaceData]) -> list[Face]:
+        return await update_faces_repo(faces=to_table_models(Face, faces))
 
     async def delete_face(self, face_id: str) -> str:
         return await delete_face_repo(face_id=face_id)

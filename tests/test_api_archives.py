@@ -6,14 +6,14 @@ from api.archive.archives import (
     archives_query_sync,
     archives_update,
 )
-from models import (
+from domain.common import enums
+from schemas import (
     Archive,
     ArchiveList,
     ArchiveListSchema,
     ArchiveQuery,
     ArchiveQuerySchema,
 )
-from models.common import enums
 from tests.type_helpers import (
     as_service,
     as_status_list,

@@ -1,9 +1,13 @@
+from collections.abc import Sequence
+
+from domain import SubscribeNotification as SubscribeNotificationData
 from models import SubscribeNotification
 from repo.subscribe.subscribe_notification import (
     create_subscribe_notifications_repo,
     delete_subscribe_notifications_repo,
     list_subscribe_notifications_repo,
 )
+from services.model_conversion import to_table_models
 
 
 class SubscribeNotificationService:
@@ -18,11 +22,13 @@ class SubscribeNotificationService:
         return list(await list_subscribe_notifications_repo(filters=filters))
 
     async def create_subscribe_notifications(
-        self, subscribe_notifications: list[SubscribeNotification]
+        self, subscribe_notifications: Sequence[SubscribeNotificationData]
     ) -> list[SubscribeNotification]:
         return list(
             await create_subscribe_notifications_repo(
-                subscribe_notifications=subscribe_notifications
+                subscribe_notifications=to_table_models(
+                    SubscribeNotification, subscribe_notifications
+                )
             )
         )
 

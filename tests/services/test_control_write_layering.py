@@ -16,6 +16,14 @@ def test_control_writes_call_repositories_directly(monkeypatch):
         import services.subscribe.subscribe as subscribe_service_module
         import services.task.archive_task as archive_task_service_module
 
+        for module in (
+            ape_service_module,
+            library_service_module,
+            subscribe_service_module,
+            archive_task_service_module,
+        ):
+            monkeypatch.setattr(module, "to_table_models", lambda _, values: values)
+
         value = cast(Any, object())
         values = cast(list[Any], [value])
         calls: list[str] = []

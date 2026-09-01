@@ -6,7 +6,8 @@ from api.subscribe.subscribe_notification import (
     subscribe_notifications_delete,
     subscribe_notifications_query,
 )
-from models import (
+from domain.common import enums
+from schemas import (
     Archive,
     ArchiveList,
     ArchiveSubject,
@@ -18,7 +19,6 @@ from models import (
     VehicleArchive,
     VehicleArchiveList,
 )
-from models.common import enums
 from tests.type_helpers import (
     as_service,
     as_status_list,

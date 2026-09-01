@@ -1,8 +1,8 @@
 import asyncio
 
 from api.verify.archive_confidence import archive_confidence_verify
-from models import Archive, ArchiveList, ArchiveListSchema
-from models.common import enums
+from domain.common import enums
+from schemas import Archive, ArchiveList, ArchiveListSchema
 from tests.type_helpers import (
     as_service,
     dt,

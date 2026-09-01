@@ -1,410 +1,421 @@
-# 数据推送架构设计
+# Kafka 高并发数据接入设计
 
-本文是 `dossier-aggr` 后续数据推送实现的公开架构基线。文档记录已经确定的
-组件边界、数据流、可靠性语义和实施顺序；协议字段仍应以本地 `.protocol/`
-原文为准。
+本文记录 `dossier-aggr` 第一阶段高并发 POST 接口接入 Kafka 的实现边界。
 
-当前仓库尚未实现本文描述的 Kafka、Taskiq、RabbitMQ、实时推送编排器或历史
-推送任务。现有 `/VIID/SubscribeNotifications` 是入站通知接口，不能视为出站
-推送已经完成。
-
-## 1. 目标与约束
-
-目标容量基线：
-
-- 高并发新增数据：`5,000` 条/秒。
-- 上级系统：按最多 `10` 个估算。
-- 最大逻辑扇出：`5,000 x 10 = 50,000` 条/秒。
-- 推送必须批量执行，不能为每条数据创建一个 Taskiq 任务。
-- 接收、实时编排、历史查询和 HTTP 推送必须能够独立部署和水平扩容。
-
-已经确定的业务边界：
-
-- 高并发新增数据通过 Kafka 接入并异步物化到 PostgreSQL。
-- 修改和删除直接写 PostgreSQL，不进入 Kafka，也不作为实时订阅数据向上级推送。
-- 订阅创建、更新、取消属于低频控制操作，直接写 PostgreSQL。
-- 实时数据来自 Kafka，历史数据来自 PostgreSQL。
-- 历史与实时的数据选择方式不同，但共用 Taskiq 推送 Worker、重试、限流、
-  幂等和审计能力。
-- 数据进入 Kafka 不等于立即向上级发送。实时编排器应按订阅和上级要求聚合，
-  达到时间、条数或字节阈值后才创建 Taskiq 批次任务。
-
-## 2. 总体架构
-
-```mermaid
-flowchart TB
-    subgraph APIPlane[API 与控制面]
-        CREATE[高并发新增接口]
-        WRITE[修改 / 删除接口]
-        SUB[订阅管理接口]
-    end
-
-    subgraph RealtimePlane[实时数据面]
-        K[(Kafka created-events)]
-        MATERIALIZER[PostgreSQL 物化 Consumer Group]
-        ORCHESTRATOR[实时推送编排 Consumer Group]
-        BUFFER[按上级和订阅聚合]
-    end
-
-    subgraph HistoryPlane[历史数据面]
-        HISTORY[历史任务调度器]
-        QUERY[订阅条件查询与 Keyset 分页]
-    end
-
-    subgraph DeliveryPlane[统一投递面]
-        TASKIQ[Taskiq Producer]
-        RABBIT[(RabbitMQ)]
-        WORKERS[Taskiq Push Workers]
-        AUDIT[(投递审计)]
-        UPSTREAMS[上级系统]
-    end
-
-    PG[(PostgreSQL)]
-
-    CREATE -->|Kafka 确认后应答| K
-    WRITE -->|事务提交后应答| PG
-    SUB -->|事务提交后应答| PG
-
-    K --> MATERIALIZER
-    MATERIALIZER --> PG
-    K --> ORCHESTRATOR
-    PG -->|周期加载有效订阅| ORCHESTRATOR
-    ORCHESTRATOR --> BUFFER
-    BUFFER --> TASKIQ
-
-    HISTORY --> QUERY
-    PG --> QUERY
-    QUERY --> TASKIQ
-
-    TASKIQ --> RABBIT
-    RABBIT --> WORKERS
-    WORKERS --> UPSTREAMS
-    WORKERS --> AUDIT
-```
-
-同一仓库可以交付这些组件，但生产环境应以独立进程或独立 Deployment 运行：
-
-1. FastAPI API。
-2. Kafka 数据落库消费者。
-3. Kafka 实时推送编排器。
-4. 历史推送调度器/生产者。
-5. Taskiq 推送 Worker。
-
-各组件使用同一份协议模型和业务代码，但具有独立连接池、并发限制、健康检查和
-扩容策略。当前阶段不要求拆成多个代码仓库。
-
-## 3. 数据接入路径
-
-### 3.1 高并发新增
-
-被确认需要承载高并发的新增接口采用 Kafka-first：
-
-```mermaid
-sequenceDiagram
-    participant Lower as 下级系统
-    participant API as FastAPI
-    participant Kafka as Kafka
-    participant DBConsumer as 落库 Consumer
-    participant PG as PostgreSQL
-
-    Lower->>API: POST 新增数据
-    API->>Kafka: 发布 created event
-    Kafka-->>API: Broker 确认
-    API-->>Lower: 已接收
-    Kafka->>DBConsumer: 消费 created event
-    DBConsumer->>PG: 幂等写入业务表
-    PG-->>DBConsumer: 事务提交
-    DBConsumer->>Kafka: 提交 offset
-```
-
-这会把新增接口成功语义从“PostgreSQL 已提交”改成“Kafka 已可靠接收”。因此实现
-时必须同步修改接口说明和测试，并接受新增数据在 PostgreSQL 中短暂不可见的最终
-一致性窗口。
-
-建议的事件信封至少包含：
-
-```json
-{
-  "event_id": "uuid",
-  "event_type": "resource.created",
-  "schema_version": 1,
-  "occurred_at": "2026-08-21T00:00:00Z",
-  "resource_type": "face",
-  "resource_id": "F-001",
-  "partition_key": "face:F-001",
-  "payload": {}
-}
-```
-
-Kafka key 使用 `resource_type + resource_id`，保证同一资源在同一分区。数据落库
-消费者以 `event_id` 或业务唯一键幂等，只有 PostgreSQL 提交成功后才能提交
-Kafka offset。
-
-### 3.2 修改、删除和订阅
-
-修改、删除以及订阅管理保持当前同步路径：
+第一阶段采用快速响应模式：FastAPI 完成协议校验并将请求放入本进程接入队列后，
+直接返回 HTTP 200；对象存储上传和 Kafka 发送由进程内固定后台 Worker 继续处理。
 
 ```text
-FastAPI -> Service -> Repository -> PostgreSQL commit -> HTTP response
+HTTP 请求 -> 协议校验 -> 本进程接入队列 -> HTTP 200
+                                  |
+                                  v
+                     对象存储上传 -> Kafka 发送
 ```
 
-它们不进入 Kafka，也不触发实时出站通知。
+Kafka 消费、批量写入 PostgreSQL、出站订阅推送、入站台账和链路追踪均不在本阶段
+实现。后续需要批量物化 Kafka 数据时，再单独讨论 consumer 和 PostgreSQL 批量写入
+方案。
 
-该选择存在一个必须显式处理的竞态：新增事件已经写入 Kafka但尚未物化到
-PostgreSQL 时，同一资源的修改或删除可能先到达数据库。第一阶段至少应定义为
-可识别的冲突或暂时不可用响应，并要求调用方重试；如果业务不能接受该语义，
-则必须为同一资源增加有序变更通道，不能静默丢失修改或删除。
+涉及 GA/T 1400 和 GA/T 2350.5 的接口、字段、外层对象及响应状态时，仍应以本地
+`.protocol/` 原文为准。当前工作区没有 `.protocol/` 和 `.ai/`，机动车、非机动车
+接口及完整图片字段在编码前仍需补充协议原文和契约测试。
 
-## 4. 实时推送
+## 1. 当前状态与目标
 
-实时推送编排器是独立的 Kafka consumer group。它与数据落库 consumer group
-分别消费同一新增事件流，互不占用对方的消息。
-
-```mermaid
-sequenceDiagram
-    participant Kafka as Kafka
-    participant O as 实时推送编排器
-    participant PG as PostgreSQL
-    participant T as Taskiq/RabbitMQ
-    participant W as Push Worker
-    participant U as 上级系统
-
-    O->>PG: 周期加载有效订阅及版本
-    Kafka->>O: 新增数据事件
-    O->>O: 匹配订阅并按上级/订阅聚合
-    Note over O: ReportInterval、最大条数或最大字节数到达
-    O->>T: 提交稳定 batch_id 的批次任务
-    T-->>O: Broker 确认
-    O->>Kafka: 提交安全消费水位
-    T->>W: 分发 Taskiq 任务
-    W->>U: POST SubscribeNotification
-```
-
-编排器不能针对每条事件查询一次 PostgreSQL。有效订阅应保存在进程内缓存中，
-并根据订阅版本或 `updated_at` 周期增量刷新。订阅量属于低并发控制数据，因此
-这种周期查询不会使 PostgreSQL进入实时数据热路径。
-
-聚合键至少包括：
+当前所有已实现写接口使用同步事务路径：
 
 ```text
-upstream_id + subscribe_id + resource_type + report_window
+FastAPI -> Service -> Repository -> PostgreSQL commit -> HTTP success
 ```
 
-批次在任一条件满足时封装：
+在均值约 `10,000` 的高并发新增流量下，逐请求写 PostgreSQL 无法满足目标吞吐。
+第一阶段将指定 POST 改为快速接入模式，使 PostgreSQL、对象存储和 Kafka 网络响应
+都不处于这些 POST 请求的同步响应路径中。
 
-- `ReportInterval` 窗口结束。
-- 达到最大记录数。
-- 达到最大序列化字节数。
+第一阶段 POST 成功语义是：
 
-实时编排器可以部署多个实例，由 Kafka 分区和 consumer group 分配负载。短窗口
-可以使用内存聚合，但必须在 Taskiq Broker 确认后才推进 Kafka 安全消费水位；
-进程崩溃导致的数据重放依靠稳定批次 ID 去重。长窗口或大报文聚合应增加可恢复的
-状态存储，不能无限占用进程内存。
+```text
+协议校验通过 + 请求已进入当前 FastAPI 进程的内存接入队列
+```
 
-## 5. 历史推送
+它不表示图片已经上传，不表示 Kafka broker 已确认消息，也不表示数据已经写入
+PostgreSQL。业务接受 POST 成功后数据暂时不可查询。
 
-历史任务由上级订阅、计划任务或受控的人工操作启动。每个上级可以有不同的资源、
-过滤条件、时间范围和图片/特征声明，因此应分别查询 PostgreSQL。
+该选择优先降低接口响应时间，但需要明确接受以下代价：
+
+- FastAPI 进程在后台处理完成前退出、崩溃或被强制重启时，内存队列中的请求可能丢失。
+- 对象存储或 Kafka 最终失败发生在 HTTP 200 之后，无法再通过本次 HTTP 响应通知调用方。
+- 第一阶段只记录后台失败日志，不提供状态查询、自动补偿、台账或 DLQ。
+
+## 2. 第一阶段范围
+
+### 2.1 接入 Kafka 的 POST
+
+| HTTP 接口 | 资源 | 当前仓库状态 |
+| --- | --- | --- |
+| `POST /VIID/SubscribeNotifications` | 入站订阅通知 | 已有接口，待改造 |
+| `POST /VIID/Faces` | 人脸 | 已有接口，待改造 |
+| `POST /VIID/Persons` | 人体/人员 | 已有接口，待改造 |
+| `POST /VIID/MotorVehicles` | 机动车 | 尚未实现接口和完整模型 |
+| `POST /VIID/NonMotorVehicles` | 非机动车 | 尚未实现接口和完整模型 |
+
+`POST /VIID/Archives`、`POST /VIID/ArchiveSubjects`、车辆档案和档案明细暂不接入
+Kafka，继续使用当前 PostgreSQL 同步事务路径。
+
+### 2.2 不进入 Kafka 的操作
+
+- 所有 `GET` 查询。
+- 所有 `PUT` 修改。
+- 所有 `DELETE` 删除。
+- 订阅创建、修改、取消等低频控制面操作。
+- 未列入上一节的其他 POST。
+
+GET、PUT 和 DELETE 继续同步访问 PostgreSQL。调用方需要修改或删除刚刚 POST 的
+对象时，应先等待数据完成后续物化并通过 GET 确认存在，再调用 PUT 或 DELETE。
+这些同步接口自身不等待 Kafka 数据落库。
+
+### 2.3 明确排除
+
+第一阶段不实现：
+
+- Kafka consumer 或 PostgreSQL 批量物化进程。
+- consumer lag、消费重试、DLQ 和物化状态查询。
+- 入站事件台账和 `event_id`、`batch_id`。
+- 请求链路追踪 ID 和额外追踪字段。
+- 根据订阅向上级系统发送数据。
+- 实时或历史出站推送编排。
+- Taskiq、RabbitMQ 或推送 Worker。
+
+`/VIID/SubscribeNotifications` 在本阶段仍然只是接收下级系统通知的入站接口，不能
+据此认为系统已经具备主动向上级推送的能力。
+
+## 3. 快速响应与后台流水线
+
+### 3.1 请求路径
 
 ```mermaid
 flowchart LR
-    J[历史推送任务] --> S[读取指定上级订阅]
-    S --> Q[PostgreSQL 条件查询]
-    Q --> P[Keyset 分页]
-    P --> B[按条数和字节数组批]
-    B --> T[Taskiq / RabbitMQ]
-    T --> W[Push Workers]
-    W --> U[对应上级]
+    CLIENT[下级系统]
+    API[FastAPI 协议入口]
+    INPUT_QUEUE[进程内接入队列]
+    STORAGE_WORKER[对象存储 Worker]
+    KAFKA_QUEUE[进程内 Kafka 队列]
+    KAFKA_WORKER[Kafka Worker]
+    STORAGE[(对象存储)]
+    KAFKA[(Kafka)]
+    PG[(PostgreSQL)]
+
+    CLIENT -->|指定 POST| API
+    API -->|校验后的原始 JSON| INPUT_QUEUE
+    INPUT_QUEUE -->|入队成功| API
+    API -->|协议成功，HTTP 200| CLIENT
+
+    INPUT_QUEUE --> STORAGE_WORKER
+    STORAGE_WORKER -->|存在 Base64| STORAGE
+    STORAGE -->|StoragePath| STORAGE_WORKER
+    STORAGE_WORKER -->|转换后的 JSON| KAFKA_QUEUE
+    KAFKA_QUEUE --> KAFKA_WORKER
+    KAFKA_WORKER --> KAFKA
+
+    CLIENT -->|GET / PUT / DELETE| API
+    API -->|现有同步 Service / Repository| PG
+    PG -->|事务结果| API
 ```
 
-历史查询结果不进入 Kafka。Kafka 的职责是实时新增数据流，而不是所有推送任务的
-统一入口。历史任务直接向 Taskiq 提交批次，可避免不必要的 Kafka 往返，也保留
-每个上级独立的查询计划。
+处理顺序固定为：
 
-历史查询必须使用 Keyset Pagination，避免在大表上使用不断增长的 `OFFSET`。
-历史批次 ID 应由 `history_job_id + subscribe_id + page/range` 稳定生成，以便任务
-重复提交时保持幂等。
+1. API 完成认证、HTTP 参数解析和完整协议模型校验。
+2. 保留原始 JSON 的字段、大小写、外层对象和列表结构。
+3. 将校验后的原始 JSON 放入本进程接入队列。
+4. 入队成功后立即返回现有 `ResponseStatusListObject` 和 HTTP 200。
+5. 对象存储 Worker 从接入队列获取请求并处理其中的 Base64 图片。
+6. 图片上传成功后，将 `StoragePath` 设置为返回地址，将 `Data` 设置为 `null`。
+7. 将转换后的完整 JSON 放入 Kafka 队列。
+8. Kafka Worker 异步发送消息；成功或最终失败只写日志，不影响已经返回的 HTTP 响应。
 
-如果同一订阅同时启用历史和实时推送，必须在任务创建时记录明确的截止水位或时间
-边界，规定历史覆盖范围和实时起点，并通过幂等台账避免边界重复。
+接入队列本身仍应是有界队列。入队失败表示请求甚至没有被当前进程接受，此时不能
+返回成功，应使用项目现有协议错误包装返回失败并记录日志。
 
-## 6. Taskiq Broker 选型
+### 3.2 S3 上传与 Kafka 发送是否可以分开
 
-生产推送链路确定使用：
+分开后可以明显降低 HTTP 响应延迟，因为响应不再累计对象存储上传和 Kafka 网络
+确认时间。将对象存储 Worker 和 Kafka Worker 拆成两个独立阶段，也可以分别设置
+并发数，使不同请求形成流水线：一批请求正在上传图片时，上一批请求可以同时发送
+Kafka。
+
+但同一个请求的两个步骤不能并行：Kafka JSON 需要包含上传后得到的 `StoragePath`，
+所以必须先完成该请求的图片上传和 JSON 替换，再发送 Kafka。拆分不会减少总 CPU、
+网络和存储工作量，也不会提高对象存储或 Kafka 本身的极限吞吐；如果后台处理速度
+长期低于请求速度，积压会转移到 FastAPI 进程内存。
+
+### 3.3 不直接使用 FastAPI BackgroundTasks
+
+`BackgroundTasks` 可以在 HTTP 响应发送后运行函数，因此从功能上能够提前返回。
+但均值约 `10,000` 的高并发场景不适合为每个请求直接创建一个独立
+`BackgroundTasks` 上传任务：
+
+- 不方便统一限制对象存储和 Kafka 的并发数。
+- 不方便观察和限制所有待处理请求占用的总内存。
+- 大量任务仍运行在 API Worker 进程中，容易争抢事件循环和连接池。
+- 进程退出时同样没有持久化恢复能力。
+
+第一阶段使用共享的有界队列和固定数量 Worker，仍属于进程内后台处理，但并发和
+内存边界更明确。它不是 Kafka consumer，也不负责 PostgreSQL 物化。
+
+## 4. Topic 与分区
+
+### 4.1 Topic 名称
+
+Topic 只按接口划分，第一阶段不加环境前缀：
+
+| HTTP 接口 | Kafka Topic |
+| --- | --- |
+| `/VIID/SubscribeNotifications` | `viid.subscribe-notifications.v1` |
+| `/VIID/Faces` | `viid.faces.v1` |
+| `/VIID/Persons` | `viid.persons.v1` |
+| `/VIID/MotorVehicles` | `viid.motor-vehicles.v1` |
+| `/VIID/NonMotorVehicles` | `viid.non-motor-vehicles.v1` |
+
+Topic 后缀 `.v1` 表示 Kafka value 结构的第一版。若未来协议 JSON 结构产生不兼容
+变化，应创建新的版本 Topic，不在原 Topic 中混放两种不兼容结构。
+
+### 4.2 初始分区数
+
+五个 Topic 的初始分区数统一设为：
 
 ```text
-Taskiq + taskiq-aio-pika + RabbitMQ
+12 partitions per topic
 ```
 
-该选择是在 Taskiq 使用场景下做出的，不只是 RabbitMQ 和 Redis 的产品比较。
-Taskiq 的任务声明和 `.kiq()` 调用方式在不同 Broker 间基本一致，但 Broker 适配器
-决定底层投递确认、崩溃重投、预取和持久化能力。
+选择 `12` 的原因：
 
-| Taskiq 关注点 | RabbitMQ / `taskiq-aio-pika` | Redis Broker |
-| --- | --- | --- |
-| 消费确认 | AMQP ACK/NACK 和未确认消息重投语义成熟 | 取决于 Pub/Sub、List 或 Streams 具体实现 |
-| Worker 崩溃恢复 | 未确认任务可重新投递 | 不同 Redis Broker 实现差异较大 |
-| 背压 | prefetch/QoS 可限制 Worker 预取 | 主要依赖具体实现及 Worker 并发配置 |
-| 持久队列 | durable queue 与 persistent message | 依赖 AOF/RDB、复制和淘汰策略 |
-| 隔离与路由 | exchange、routing key、queue 能力成熟 | 通常使用不同 key/list/stream 隔离 |
-| 运维观察 | 队列、ready、unacked、consumer 指标清晰 | 需要按所选数据结构建设观察能力 |
+- Base64 外置后单条 Kafka record 以 JSON 元数据为主，单分区吞吐压力会明显降低。
+- 单个 Topic 后续最多可以由 `12` 个 consumer 实例或消费任务并行处理。
+- 当流量集中到某一个接口时，仍有足够的并行扩展空间。
+- 相比一开始建立几十个分区，`12` 对小型 Kafka 集群的元数据和文件句柄开销更可控。
 
-推送任务经过批处理后，按每批 `100` 到 `200` 条估算约为 `250` 到 `500` 个
-Taskiq 任务/秒；这个任务量下 Broker 峰值吞吐不是主要矛盾，可靠确认、慢上级
-隔离、背压和故障恢复更重要，因此选择 RabbitMQ。
+分区数决定未来 consumer group 的最大并行度，但不保证 consumer 一定足够快。当前
+不设置 Kafka record key，由 producer 在分区间均匀分配。
 
-Redis可以用于订阅缓存、分布式限流或短期幂等键，但不作为本链路的生产 Taskiq
-Broker。推送调用方不等待任务返回结果，投递状态写入审计表，因此默认也不需要
-Taskiq Result Backend。
+## 5. Kafka 消息内容
 
-需要特别说明：RabbitMQ 不会自动理解 HTTP 或 GA/T 协议是否成功。Taskiq 任务
-必须解析 HTTP 状态和 `ResponseStatusListObject`，再决定成功、重试或最终失败。
-延迟重试需要在锁定 Taskiq 插件版本后，通过 Taskiq 重试中间件以及 RabbitMQ
-重试队列/TTL/DLX 等能力落地并进行故障测试，不能仅因为选用了 RabbitMQ 就假设
-业务重试已经完成。
+### 5.1 一次请求一条消息
 
-## 7. 批次、载荷与幂等
-
-### 7.1 批处理
-
-容量基线下的逻辑扇出为：
+第一阶段采用：
 
 ```text
-5,000 条/秒 x 10 个上级 = 50,000 条逻辑投递/秒
+一个 HTTP POST 请求 = 一条 Kafka record
 ```
 
-批量后的任务量约为：
+Kafka value 是完成图片替换后的原始请求 JSON：
+
+- 保留原请求的外层对象。
+- 保留原字段名称和大小写。
+- 保留原列表和对象层级。
+- 不增加事件 envelope。
+- 不增加 `event_id`、`batch_id`、`operation` 或资源类型字段。
+- 不增加或删除协议字段。
+- 图片对象的 `StoragePath` 改为对象存储返回地址。
+- 图片对象的 `Data` 改为 `null`。
+- 除 `StoragePath` 和 `Data` 外，不主动修改其他字段值。
+
+实现时以原始 JSON 树作为 Kafka value 的数据来源，同时使用协议模型完成校验。
+不能直接序列化一个填充了默认值的模型并写入 Kafka，否则可能把调用方未提交的默认
+字段加入消息。
+
+图片对象需要保留 `StoragePath` 和 `Data` 两个协议字段，只修改它们的值。如果请求
+缺少这两个协议字段，具体兼容方式需要在协议原文可用后确认。
+
+清理 Base64 后的请求如果仍超过配置的 Kafka record 上限，后台 Kafka Worker 记录
+失败日志并丢弃本条消息；由于 HTTP 已经返回，本阶段不向调用方补发错误。
+
+### 5.2 不生成额外 ID 或 Key
+
+协议请求已经包含 `NotificationID`、`FaceID`、`PersonID` 等业务 ID，第一阶段不
+生成额外 `event_id` 和 `batch_id`，也不添加请求链路追踪 ID。
+
+Kafka record key 暂时保持为空。对象存储所需的底层 object key 或 object ID 由
+对象存储 adapter 在内部生成，业务 Service 不制定 key 规则，也不把该技术字段加入
+Kafka JSON。
+
+### 5.3 最小 Header
+
+Topic 已经表示接口类型，协议 JSON 已有业务 ID，所以第一阶段只设置一个自定义
+header：
 
 ```text
-每批 100 条 -> 约 500 个任务/秒
-每批 200 条 -> 约 250 个任务/秒
+content-type = application/json
 ```
 
-批处理只降低任务数和 HTTP 请求数，不降低网络字节数。如果平均单条协议数据为
-`10 KB`，十倍扇出已经接近 `500 MB/s` 的业务载荷；包含 Base64 图片时可能更高。
-因此压测必须同时测记录数、序列化字节数、图片比例和上级响应时间。
+不增加 `request-id`、`traceparent`、`received-at`、`request-path` 或自定义 schema
+header。版本由 Topic 的 `.v1` 后缀表达。
 
-Taskiq 任务应优先携带小型批次描述和稳定引用。大型图片或超大 JSON 不能无限制
-塞入 RabbitMQ；实现时必须设置任务消息最大字节数，并为超限批次采用不可变载荷
-存储或更小批次。具体阈值应由 RabbitMQ 和真实协议报文压测确定。
+## 6. Base64 与对象存储
 
-### 7.2 Kafka 到 Taskiq 的交接
+### 6.1 平台无关适配
 
-Kafka 和 RabbitMQ之间没有原子事务：
-
-1. 编排器向 Taskiq/RabbitMQ 提交任务。
-2. RabbitMQ 确认后，编排器提交 Kafka offset。
-3. 如果步骤 1 成功、步骤 2 前进程崩溃，Kafka 会重放并再次提交同一任务。
-
-因此系统采用至少一次语义，不能承诺恰好一次。实时批次 ID建议稳定包含：
+业务代码不直接依赖某一家 S3 产品或 SDK。定义统一的异步对象存储接口：
 
 ```text
-subscribe_id + topic + partition + first_offset + last_offset + schema_version
+upload(bucket, content, content_type) -> storage_path
 ```
 
-历史批次 ID建议稳定包含：
+具体 adapter 可以对接 AWS S3、MinIO、Ceph、阿里云 OSS、华为云 OBS 或其他对象
+存储平台。Service 只传入逻辑 bucket 和图片内容，并把 adapter 返回值写入
+`StoragePath`，不处理 endpoint、签名、底层 object key 或 URL 拼接。
+
+不同平台的上传响应并不统一：有的平台返回对象 ID 或稳定地址；标准 S3 `PutObject`
+通常要求客户端先提供 bucket 和 object key，响应主要返回 ETag/version，并不会自动
+返回可长期使用的 URL。因此 adapter 的职责是：
+
+1. 在平台要求时生成内部 object key。
+2. 调用对应平台上传 API。
+3. 优先采用平台返回的稳定对象地址。
+4. 平台不返回地址时，根据本次上传结果生成系统内部可长期解析的地址。
+5. 将最终地址作为 `storage_path` 返回给 Service。
+
+Kafka 中不能保存会过期的临时签名 URL。`StoragePath` 对业务层是不透明字符串，未来
+读取图片时仍通过同一对象存储 adapter 解析，不在业务代码中按某个平台拼 URL。
+
+### 6.2 按日期划分 bucket
+
+第一阶段按中国时区的接收日期选择逻辑 bucket，默认命名模板为：
 
 ```text
-history_job_id + subscribe_id + page_or_key_range
+viid-{YYYYMMDD}
 ```
 
-同一 `batch_id` 必须映射到同一 `NotificationID`。投递审计表对 `batch_id` 和
-`NotificationID` 建唯一约束；Worker 收到重复任务时复用已有结果，不生成新的
-通知标识。上级接收方也应按 `NotificationID` 幂等。
+例如：
 
-## 8. 发送、重试和隔离
-
-```mermaid
-stateDiagram-v2
-    [*] --> pending
-    pending --> sending: Worker 获得任务
-    sending --> succeeded: HTTP 和协议状态成功
-    sending --> retry_wait: timeout / 429 / 5xx / 临时协议错误
-    retry_wait --> pending: 退避到期
-    sending --> dead: 永久错误或重试耗尽
-    dead --> pending: 受控人工重放
-    succeeded --> [*]
+```text
+viid-20260831
 ```
 
-发送策略：
+不同存储平台对 bucket/container 的命名、数量限制和创建方式不同。日期和逻辑 bucket
+名由 Service 生成，实际 bucket 创建、存在性检查以及必要的平台名称映射由 adapter
+负责。adapter 应缓存当日 bucket 的就绪状态，不能在每张图片上传前重复创建或检查。
 
-- HTTP `2xx` 不等于业务成功，必须解析协议状态对象。
-- 超时、连接失败、`429` 和可恢复的 `5xx` 使用指数退避和随机抖动。
-- 明确的认证失败、参数错误和协议不兼容默认进入最终失败，避免无限重试。
-- 重试必须复用同一批次载荷和 `NotificationID`。
-- 每个上级分别配置并发、QPS、批次大小、超时和积压上限。
-- 慢上级不能占满所有 Worker；应按上级路由到隔离队列或受控的队列分片。
-- Worker 在网络调用期间不持有 PostgreSQL 事务。
+第一阶段不在业务层制定 object key，也不计算图片 SHA-256。底层平台如果必须提供
+object key，由 adapter 内部使用其默认或简单随机标识生成；后续再讨论稳定 key、
+内容去重和完整性校验。
 
-RabbitMQ 负责可靠分发和积压，Taskiq 中间件及任务代码负责业务重试决策，
-PostgreSQL 投递审计仅保存状态、次数、错误摘要和时间，不承担高吞吐任务队列职责。
+### 6.3 为什么不计算 SHA-256
 
-## 9. 数据模型与内部状态
+SHA-256 可以用于内容去重和完整性校验，但需要完整遍历解码后的图片字节。在低性能
+服务器和大量图片并发场景中会增加 CPU 工作。
 
-后续实现至少需要以下内部实体，具体字段通过模型和 Alembic 迁移落地：
+第一阶段没有内容去重要求，所以不计算 SHA-256。当前优先缩短处理路径；后续只有在
+确认需要去重或完整性校验，并完成 CPU 压测后再增加哈希。
 
-- `PushBatch`：`batch_id`、`NotificationID`、上级、订阅、模式（历史/实时）、
-  记录数、载荷引用或快照哈希、创建时间。
-- `PushDelivery`：状态、尝试次数、下次重试时间、最近 HTTP/协议状态、错误摘要、
-  成功时间。
-- `HistoryPushJob`：上级、订阅、查询范围、分页游标、截止水位、任务状态。
-- 订阅内部版本或 `updated_at`：供实时编排器增量刷新缓存。
-- 数据落库幂等记录：防止 Kafka 重放造成重复插入。
+### 6.4 图片字段替换
 
-这些是内部运行模型，不应混入 GA/T 协议对象，也不应改变公开字段大小写。
+对于协议图片字段，例如当前模型中的 `SubImageInfo`：
 
-## 10. 可观测性与背压
+1. `Data` 包含 Base64 时，解码并上传对象存储。
+2. 上传成功后，将 adapter 返回地址写入 `StoragePath`。
+3. 将 `Data` 设置为 `null`。
+4. 其他字段保持原值，不新增或删除字段。
 
-至少采集：
+对象存储外置减少的是 Kafka 消息大小、Kafka 网络复制流量和 Kafka 磁盘占用，
+不会减少下级系统到 FastAPI 的入站带宽。
 
-- Kafka producer 延迟、错误率和各 consumer group lag。
-- 每个上级和订阅的匹配数、批次数、记录数和字节数。
-- RabbitMQ ready、unacked、publish/ack 速率和最老任务年龄。
-- Taskiq 任务执行时间、成功率、重试数和最终失败数。
-- 上级 HTTP p50/p95/p99、状态码、协议错误和限流次数。
-- PostgreSQL 物化延迟、历史查询耗时和连接池占用。
-- 历史任务进度以及历史/实时边界重复数。
+## 7. 队列、Producer 与失败日志
 
-背压顺序应为：限制单上级并发、暂停该上级新批次、保留 Kafka lag 或历史游标，
-而不是让慢上级拖慢所有数据接入和其他上级。
+### 7.1 两类内存缓冲
 
-## 11. 实施顺序
+本设计存在两类不同的内存缓冲：
 
-1. 核验协议原文，确认 `SubscribeDetail`、`ReceiveAddr`、`ReportInterval`、通知字段、
-   Digest 认证以及上级幂等要求。
-2. 定义版本化新增事件信封、Kafka topic、分区键和错误 topic；实现高并发新增 API
-   与幂等 PostgreSQL 物化消费者。
-3. 增加订阅内部版本和实时编排器，完成订阅缓存、匹配、窗口聚合和稳定批次 ID。
-4. 引入固定版本的 Taskiq、`taskiq-aio-pika` 和 RabbitMQ，完成批次任务、HTTP
-   Worker、投递审计、限流、重试和最终失败处理。
-5. 实现按上级订阅查询 PostgreSQL 的历史任务、Keyset 分页和历史/实时边界。
-6. 进行 `5,000` 条/秒、`10` 个上级的端到端容量测试，并加入 Kafka 重放、
-   RabbitMQ 重启、Worker 强制退出、慢上级、上级长时间不可用等故障测试。
-7. 根据报文大小和压测结果确定 Kafka 分区数、Taskiq Worker 数、RabbitMQ 队列
-   拓扑、批次阈值、载荷存储方式和保留周期。
+- 应用接入队列和 Kafka 队列：保存等待后台 Worker 处理的请求，通常按消息数量限制。
+- Kafka producer 内部缓冲：保存等待组批和发送的序列化 records，主要按内存字节数
+  和批次大小管理，不只是“推送数量”。
 
-## 12. 实现验收条件
+Base64 请求可能很大，所以应用队列即使按数量限制，也必须评估实际内存占用。接入
+队列入队失败发生在 HTTP 返回前，应返回协议失败。HTTP 200 返回后的对象存储失败、
+Kafka 队列积压、producer 缓冲区不足或 Kafka 最终发送失败，只记录错误日志。
 
-- 新增 API 在 Kafka 未确认时不能返回成功。
-- 数据落库消费者重放不会产生重复业务数据。
-- 修改、删除早于新增物化时有明确且经过测试的响应语义。
-- 实时编排器不会为每条数据创建一个 Taskiq 任务。
-- 历史查询结果不经过 Kafka，并且不同上级使用各自的订阅条件。
-- Kafka offset 只在对应 Taskiq 批次获得 Broker 确认后推进。
-- Kafka 重放或 Taskiq 重投保持相同 `batch_id` 和 `NotificationID`。
-- 单个慢上级不会阻塞其他上级。
-- Worker 崩溃、RabbitMQ 重启和 HTTP 超时后任务可恢复且不会静默丢失。
-- `ruff check .`、`pyright`、`pytest -q` 以及目标容量压测均有可追溯结果。
+第一阶段不建设复杂指标、自动补偿或持久化队列。至少记录：
 
-## 13. 尚待协议核验
+- 接口路径和协议已有业务 ID。
+- 失败阶段：`storage_upload`、`kafka_enqueue` 或 `kafka_send`。
+- 异常类型和错误摘要。
+- 当前应用队列长度或 producer 缓冲相关错误。
 
-当前工作区没有可用的 `.protocol/` 原文，以下结论不能仅依赖现有模型：
+日志不能记录原始 Base64、完整请求体、对象存储凭证或 Kafka 认证信息。
 
-- `SubscribeDetail` 的正式过滤表达方式。
-- `ReceiveAddr` 是完整通知 URL 还是服务基址。
-- `ReportInterval` 是聚合窗口、最小间隔还是周期快照定义。
-- 历史订阅的时间边界以及是否允许存量补发。
-- 各资源在 `SubscribeNotification` 中的正式字段和必填性。
-- 上级通知接口的认证方式、成功状态和可重试协议状态。
+### 7.2 Kafka producer
 
-实施相关字段前必须核验原文并用协议契约测试固定结论。
+FastAPI 进程复用一个长生命周期的异步 Kafka producer，由应用 lifespan 启动和
+关闭，不能每个请求创建 producer 或 Kafka 连接。
+
+第一阶段至少配置：
+
+- 后台发送使用 `acks=all`，用于确认并记录最终发送结果，但 HTTP 响应不等待该确认。
+- 开启 producer 幂等能力，处理 producer 自身的安全重试。
+- 使用有界发送超时，最终失败后记录日志。
+- 消息压缩算法通过小规模测试后选择，初始可使用 `lz4`。
+- producer 缓冲区不足时记录错误，不无限增加 API 进程内存。
+
+对象存储客户端和 Kafka producer 均复用异步长连接。对象存储 Worker 和 Kafka Worker
+分别配置固定并发数，不能为每张图片或每条消息无限制创建任务。
+
+### 7.3 进程关闭
+
+正常关闭时，lifespan 应停止接收新任务，并在有限超时时间内尝试清空应用队列和刷新
+Kafka producer。超过关闭超时的剩余任务允许丢失并记录日志。强制退出无法保证执行
+该流程，这是快速响应且仅使用内存队列的已知限制。
+
+## 8. 代码分层
+
+实现继续遵守现有分层：
+
+- `api/` 负责 HTTP 参数、依赖注入、协议模型校验和响应包装。
+- `services/` 负责将校验后的原始 JSON 放入接入队列。
+- 进程内 Worker 编排 Base64 外置、字段替换和 Kafka 投递。
+- 对象存储和 Kafka producer 通过基础设施 adapter 提供，不在路由中直接调用 SDK。
+- `repo/` 继续只负责 PostgreSQL，不把 Kafka 或对象存储放入 Repository。
+- `main.py` 的 lifespan 管理客户端、队列和固定 Worker 的启动、刷新和关闭。
+
+本阶段不创建 Kafka consumer 进程目录、物化 Repository 或 PostgreSQL 批量写入代码。
+
+## 9. 实施顺序
+
+1. 补齐协议资料，确认五类接口的请求外形、Base64 字段和成功响应。
+2. 增加 Kafka、对象存储、接入队列和后台 Worker 的最小配置。
+3. 固定五个 Topic 各 `12` 个分区，Kafka record key 为空。
+4. 实现平台无关的异步对象存储接口及首个 adapter。
+5. 实现日期 bucket、adapter 内部 object key 和 `StoragePath`/`Data` 字段替换。
+6. 实现 lifespan 级队列、固定 Worker 和异步 Kafka producer。
+7. 将通知、人脸、人员 POST 改为快速响应，保持 GET、PUT、DELETE 不变。
+8. 补齐机动车、非机动车协议模型和 POST，再接入各自 Topic。
+9. 补充响应时序、原始 JSON、字段替换、Topic、后台失败日志和队列满测试。
+10. 使用无图片和含 Base64 图片的真实报文进行响应延迟、内存和后台吞吐测试。
+
+## 10. 第一阶段验收条件
+
+- 五类 POST 分别写入约定 Topic，每个 Topic 初始为 `12` 个分区。
+- 接入队列入队成功后直接返回 HTTP 200，不等待对象存储或 Kafka broker。
+- 一次 HTTP POST 最终只生成一条 Kafka record。
+- Kafka value 保留原始请求字段和层级。
+- 图片 `StoragePath` 替换为对象存储返回地址，`Data` 设置为 `null`。
+- Kafka value 不含新增 envelope、事件 ID、批次 ID、操作类型或技术 object key。
+- Kafka record key 为空，只使用 `content-type=application/json` 自定义 header。
+- 对象存储或 Kafka 后台失败只记录日志，不改变已返回的 HTTP 响应。
+- GET、PUT、DELETE 完全不调用 Kafka，仍按现有 PostgreSQL 事务执行。
+- 对象存储通过统一 adapter 接入，不把实现固定为某一家 S3 平台。
+- bucket 按接收日期区分，业务层不制定 object key，也不计算 SHA-256。
+- 不实现 Kafka consumer、批量物化、consumer lag、DLQ、台账和出站推送。
+- `git diff --check`、`ruff check .`、`pyright` 和 `pytest -q` 完成验证。
+
+## 11. 编码前仍需确认
+
+1. 均值 `10,000` 的准确单位是 HTTP requests/s、业务对象数/s，还是并发连接数；
+   五类接口的流量比例是多少。
+2. Base64 是纯字符串还是也允许 `data:image/...;base64,` 前缀；单图和单请求的
+   最大体积是多少。
+3. 第一批需要支持哪些对象存储平台，以及各平台返回或允许构造的稳定地址格式。
+4. 日期 bucket 是否确认使用中国时区和 `viid-{YYYYMMDD}` 命名模板。
+5. Kafka 集群的 broker 数、认证方式、单条消息上限和保留时间。
+6. 接入队列、Kafka 队列、对象存储 Worker 和 Kafka Worker 的初始容量/并发数。
+
+当前缺少协议原文，因此机动车、非机动车模型字段以及五类对象的完整图片字段仍是
+未确认项，不能仅根据当前占位 `dict` 模型直接实现。

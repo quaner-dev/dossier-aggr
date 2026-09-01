@@ -7,13 +7,14 @@ from pydantic import BeforeValidator
 from core import constants
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     ArchiveQueryResult,
     ArchiveQueryResultSchema,
     ArchiveQuerySchema,
     ResponseStatus,
     ResponseStatusList,
     ResponseStatusListSchema,
+    VehicleArchive,
     VehicleArchiveList,
     VehicleArchiveListSchema,
 )
@@ -48,7 +49,10 @@ async def vehicle_archives_query_sync(
             PageRecordNum=len(page_archives),
             TotalNum=len(archives),
             VehicleArchiveListObject=VehicleArchiveList(
-                VehicleArchiveObject=[archive for archive in page_archives]
+                VehicleArchiveObject=[
+                    VehicleArchive.model_validate(archive, from_attributes=True)
+                    for archive in page_archives
+                ]
             ),
         )
     )

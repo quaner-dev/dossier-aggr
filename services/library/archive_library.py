@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 
+from domain import ArchiveLibrary as ArchiveLibraryData
 from models import ArchiveLibrary
 from repo.library.archive_library import (
     create_archive_libraries_repo,
@@ -7,6 +8,7 @@ from repo.library.archive_library import (
     list_archive_libraries_repo,
     update_archive_libraries_repo,
 )
+from services.model_conversion import to_table_models
 
 
 class ArchiveLibraryService:
@@ -21,14 +23,14 @@ class ArchiveLibraryService:
         return list(await list_archive_libraries_repo(filters=filters))
 
     async def create_archive_libraries(
-        self, libraries: Sequence[ArchiveLibrary]
+        self, libraries: Sequence[ArchiveLibraryData]
     ) -> list[ArchiveLibrary]:
-        return list(await create_archive_libraries_repo(libraries=list(libraries)))
+        return list(await create_archive_libraries_repo(libraries=to_table_models(ArchiveLibrary, libraries)))
 
     async def update_archive_libraries(
-        self, libraries: Sequence[ArchiveLibrary]
+        self, libraries: Sequence[ArchiveLibraryData]
     ) -> list[ArchiveLibrary]:
-        return list(await update_archive_libraries_repo(libraries=list(libraries)))
+        return list(await update_archive_libraries_repo(libraries=to_table_models(ArchiveLibrary, libraries)))
 
     async def delete_archive_libraries(self, library_ids: list[str]) -> list[str]:
         return await delete_archive_libraries_repo(library_ids=library_ids)

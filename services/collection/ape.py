@@ -1,5 +1,7 @@
+from domain import APE as APEData
 from models import APE
 from repo.collection.ape import list_apes_repo, update_apes_repo
+from services.model_conversion import to_table_models
 
 
 class APEService:
@@ -12,6 +14,6 @@ class APEService:
         """查询所有APE信息"""
         return list(await list_apes_repo())
 
-    async def update_apes(self, apes: list[APE]) -> list[APE]:
+    async def update_apes(self, apes: list[APEData]) -> list[APE]:
         """批量更新APE设备"""
-        return await update_apes_repo(apes=apes)
+        return await update_apes_repo(apes=to_table_models(APE, apes))

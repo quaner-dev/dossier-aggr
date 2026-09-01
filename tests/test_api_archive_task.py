@@ -7,7 +7,8 @@ from api.task.archive_task import (
     archive_tasks_query,
     archive_tasks_update,
 )
-from models import ArchiveTask, ArchiveTaskList, ArchiveTaskListSchema
+from domain import ArchiveTask
+from schemas import ArchiveTaskList, ArchiveTaskListSchema
 from tests.type_helpers import as_service, as_status_list, dt
 
 

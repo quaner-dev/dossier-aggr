@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from core import settings
 
 
-def _engine_kwargs(database_url: str) -> dict[str, Any]:
+def _engine_kwargs() -> dict[str, Any]:
     kwargs: dict[str, Any] = {}
     if settings.DB_POOL_SIZE is not None:
         kwargs["pool_size"] = settings.DB_POOL_SIZE
@@ -20,4 +20,4 @@ def _engine_kwargs(database_url: str) -> dict[str, Any]:
     return kwargs
 
 
-engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs(settings.DATABASE_URL))
+engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs())

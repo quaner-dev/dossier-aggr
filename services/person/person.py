@@ -1,3 +1,6 @@
+from collections.abc import Sequence
+
+from domain import Person as PersonData
 from models import Person
 from repo.person.person import (
     create_person_repo,
@@ -9,6 +12,7 @@ from repo.person.person import (
     update_person_repo,
     update_persons_repo,
 )
+from services.model_conversion import to_table_model, to_table_models
 
 
 class PersonService:
@@ -25,21 +29,21 @@ class PersonService:
         """查询所有人员信息"""
         return list(await list_persons_repo())
 
-    async def create_person(self, person: Person) -> Person:
+    async def create_person(self, person: PersonData) -> Person:
         """创建人员信息"""
-        return await create_person_repo(person=person)
+        return await create_person_repo(person=to_table_model(Person, person))
 
-    async def create_persons(self, persons: list[Person]) -> list[Person]:
+    async def create_persons(self, persons: Sequence[PersonData]) -> list[Person]:
         """创建多个人员信息"""
-        return await create_persons_repo(persons=persons)
+        return await create_persons_repo(persons=to_table_models(Person, persons))
 
-    async def update_person(self, person: Person) -> Person:
+    async def update_person(self, person: PersonData) -> Person:
         """更新人员信息"""
-        return await update_person_repo(person=person)
+        return await update_person_repo(person=to_table_model(Person, person))
 
-    async def update_persons(self, persons: list[Person]) -> list[Person]:
+    async def update_persons(self, persons: Sequence[PersonData]) -> list[Person]:
         """批量更新人员信息"""
-        return await update_persons_repo(persons=persons)
+        return await update_persons_repo(persons=to_table_models(Person, persons))
 
     async def delete_person(self, person_id: str) -> str:
         """删除人员信息"""

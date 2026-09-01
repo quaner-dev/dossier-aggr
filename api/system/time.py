@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from core import constants
-from models import SystemTime
+from domain import SystemTime
 from services import SystemTimeService
 
 router = APIRouter()

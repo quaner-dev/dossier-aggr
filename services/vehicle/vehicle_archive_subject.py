@@ -1,10 +1,15 @@
-from models import ArchiveSubjectQuery, VehicleArchiveSubject
+from collections.abc import Sequence
+
+from domain import VehicleArchiveSubject as VehicleArchiveSubjectData
+from models import VehicleArchiveSubject
 from repo.vehicle.vehicle_archive_subject import (
     create_vehicle_archive_subjects_repo,
     delete_vehicle_archive_subjects_repo,
     query_vehicle_archive_subjects_repo,
     update_vehicle_archive_subjects_repo,
 )
+from schemas import ArchiveSubjectQuery
+from services.model_conversion import to_table_models
 
 
 class VehicleArchiveSubjectService:
@@ -19,14 +24,14 @@ class VehicleArchiveSubjectService:
         return list(await query_vehicle_archive_subjects_repo(query=query))
 
     async def create_vehicle_archive_subjects(
-        self, subjects: list[VehicleArchiveSubject]
+        self, subjects: Sequence[VehicleArchiveSubjectData]
     ) -> list[VehicleArchiveSubject]:
-        return list(await create_vehicle_archive_subjects_repo(subjects=subjects))
+        return list(await create_vehicle_archive_subjects_repo(subjects=to_table_models(VehicleArchiveSubject, subjects)))
 
     async def update_vehicle_archive_subjects(
-        self, subjects: list[VehicleArchiveSubject]
+        self, subjects: Sequence[VehicleArchiveSubjectData]
     ) -> list[VehicleArchiveSubject]:
-        return list(await update_vehicle_archive_subjects_repo(subjects=subjects))
+        return list(await update_vehicle_archive_subjects_repo(subjects=to_table_models(VehicleArchiveSubject, subjects)))
 
     async def delete_vehicle_archive_subjects(
         self,

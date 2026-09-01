@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, Request
 
 from core import auth, constants
 from core.time import CHINA_TZ
-from models import RegisterSchema, ResponseStatus, ResponseStatusList
+from domain import ResponseStatus
+from schemas import RegisterSchema, ResponseStatusList
 from services import APSService
 
 router = APIRouter()

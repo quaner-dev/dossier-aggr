@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from core import constants, exceptions
 from core.time import CHINA_TZ
 from core.utils import parse_id_list
-from models import (
+from schemas import (
     Person,
     PersonList,
     PersonListObjectSchema,
@@ -31,7 +31,11 @@ async def persons_query(
     persons = await service.list_persons()
 
     return PersonListObjectSchema(
-        PersonListObject=PersonList(PersonObject=[person for person in persons])
+        PersonListObject=PersonList(
+            PersonObject=[
+                Person.model_validate(person, from_attributes=True) for person in persons
+            ]
+        )
     )
 
 
@@ -144,7 +148,7 @@ async def person_query(
 ) -> Person:
     """单个人员查询接口"""
     person = await service.get_person(person_id)
-    return person
+    return Person.model_validate(person, from_attributes=True)
 
 
 @router.put(

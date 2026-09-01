@@ -1,13 +1,9 @@
-from models import (
-    Archive,
-    ArchiveQuery,
-    ArchiveSubject,
-    Gait,
+from domain import (
     SubImageInfo,
-    VehicleArchive,
     enums,
 )
-from models.common.common import FieldsType
+from domain.common.common import FieldsType
+from schemas import Archive, ArchiveQuery, ArchiveSubject, Gait, VehicleArchive
 
 
 def _sub_image_payload(image_id: str, image_type: enums.ImageTypeEnum) -> dict:

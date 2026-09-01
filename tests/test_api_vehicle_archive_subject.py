@@ -6,7 +6,7 @@ from api.vehicle.vehicle_archive_subject import (
     vehicle_archive_subjects_delete,
     vehicle_archive_subjects_update,
 )
-from models import (
+from schemas import (
     ArchiveSubjectQuery,
     ArchiveSubjectQuerySchema,
     VehicleArchiveSubject,

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from core import constants
-from models import ArchiveList, ArchiveListSchema
+from schemas import Archive, ArchiveList, ArchiveListSchema
 from services import ArchiveConfidenceService
 
 router = APIRouter()
@@ -21,5 +21,10 @@ async def archive_confidence_verify(
     archives = data.ArchiveListObject.ArchiveObject
     verified_archives = await service.verify_archive_confidence(archives=archives)
     return ArchiveListSchema(
-        ArchiveListObject=ArchiveList(ArchiveObject=verified_archives)
+        ArchiveListObject=ArchiveList(
+            ArchiveObject=[
+                Archive.model_validate(archive, from_attributes=True)
+                for archive in verified_archives
+            ]
+        )
     )

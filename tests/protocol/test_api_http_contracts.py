@@ -3,9 +3,9 @@ import asyncio
 import httpx
 
 from core import exceptions
+from domain.common import enums
 from main import app
-from models import Face, FaceQueryParams, Person
-from models.common import enums
+from schemas import Face, FaceQueryParams, Person
 from services.face.face import FaceService
 from services.person.person import PersonService
 

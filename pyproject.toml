@@ -20,9 +20,11 @@ dev = [
 include = [
   "api",
   "core",
+  "domain",
   "models",
   "repo",
   "services",
+  "schemas",
   "alembic/env.py",
   "main.py",
 ]

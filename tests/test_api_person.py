@@ -15,7 +15,12 @@ from domain.common import enums
 from main import app
 from schemas import Person, PersonList, PersonListObjectSchema
 from services.person.person import PersonService
-from tests.type_helpers import as_service, as_status_list
+from tests.type_helpers import (
+    FakeMessageManager,
+    FakeRequest,
+    as_service,
+    as_status_list,
+)
 
 
 class _FakePersonService:
@@ -98,9 +103,17 @@ def test_persons_create_update_delete_return_status_list():
     async def _run():
         persons = _sample_persons()
         fake = _FakePersonService(persons)
-        payload = PersonListObjectSchema(PersonListObject=PersonList(PersonObject=persons))
+        manager = FakeMessageManager()
+        payload = PersonListObjectSchema(
+            PersonListObject=PersonList(PersonObject=persons)
+        )
+        raw_payload = {"PersonListObject": {"PersonObject": [{"PersonID": "raw"}]}}
 
-        create_res = await persons_create(data=payload, service=as_service(fake))
+        create_res = await persons_create(
+            request=FakeRequest(raw_payload),
+            data=payload,
+            message_manager=manager,
+        )
         update_res = await persons_update(data=payload, service=as_service(fake))
         delete_res = await persons_delete(
             service=as_service(fake), person_ids=["P-001", "P-002"]
@@ -125,8 +138,9 @@ def test_persons_create_update_delete_return_status_list():
         assert len(delete_status) == 2
         assert delete_status[0].Id == "P-001"
 
-        assert fake.created_with is not None
-        assert len(fake.created_with) == 2
+        assert fake.created_with is None
+        assert manager.enqueued[0]["payload"] is raw_payload
+        assert manager.enqueued[0]["business_ids"] == ["P-001", "P-002"]
         assert fake.updated_with is not None
         assert len(fake.updated_with) == 2
         assert fake.deleted_with == ["P-001", "P-002"]

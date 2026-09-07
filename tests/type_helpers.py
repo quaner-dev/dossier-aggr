@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 from domain import (
     FeatureInfo,
     ResponseStatus,
@@ -9,6 +9,22 @@ from domain import (
     enums,
 )
 from schemas import FeatureInfoList, SubImageInfoList
+
+
+class FakeRequest:
+    def __init__(self, payload: dict[str, Any]):
+        self.payload = payload
+
+    async def json(self) -> dict[str, Any]:
+        return self.payload
+
+
+class FakeMessageManager:
+    def __init__(self):
+        self.enqueued: list[dict[str, Any]] = []
+
+    def enqueue(self, **kwargs: Any) -> None:
+        self.enqueued.append(kwargs)
 
 
 def as_service(service: object) -> Any:

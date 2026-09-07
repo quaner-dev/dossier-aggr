@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from core import constants, exceptions
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 from core.utils import parse_id_list
 from schemas import (
     Person,
@@ -33,7 +33,8 @@ async def persons_query(
     return PersonListObjectSchema(
         PersonListObject=PersonList(
             PersonObject=[
-                Person.model_validate(person, from_attributes=True) for person in persons
+                Person.model_validate(person, from_attributes=True)
+                for person in persons
             ]
         )
     )
@@ -45,12 +46,13 @@ async def persons_query(
     description="GA/T 1400.4-2017 7.2.11.1 批量人员的增加",
 )
 async def persons_create(
+    request: Request,
     data: PersonListObjectSchema,
     service: Annotated[PersonService, Depends(PersonService)],
 ) -> ResponseStatusListSchema:
     """批量人员增加接口"""
     persons = data.PersonListObject.PersonObject
-    _ = await service.create_persons(persons=persons)
+    await service.create_persons(persons, request=request, payload=await request.json())
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(

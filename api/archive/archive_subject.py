@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from core import constants
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 from core.utils import parse_id_list
 from schemas import (
     ArchiveList,

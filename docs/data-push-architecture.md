@@ -2,14 +2,11 @@
 
 本文记录 `dossier-aggr` 第一阶段高并发 POST 接口接入 Kafka 的实现边界。
 
-第一阶段采用快速响应模式：FastAPI 完成协议校验并将请求放入本进程接入队列后，
-直接返回 HTTP 200；对象存储上传和 Kafka 发送由进程内固定后台 Worker 继续处理。
+当前采用同步直传模式：FastAPI 完成协议校验后，在同一请求中先上传对象存储图片，
+再发送 Kafka；两步都成功后才返回 HTTP 200。
 
 ```text
-HTTP 请求 -> 协议校验 -> 本进程接入队列 -> HTTP 200
-                                  |
-                                  v
-                     对象存储上传 -> Kafka 发送
+HTTP 请求 -> 协议校验 -> 对象存储上传 -> Kafka 发送 -> HTTP 200
 ```
 
 Kafka 消费、批量写入 PostgreSQL、出站订阅推送、入站台账和链路追踪均不在本阶段
@@ -32,20 +29,18 @@ FastAPI -> Service -> Repository -> PostgreSQL commit -> HTTP success
 第一阶段将指定 POST 改为快速接入模式，使 PostgreSQL、对象存储和 Kafka 网络响应
 都不处于这些 POST 请求的同步响应路径中。
 
-第一阶段 POST 成功语义是：
+当前 POST 成功语义是：
 
 ```text
-协议校验通过 + 请求已进入当前 FastAPI 进程的内存接入队列
+协议校验通过 + 图片已上传 + Kafka broker 已确认消息
 ```
 
-它不表示图片已经上传，不表示 Kafka broker 已确认消息，也不表示数据已经写入
-PostgreSQL。业务接受 POST 成功后数据暂时不可查询。
+它不表示数据已经写入 PostgreSQL；Kafka 消费和 PostgreSQL 物化仍由系统外部流程负责。
 
 该选择优先降低接口响应时间，但需要明确接受以下代价：
 
-- FastAPI 进程在后台处理完成前退出、崩溃或被强制重启时，内存队列中的请求可能丢失。
-- 对象存储或 Kafka 最终失败发生在 HTTP 200 之后，无法再通过本次 HTTP 响应通知调用方。
-- 第一阶段只记录后台失败日志，不提供状态查询、自动补偿、台账或 DLQ。
+- 对象存储或 Kafka 失败会在本次 HTTP 请求中返回错误，调用方可以重试。
+- 本阶段不提供自动补偿、台账或 DLQ；重试幂等性由调用方和下游契约负责。
 
 ## 2. 第一阶段范围
 
@@ -89,7 +84,7 @@ GET、PUT 和 DELETE 继续同步访问 PostgreSQL。调用方需要修改或删
 `/VIID/SubscribeNotifications` 在本阶段仍然只是接收下级系统通知的入站接口，不能
 据此认为系统已经具备主动向上级推送的能力。
 
-## 3. 快速响应与后台流水线
+## 3. 同步投递流水线
 
 ### 3.1 请求路径
 
@@ -97,25 +92,16 @@ GET、PUT 和 DELETE 继续同步访问 PostgreSQL。调用方需要修改或删
 flowchart LR
     CLIENT[下级系统]
     API[FastAPI 协议入口]
-    INPUT_QUEUE[进程内接入队列]
-    STORAGE_WORKER[对象存储 Worker]
-    KAFKA_QUEUE[进程内 Kafka 队列]
-    KAFKA_WORKER[Kafka Worker]
     STORAGE[(对象存储)]
     KAFKA[(Kafka)]
     PG[(PostgreSQL)]
 
     CLIENT -->|指定 POST| API
-    API -->|校验后的原始 JSON| INPUT_QUEUE
-    INPUT_QUEUE -->|入队成功| API
+    API -->|校验后的原始 JSON| STORAGE
+    STORAGE -->|StoragePath| API
+    API -->|转换后的 JSON| KAFKA
+    KAFKA -->|broker 确认| API
     API -->|协议成功，HTTP 200| CLIENT
-
-    INPUT_QUEUE --> STORAGE_WORKER
-    STORAGE_WORKER -->|存在 Base64| STORAGE
-    STORAGE -->|StoragePath| STORAGE_WORKER
-    STORAGE_WORKER -->|转换后的 JSON| KAFKA_QUEUE
-    KAFKA_QUEUE --> KAFKA_WORKER
-    KAFKA_WORKER --> KAFKA
 
     CLIENT -->|GET / PUT / DELETE| API
     API -->|现有同步 Service / Repository| PG
@@ -126,41 +112,22 @@ flowchart LR
 
 1. API 完成认证、HTTP 参数解析和完整协议模型校验。
 2. 保留原始 JSON 的字段、大小写、外层对象和列表结构。
-3. 将校验后的原始 JSON 放入本进程接入队列。
-4. 入队成功后立即返回现有 `ResponseStatusListObject` 和 HTTP 200。
-5. 对象存储 Worker 从接入队列获取请求并处理其中的 Base64 图片。
-6. 图片上传成功后，将 `StoragePath` 设置为返回地址，将 `Data` 设置为 `null`。
-7. 将转换后的完整 JSON 放入 Kafka 队列。
-8. Kafka Worker 异步发送消息；成功或最终失败只写日志，不影响已经返回的 HTTP 响应。
+3. 在当前请求中处理其中的 Base64 图片并上传对象存储。
+4. 图片上传成功后，将 `StoragePath` 设置为返回地址，将 `Data` 设置为 `null`。
+5. 将转换后的完整 JSON 同步发送 Kafka，并等待 broker 确认。
+6. Kafka 成功后返回现有 `ResponseStatusListObject` 和 HTTP 200。
 
-接入队列本身仍应是有界队列。入队失败表示请求甚至没有被当前进程接受，此时不能
-返回成功，应使用项目现有协议错误包装返回失败并记录日志。
+### 3.2 S3 上传与 Kafka 发送顺序
 
-### 3.2 S3 上传与 Kafka 发送是否可以分开
+同一个请求的两个步骤不能并行：Kafka JSON 需要包含上传后得到的 `StoragePath`，
+所以必须先完成该请求的图片上传和 JSON 替换，再发送 Kafka。
 
-分开后可以明显降低 HTTP 响应延迟，因为响应不再累计对象存储上传和 Kafka 网络
-确认时间。将对象存储 Worker 和 Kafka Worker 拆成两个独立阶段，也可以分别设置
-并发数，使不同请求形成流水线：一批请求正在上传图片时，上一批请求可以同时发送
-Kafka。
+### 3.3 不使用进程内后台队列
 
-但同一个请求的两个步骤不能并行：Kafka JSON 需要包含上传后得到的 `StoragePath`，
-所以必须先完成该请求的图片上传和 JSON 替换，再发送 Kafka。拆分不会减少总 CPU、
-网络和存储工作量，也不会提高对象存储或 Kafka 本身的极限吞吐；如果后台处理速度
-长期低于请求速度，积压会转移到 FastAPI 进程内存。
-
-### 3.3 不直接使用 FastAPI BackgroundTasks
-
-`BackgroundTasks` 可以在 HTTP 响应发送后运行函数，因此从功能上能够提前返回。
-但均值约 `10,000` 的高并发场景不适合为每个请求直接创建一个独立
-`BackgroundTasks` 上传任务：
-
-- 不方便统一限制对象存储和 Kafka 的并发数。
-- 不方便观察和限制所有待处理请求占用的总内存。
-- 大量任务仍运行在 API Worker 进程中，容易争抢事件循环和连接池。
-- 进程退出时同样没有持久化恢复能力。
-
-第一阶段使用共享的有界队列和固定数量 Worker，仍属于进程内后台处理，但并发和
-内存边界更明确。它不是 Kafka consumer，也不负责 PostgreSQL 物化。
+消息投递不使用 `BackgroundTasks`、内存队列或固定 Worker。请求会占用一个 HTTP
+连接直到对象存储和 Kafka 都完成，因此部署时应通过 Web 服务器并发上限、对象存储
+连接池和 Kafka 客户端超时控制整体资源。若需要高并发缓冲、重试或持久化，应先单独
+定义消息队列及其幂等、失败重试和顺序契约，再扩展本架构。
 
 ## 4. Topic 与分区
 
@@ -254,7 +221,9 @@ header。版本由 Topic 的 `.v1` 后缀表达。
 
 ### 6.1 平台无关适配
 
-业务代码不直接依赖某一家 S3 产品或 SDK。定义统一的异步对象存储接口：
+业务代码不直接依赖某一家 S3 产品或 SDK。对象存储适配器位于独立的 `s3/` 包，消息
+传输包 `message/` 不包含 S3 配置或 SDK 依赖。S3 配置统一由 `core/settings.py` 提供，
+业务层只依赖统一的异步对象存储接口：
 
 ```text
 upload(bucket, content, content_type) -> storage_path
@@ -369,11 +338,10 @@ Kafka producer。超过关闭超时的剩余任务允许丢失并记录日志。
 实现继续遵守现有分层：
 
 - `api/` 负责 HTTP 参数、依赖注入、协议模型校验和响应包装。
-- `services/` 负责将校验后的原始 JSON 放入接入队列。
-- 进程内 Worker 编排 Base64 外置、字段替换和 Kafka 投递。
+- `services/` 负责在请求内编排原始 JSON 的 Base64 外置、字段替换和 Kafka 投递。
 - 对象存储和 Kafka producer 通过基础设施 adapter 提供，不在路由中直接调用 SDK。
 - `repo/` 继续只负责 PostgreSQL，不把 Kafka 或对象存储放入 Repository。
-- `main.py` 的 lifespan 管理客户端、队列和固定 Worker 的启动、刷新和关闭。
+- `main.py` 的 lifespan 管理 S3 adapter 和 Kafka producer 的启动与关闭。
 
 本阶段不创建 Kafka consumer 进程目录、物化 Repository 或 PostgreSQL 批量写入代码。
 

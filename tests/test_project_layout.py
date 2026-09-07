@@ -44,6 +44,8 @@ def test_pyproject_separates_runtime_and_development_dependencies():
     assert "project" not in config
     assert set(config["dependency-groups"]["runtime"]) == {
         "alembic",
+        "aioboto3",
+        "aiokafka",
         "asyncpg",
         "fastapi",
         "psycopg2-binary",

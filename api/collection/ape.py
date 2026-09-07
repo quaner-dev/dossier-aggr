@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from core import constants
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 from domain import ResponseStatus
 from schemas import APEList, APEListSchema, ResponseStatusList, ResponseStatusListSchema
 from services import APEService

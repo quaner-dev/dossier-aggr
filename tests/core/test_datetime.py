@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 from core.utils import parse_datetime, serialize_datetime
 
 

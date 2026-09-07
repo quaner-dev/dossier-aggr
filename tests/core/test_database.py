@@ -11,8 +11,19 @@ def _fresh_database_module(
     fake_create_async_engine,
     **env: str,
 ):
+    required_defaults = {
+        "DB_HOST": "localhost",
+        "DB_PORT": "5432",
+        "DB_USER": "postgres",
+        "DB_PASSWORD": "postgres",
+        "DB_NAME": "dossier_aggr",
+    }
     for key in (
-        "DATABASE_URL",
+        "DB_HOST",
+        "DB_PORT",
+        "DB_USER",
+        "DB_PASSWORD",
+        "DB_NAME",
         "DB_POOL_SIZE",
         "DB_MAX_OVERFLOW",
         "DB_POOL_TIMEOUT_SECONDS",
@@ -21,6 +32,8 @@ def _fresh_database_module(
     ):
         if key in env:
             monkeypatch.setenv(key, env[key])
+        elif key in required_defaults:
+            monkeypatch.setenv(key, required_defaults[key])
         else:
             monkeypatch.delenv(key, raising=False)
 
@@ -53,7 +66,8 @@ def test_postgresql_engine_uses_configured_pool_options(
     _fresh_database_module(
         monkeypatch,
         fake_create_async_engine,
-        DATABASE_URL="postgresql+asyncpg://postgres:postgres@postgresql:5432/app",
+        DB_HOST="postgresql",
+        DB_NAME="app",
         DB_POOL_SIZE="7",
         DB_MAX_OVERFLOW="11",
         DB_POOL_TIMEOUT_SECONDS="3.5",
@@ -84,7 +98,8 @@ def test_postgresql_engine_uses_default_pool_options_when_env_is_absent(
     _fresh_database_module(
         monkeypatch,
         fake_create_async_engine,
-        DATABASE_URL="postgresql+asyncpg://postgres:postgres@postgresql:5432/app",
+        DB_HOST="postgresql",
+        DB_NAME="app",
     )
 
     assert captured["url"].startswith("postgresql+asyncpg://")
@@ -114,18 +129,28 @@ def test_default_database_url_uses_postgresql(
     )
 
 
-def test_database_url_rejects_non_postgresql_driver(
+def test_database_url_is_built_from_connection_settings(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    captured: dict[str, Any] = {}
+
     def fake_create_async_engine(url: str, **kwargs: Any) -> object:
+        captured["url"] = url
         return object()
 
-    with pytest.raises(ValueError, match="PostgreSQL"):
-        _fresh_database_module(
-            monkeypatch,
-            fake_create_async_engine,
-            DATABASE_URL="mysql+pymysql://user:password@localhost:3306/app",
-        )
+    _fresh_database_module(
+        monkeypatch,
+        fake_create_async_engine,
+        DB_HOST="database.internal",
+        DB_PORT="5433",
+        DB_USER="app_user",
+        DB_PASSWORD="secret",
+        DB_NAME="app",
+    )
+
+    assert captured["url"] == (
+        "postgresql+asyncpg://app_user:secret@database.internal:5433/app"
+    )
 
 
 def test_db_pool_pre_ping_accepts_true_case_insensitively(
@@ -141,7 +166,8 @@ def test_db_pool_pre_ping_accepts_true_case_insensitively(
     _fresh_database_module(
         monkeypatch,
         fake_create_async_engine,
-        DATABASE_URL="postgresql+asyncpg://postgres:postgres@postgresql:5432/app",
+        DB_HOST="postgresql",
+        DB_NAME="app",
         DB_POOL_PRE_PING="TRUE",
     )
 
@@ -161,7 +187,8 @@ def test_postgresql_engine_always_uses_pool_options(
     _fresh_database_module(
         monkeypatch,
         fake_create_async_engine,
-        DATABASE_URL="postgresql+asyncpg://postgres:postgres@postgresql:5432/app",
+        DB_HOST="postgresql",
+        DB_NAME="app",
         DB_POOL_SIZE="7",
         DB_MAX_OVERFLOW="11",
         DB_POOL_TIMEOUT_SECONDS="3.5",

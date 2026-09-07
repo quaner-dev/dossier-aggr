@@ -1,4 +1,10 @@
 from collections.abc import Sequence
+from typing import Any
+from fastapi import Request
+from core import settings
+from message.kafka import publish_message
+from message.dispatch import MessageUnavailableError
+from services.image_upload import transform_images
 
 from domain import Person as PersonData
 from models import Person
@@ -33,8 +39,18 @@ class PersonService:
         """创建人员信息"""
         return await create_person_repo(person=to_table_model(Person, person))
 
-    async def create_persons(self, persons: Sequence[PersonData]) -> list[Person]:
+    async def create_persons(self, persons: Sequence[PersonData], *, request: Request | None = None, payload: dict[str, Any] | None = None) -> list[Person]:
         """创建多个人员信息"""
+        if request is not None:
+            storage = getattr(request.app.state, "object_storage", None)
+            producer = getattr(request.app.state, "kafka_producer", None)
+            bucket = getattr(request.app.state, "object_storage_bucket_prefix", settings.OBJECT_STORAGE_BUCKET_PREFIX)
+            if storage is None or producer is None or not bucket:
+                raise MessageUnavailableError()
+            body = payload if payload is not None else await request.json()
+            await transform_images(body, storage=storage, bucket=bucket)
+            await publish_message(producer=producer, topic="viid.persons.v1", payload=body)
+            return []
         return await create_persons_repo(persons=to_table_models(Person, persons))
 
     async def update_person(self, person: PersonData) -> Person:

@@ -3,6 +3,11 @@
 本文是 [`docs/data-push-architecture.md`](./data-push-architecture.md) 的编码指南。
 架构文档已经确定业务边界，本文只把它翻译成一组简单、可逐步执行的代码任务。
 
+当前实现中，`message/` 仅负责 Kafka 消息传输；S3-compatible adapter 位于独立的
+`s3/` 包，对象存储配置统一由 `core/settings.py` 提供，由 `services/message_dispatch.py`
+组合图片上传与消息发送。
+本文早期示例中出现的 `message/storage.py` 和对象存储配置均已迁移，不应按旧路径新增代码。
+
 当前只做一件事：指定的高并发 `POST` 先进入 FastAPI 进程内存队列，后台上传图片并
 发送一条 Kafka 消息。当前不做 Kafka consumer、不做 PostgreSQL 批量物化、不做出站
 推送。
@@ -74,28 +79,30 @@ HTTP 200 的含义只有：协议校验通过，并且请求已经进入当前 F
 - SHA-256、图片去重或业务层 object key 规则。
 - 为了接入 Kafka 而修改协议字段、数据库表模型或历史迁移。
 
-## 3. 目标目录：所有接入代码集中在 `message/`
+## 3. 目标目录：消息传输与对象存储分包
 
-新增一个独立的根目录包 `message/`，专门表示消息接入和 Kafka/对象存储适配。不要把
-这些文件放入现有的 `core/`、`services/`、`repo/` 或 `api/` 业务目录，也不要创建
-根目录 `ingest/` 或 `consumers/`。
+`message/` 是 Kafka 消息传输边界；S3-compatible 对象存储放在独立根目录 `s3/`，由
+业务 service 负责组合两者。不要把这些 adapter 放入 `core/`、`repo/` 或 `api/`。
 
 ```text
 message/
-  __init__.py       # 对外导出 topic 和 MessageManager
-  config.py         # Kafka/对象存储/队列环境变量
-  storage.py        # 对象存储接口、首个 adapter 和图片递归转换
-  kafka.py          # KafkaProducer Protocol 和 aiokafka 实现
-  manager.py        # 入队、两个有界队列、固定 Worker、启动和停止
+  __init__.py       # 对外导出 topic 和 Kafka transport
+  kafka.py          # aiokafka 实现
+s3/
+  __init__.py       # 对象存储 adapter 导出
+  storage.py        # S3-compatible adapter
+services/
+  image_upload.py   # 协议图片转换与上传编排
+  message_dispatch.py # 上传后发送 Kafka
 ```
 
 说明：
 
 - 选择 `message` 而不是 `consumer`，因为当前只写入 Kafka，还没有消费 Kafka。
-- `message/` 是接入基础设施边界；API 不直接导入 Kafka SDK 或对象存储 SDK。
-- `core/settings.py` 继续保留 PostgreSQL 配置。Kafka/对象存储配置放到
-  `message/config.py`，避免继续扩大现有 `core` 配置文件。
-- API 路由只依赖 `MessageManager.enqueue()`；dependency 也放在 `message/manager.py`。
+- `message/` 是 Kafka 接入基础设施边界；API 不直接导入 Kafka SDK 或 S3 SDK。
+- `core/settings.py` 统一保留 PostgreSQL、Kafka 和对象存储配置。
+- API 路由依赖 `services.message_dispatch.MessageDispatchService`；配置由
+  `core/settings.py` 统一提供。
 - 不新增 `services/ingestion.py`、`core/ingestion/`、`api/dependencies.py`、Factory 或
   Runtime 包装层。
 
@@ -228,7 +235,7 @@ manager 没有接收，返回协议包装的 503。
 
 ## 8. Base64 图片处理
 
-`message/storage.py` 同时放图片转换函数和 `ObjectStorage` Protocol，避免为一个简单
+`services/image_upload.py` 放图片转换函数和 `ObjectStorage` Protocol，避免为一个简单
 转换过程再增加额外 service 层。
 
 ### 8.1 识别和替换
@@ -275,7 +282,7 @@ viid-{YYYYMMDD}
 
 ## 9. 对象存储接口
 
-`message/storage.py` 定义平台无关接口：
+`services/image_upload.py` 定义平台无关接口，具体 S3 adapter 位于 `s3/storage.py`：
 
 ```python
 class ObjectStorage(Protocol):
@@ -295,7 +302,7 @@ class ObjectStorage(Protocol):
 业务层只把返回值写入 `StoragePath`，将其当作不透明字符串。业务层不判断 AWS、
 MinIO、Ceph、OSS 或 OBS，也不生成 object key。
 
-如果确认首个平台是 S3-compatible，首个具体类也直接放在 `message/storage.py`，使用
+如果确认首个平台是 S3-compatible，首个具体类放在 `s3/storage.py`，使用
 一个长生命周期异步 client。adapter 内部负责：
 
 - 根据 content type 生成随机 object key；不使用业务 ID，不计算 SHA-256。
@@ -315,7 +322,7 @@ MinIO、Ceph、OSS 或 OBS，也不生成 object key。
 class KafkaProducer(Protocol):
     async def start(self) -> None: ...
 
-    async def send_json(self, *, topic: str, payload: dict[str, Any]) -> None: ...
+    async def send(self, *, topic: str, payload: dict[str, Any]) -> None: ...
 
     async def stop(self) -> None: ...
 ```
@@ -325,7 +332,7 @@ class KafkaProducer(Protocol):
 ```text
 acks=all
 enable_idempotence=True
-compression_type=配置值，初始 lz4
+compression_type=不配置，当前不启用压缩
 key=None
 headers=[("content-type", b"application/json")]
 ```
@@ -368,7 +375,7 @@ kafka_queue: asyncio.Queue[MessageItem]   # 图片处理完成后待发送
 固定数量的 Kafka worker：
 
 1. 从 `kafka_queue` 取 item。
-2. 调用 `producer.send_json()`。
+2. 调用 `producer.send()`。
 3. 在 `finally` 调用 `kafka_queue.task_done()`。
 
 后台 worker 只捕获普通 `Exception` 并记录安全日志；`CancelledError` 必须继续抛出。
@@ -394,7 +401,7 @@ manager。测试通过 `app.dependency_overrides` 注入 fake，不连接外部�
 
 启动顺序：
 
-1. 读取并校验 `message/config.py` 配置。
+1. 读取并校验 `core/settings.py` 中的 Kafka 和对象存储配置。
 2. 启动 storage。
 3. 启动 producer。
 4. 创建固定数量的两个 Worker。
@@ -422,7 +429,7 @@ producer 和 storage。超时的剩余数量写日志，不写消息内容。关
 
 ## 12. 配置和依赖
 
-配置放在 `message/config.py`，默认值只用于功能联调，不代表生产容量：
+配置放在 `core/settings.py`，默认值只用于功能联调，不代表生产容量：
 
 ```text
 INGEST_INPUT_QUEUE_MAX_ITEMS=256
@@ -434,14 +441,13 @@ INGEST_SHUTDOWN_TIMEOUT_SECONDS=10
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 KAFKA_CLIENT_ID=dossier-aggr-api
 KAFKA_SEND_TIMEOUT_SECONDS=5
-KAFKA_COMPRESSION_TYPE=lz4
-
 OBJECT_STORAGE_PROVIDER=s3-compatible
 OBJECT_STORAGE_BUCKET_PREFIX=viid
 OBJECT_STORAGE_ENDPOINT_URL=
 OBJECT_STORAGE_REGION=
 OBJECT_STORAGE_ACCESS_KEY_ID=
 OBJECT_STORAGE_SECRET_ACCESS_KEY=
+OBJECT_STORAGE_PUBLIC_BASE_URL=
 ```
 
 要求：
@@ -449,12 +455,14 @@ OBJECT_STORAGE_SECRET_ACCESS_KEY=
 - 队列容量、worker 数、超时必须大于零；配置错误在启动时失败。
 - 不提供默认密码、access key 或 secret key；允许使用部署环境默认凭证链。
 - access key 和 secret key 必须同时设置或同时留空。
+- `OBJECT_STORAGE_PUBLIC_BASE_URL` 必须配置为部署方确认的长期访问地址；adapter 将其与
+  bucket、随机 object key 组合为 `StoragePath`，不生成预签名 URL。
 - 当前不区分 dev/test/prod，不在 topic 前加环境名。
 - `OBJECT_STORAGE_PROVIDER` 不是 `s3-compatible` 时先停止，不自动回退本地文件。
 - 每个 Uvicorn 进程拥有独立队列和 client，多进程会按进程数放大内存与连接数。
 - Base64 保留在 input queue 时按请求体大小占用内存；不能只看队列条数调大容量。
 
-候选运行依赖为 `aiokafka`、`aioboto3`、`lz4`。加入 `pyproject.toml` 前，必须在 Python
+候选运行依赖为 `aiokafka`、`aioboto3`。加入 `pyproject.toml` 前，必须在 Python
 3.14 和当前 Alpine Dockerfile 中完成 import、client 生命周期和最小 smoke。兼容失败时
 停止并报告，不能自行改用同步库、线程池、其他 Python 版本或其他基础镜像。
 
@@ -528,7 +536,7 @@ key、secret key、session token 或连接签名。异常摘要去掉换行并�
 - input queue 满或停止接收抛 `MessageUnavailableError`。
 - 图片处理完成后才进入 Kafka queue。
 - storage、kafka enqueue、kafka send 三类失败日志 stage 正确。
-- 每个成功 item 最多调用一次 `send_json`，不重试不重新入队。
+- 每个成功 item 最多调用一次 `send`，不重试不重新入队。
 - Worker 取消时执行 `task_done()`；stop 在总超时内结束并关闭 client。
 - 日志哨兵断言不包含 Base64 和 secret。
 
@@ -578,8 +586,8 @@ pytest -q
 
 ```text
 message/__init__.py
-message/config.py
-message/storage.py
+core/settings.py
+s3/storage.py
 message/kafka.py
 message/manager.py
 tests/message/test_storage.py
@@ -604,7 +612,7 @@ git diff --check
 
 ```text
 message/kafka.py
-message/storage.py
+s3/storage.py
 tests/message/test_kafka.py
 tests/message/test_storage.py
 pyproject.toml
@@ -701,7 +709,7 @@ Kafka/对象存储 smoke。
 
 ## 17. 完成标准
 
-- [ ] 所有 Kafka/对象存储/队列代码都在独立根目录 `message/`，没有新增 `core/ingestion`、
+- [ ] Kafka 传输代码在独立根目录 `message/`，S3 adapter 在独立根目录 `s3/`，没有新增 `core/ingestion`、
       `services/ingestion`、`api/dependencies`、Pipeline、Runtime、Service 或 Factory 包装层。
 - [ ] Faces、Persons、SubscribeNotifications POST 入队成功后立即返回 200。
 - [ ] 队列满或 manager 停止接收返回协议包装的 503。
@@ -731,3 +739,8 @@ Kafka/对象存储 smoke。
 
 这些问题若要求改变“入队即成功”、Kafka value 结构、图片字段规则或持久化保证，必须
 先修改并重新评审架构文档，不能由 Light 实现代理自行决定。
+# 历史设计说明
+
+本文记录的是已废弃的“进程内队列 + 固定 Worker”方案，仅保留作历史参考。当前实现
+已移除 `MessageManager`、内存队列和后台 Worker，采用请求内同步的“对象存储上传 →
+Kafka 发送”流程；请以 `docs/data-push-architecture.md` 和实际代码为准。

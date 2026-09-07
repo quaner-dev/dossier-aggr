@@ -20,4 +20,7 @@ def _engine_kwargs() -> dict[str, Any]:
     return kwargs
 
 
-engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs())
+engine = create_async_engine(
+    settings.DB_ASYNC_URL,
+    **_engine_kwargs(),
+)

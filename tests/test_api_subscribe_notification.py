@@ -20,6 +20,8 @@ from schemas import (
     VehicleArchiveList,
 )
 from tests.type_helpers import (
+    FakeMessageManager,
+    FakeRequest,
     as_service,
     as_status_list,
     dt,
@@ -114,7 +116,9 @@ def _sample_notifications() -> list[SubscribeNotification]:
             VehicleArchiveObjectList=VehicleArchiveList(
                 VehicleArchiveObject=[vehicle_archive]
             ),
-            ArchiveSubjectList=ArchiveSubjectList(ArchiveSubjectObject=[archive_subject]),
+            ArchiveSubjectList=ArchiveSubjectList(
+                ArchiveSubjectObject=[archive_subject]
+            ),
             FaceObjectList=None,
             PersonObjectList=None,
         ),
@@ -131,7 +135,9 @@ def _sample_notifications() -> list[SubscribeNotification]:
             VehicleArchiveObjectList=VehicleArchiveList(
                 VehicleArchiveObject=[vehicle_archive]
             ),
-            ArchiveSubjectList=ArchiveSubjectList(ArchiveSubjectObject=[archive_subject]),
+            ArchiveSubjectList=ArchiveSubjectList(
+                ArchiveSubjectObject=[archive_subject]
+            ),
             FaceObjectList=None,
             PersonObjectList=None,
         ),
@@ -142,21 +148,28 @@ def test_subscribe_notifications_create_returns_status_list():
     async def _run():
         notifications = _sample_notifications()
         fake = _FakeSubscribeNotificationService()
+        manager = FakeMessageManager()
         payload = SubscribeNotificationListSchema(
             SubscribeNotificationListObject=SubscribeNotificationList(
                 SubscribeNotificationObject=notifications
             )
         )
 
-        res = await subscribe_notifications_create(data=payload, service=as_service(fake))
+        raw_payload = {"SubscribeNotificationListObject": {"raw": True}}
+        res = await subscribe_notifications_create(
+            request=FakeRequest(raw_payload),
+            data=payload,
+            message_manager=manager,
+        )
         status = as_status_list(res.ResponseStatusListObject.ResponseStatusObject)
 
         assert len(status) == 2
         assert status[0].StatusCode == "0"
         assert status[0].StatusString == "已接收"
         assert status[0].Id == "N-001"
-        assert fake.created_with is not None
-        assert len(fake.created_with) == 2
+        assert fake.created_with is None
+        assert manager.enqueued[0]["payload"] is raw_payload
+        assert manager.enqueued[0]["business_ids"] == ["N-001", "N-002"]
 
     asyncio.run(_run())
 
@@ -173,7 +186,9 @@ def test_subscribe_notifications_query_returns_notification_list():
 
         assert len(res.SubscribeNotificationListObject.SubscribeNotificationObject) == 1
         assert (
-            res.SubscribeNotificationListObject.SubscribeNotificationObject[0].NotificationID
+            res.SubscribeNotificationListObject.SubscribeNotificationObject[
+                0
+            ].NotificationID
             == "N-001"
         )
         assert (

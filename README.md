@@ -30,9 +30,10 @@ flowchart LR
 - 覆盖 GA/T 1400-2017 与 2018 试行资料中的系统注册、保活、注销、校时、采集系统、采集设备、人员、人脸、订阅与通知等主链路。
 - 覆盖 GA/T 2350.5-2025 目标聚档服务中的目标档案库、聚档任务、人员/车辆档案、档案明细和档案核验主链路。
 - 自动生成 OpenAPI，并通过 Swagger UI 与 ReDoc 提供接口调试页面。
-- 当前所有新增、查询、更新和删除请求都通过 Service 调用 Repository，并在
-  PostgreSQL 事务提交完成后返回结果。
-- 当前仓库仅提供同步 API 和 PostgreSQL 事务路径；异步数据接入与出站推送尚未实装。
+- Faces、Persons 和 SubscribeNotifications 的批量 POST 在请求内完成图片上传和 Kafka
+  投递；`message/` 仅负责 Kafka，S3-compatible adapter 位于独立的 `s3/` 包。
+- 查询、修改、删除及其他写接口继续通过 Service 和 Repository 同步访问 PostgreSQL。
+- Kafka 消费、PostgreSQL 批量物化和出站推送尚未实现。
 - 提供 Dockerfile。
 
 ## 运行环境
@@ -51,33 +52,35 @@ flowchart LR
 
 ## 数据接入与推送
 
-当前仓库只实现同步 API 和 PostgreSQL 事务路径，所有写接口都在事务提交成功后
-返回成功。出站订阅推送尚未实现；`/VIID/SubscribeNotifications` 是接收入站通知
-并提供查询、删除能力的协议接口，不代表服务会主动向上级发送通知。
+`POST /VIID/Faces`、`POST /VIID/Persons` 和
+`POST /VIID/SubscribeNotifications` 在协议校验后，先将 Base64 图片上传对象存储并替换
+`StoragePath`，再发送 Kafka，两个步骤均成功后返回。HTTP 成功不表示 PostgreSQL 已经
+完成物化。出站订阅推送尚未实现。
 
 ```mermaid
 flowchart TB
     CLIENT[下级系统 / API 调用方]
     API[FastAPI 路由与协议包装]
+    STORAGE[(S3-compatible 对象存储)]
+    KAFKA[(Kafka)]
     SERVICE[Service 业务编排]
     REPO[Repository 数据访问]
     POSTGRES[(PostgreSQL)]
     OPENAPI[OpenAPI / Swagger UI / ReDoc]
 
     CLIENT --> API
+    API -->|指定 POST| STORAGE
+    STORAGE --> API
+    API --> KAFKA
     API --> SERVICE
     SERVICE --> REPO
     REPO -->|异步事务提交| POSTGRES
     API --> OPENAPI
 ```
 
-所有查询和写入均由 Service 调用 Repository 完成。Repository 使用异步
-SQLModel/SQLAlchemy 会话处理过滤、排序、分页和持久化；写请求只有在 PostgreSQL
-事务提交成功后才返回协议成功状态。批量写入保持单次请求的事务一致性，避免部分
-提交。
-
-未来若增加高并发接入或出站推送，应先补充架构决策、协议契约和幂等语义，并保持
-普通修改、删除与订阅管理的同步事务边界。
+Kafka 接入范围以外的接口仍由 Service 调用 Repository；修改、删除与订阅管理保持
+同步事务边界。完整边界见 `docs/data-push-architecture.md`，实现配置和部署要求见
+`docs/kafka-ingestion-implementation.md`。
 
 ## 协议资料
 

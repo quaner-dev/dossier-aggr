@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 
 
 def parse_datetime(v: str | datetime) -> datetime:

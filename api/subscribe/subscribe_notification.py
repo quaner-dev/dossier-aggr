@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BeforeValidator
 
 from core import constants
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 from core.utils import parse_id_list
 from schemas import (
     ResponseStatus,
@@ -26,6 +26,7 @@ router = APIRouter()
     description="GA/T 1400.4-2017 7.2.21.1 通知消息",
 )
 async def subscribe_notifications_create(
+    request: Request,
     data: SubscribeNotificationListSchema,
     service: Annotated[
         SubscribeNotificationService, Depends(SubscribeNotificationService)
@@ -34,7 +35,11 @@ async def subscribe_notifications_create(
     subscribe_notifications = (
         data.SubscribeNotificationListObject.SubscribeNotificationObject
     )
-    _ = await service.create_subscribe_notifications(subscribe_notifications)
+    await service.create_subscribe_notifications(
+        subscribe_notifications,
+        request=request,
+        payload=await request.json(),
+    )
 
     return ResponseStatusListSchema(
         ResponseStatusListObject=ResponseStatusList(
@@ -69,9 +74,7 @@ async def subscribe_notifications_query(
     return SubscribeNotificationListSchema(
         SubscribeNotificationListObject=SubscribeNotificationList(
             SubscribeNotificationObject=[
-                SubscribeNotification.model_validate(
-                    notification, from_attributes=True
-                )
+                SubscribeNotification.model_validate(notification, from_attributes=True)
                 for notification in notifications
             ]
         )

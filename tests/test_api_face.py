@@ -16,7 +16,12 @@ from domain.common import enums
 from main import app
 from schemas import Face, FaceList, FaceListObjectSchema, FaceQueryParams
 from services.face.face import FaceService
-from tests.type_helpers import as_service, as_status_list
+from tests.type_helpers import (
+    FakeMessageManager,
+    FakeRequest,
+    as_service,
+    as_status_list,
+)
 
 
 class _FakeFaceService:
@@ -165,9 +170,15 @@ def test_faces_create_update_delete_return_status_list():
     async def _run():
         faces = _sample_faces()
         fake = _FakeFaceService(faces)
+        manager = FakeMessageManager()
         payload = FaceListObjectSchema(FaceListObject=FaceList(FaceObject=faces))
+        raw_payload = {"FaceListObject": {"FaceObject": [{"FaceID": "raw"}]}}
 
-        create_res = await faces_create(data=payload, service=as_service(fake))
+        create_res = await faces_create(
+            request=FakeRequest(raw_payload),
+            data=payload,
+            message_manager=manager,
+        )
         update_res = await faces_update(data=payload, service=as_service(fake))
         delete_res = await faces_delete(
             face_ids=["F-001", "F-002"],
@@ -193,8 +204,9 @@ def test_faces_create_update_delete_return_status_list():
         assert len(delete_status) == 2
         assert delete_status[0].Id == "F-001"
 
-        assert fake.created_with is not None
-        assert len(fake.created_with) == 2
+        assert fake.created_with is None
+        assert manager.enqueued[0]["payload"] is raw_payload
+        assert manager.enqueued[0]["business_ids"] == ["F-001", "F-002"]
         assert len(fake.updated_with) == 2
         assert fake.deleted_with == ["F-001", "F-002"]
         assert fake.update_faces_calls == [["F-001", "F-002"]]

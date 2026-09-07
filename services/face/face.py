@@ -1,4 +1,10 @@
 from collections.abc import Sequence
+from typing import Any
+from fastapi import Request
+from core import settings
+from message.kafka import publish_message
+from message.dispatch import MessageUnavailableError
+from services.image_upload import transform_images
 
 from domain import Face as FaceData
 from models import Face
@@ -32,7 +38,17 @@ class FaceService:
     async def create_face(self, face: FaceData) -> Face:
         return await create_face_repo(face=to_table_model(Face, face))
 
-    async def create_faces(self, faces: Sequence[FaceData]) -> list[Face]:
+    async def create_faces(self, faces: Sequence[FaceData], *, request: Request | None = None, payload: dict[str, Any] | None = None) -> list[Face]:
+        if request is not None:
+            storage = getattr(request.app.state, "object_storage", None)
+            producer = getattr(request.app.state, "kafka_producer", None)
+            bucket = getattr(request.app.state, "object_storage_bucket_prefix", settings.OBJECT_STORAGE_BUCKET_PREFIX)
+            if storage is None or producer is None or not bucket:
+                raise MessageUnavailableError()
+            body = payload or await request.json()
+            await transform_images(body, storage=storage, bucket=bucket)
+            await publish_message(producer=producer, topic="viid.faces.v1", payload=body)
+            return []
         return await create_faces_repo(faces=to_table_models(Face, faces))
 
     async def update_face(self, face: FaceData) -> Face:

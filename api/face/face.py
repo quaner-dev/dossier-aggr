@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from core import constants, exceptions
-from core.time import CHINA_TZ
+from core.settings import CHINA_TZ
 from core.utils import parse_id_list
 from schemas import (
     Face,
@@ -52,11 +52,13 @@ async def faces_query(
     description="GA/T 1400.4-2017 7.2.12.1 批量人脸增加",
 )
 async def faces_create(
-    data: FaceListObjectSchema, service: Annotated[FaceService, Depends(FaceService)]
+    request: Request,
+    data: FaceListObjectSchema,
+    service: Annotated[FaceService, Depends(FaceService)],
 ):
     """批量人脸增加接口"""
     faces = data.FaceListObject.FaceObject
-    _ = await service.create_faces(faces)
+    await service.create_faces(faces, request=request, payload=await request.json())
 
     response_status_objects = [
         ResponseStatus(

@@ -11,8 +11,12 @@ COPY main.py alembic.ini ./
 COPY alembic ./alembic
 COPY api ./api
 COPY core ./core
+COPY domain ./domain
+COPY message ./message
+COPY s3 ./s3
 COPY models ./models
 COPY repo ./repo
+COPY schemas ./schemas
 COPY services ./services
 
 EXPOSE 8000
